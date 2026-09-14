@@ -90,10 +90,8 @@ export const useBestPlayersStats = (
           acc.goals += baseGoals;
           acc.assists += baseAssists;
           acc.minutesPlayed += baseMinutes;
-
-          if ((p.overall || 0) > (acc.player.overall || 0)) {
-            acc.player = { ...acc.player, overall: p.overall };
-          }
+          const maxOverall = Math.max(acc.player.overall || 0, p.overall || 0);
+          acc.player = { ...p, overall: maxOverall };
         }
       });
     });

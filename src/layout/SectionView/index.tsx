@@ -12,7 +12,8 @@ import Styles from "./SectionView.module.css";
 
 const SectionView = (props: SectionViewProps) => {
   const { tabsConfig, onOpenTransfers, title, notSeason, isPlayer } = props;
-  const { section, navigation, tabs, modal } = useSectionView(props);
+  const { section, navigation, tabs, modal, updatePlayer } =
+    useSectionView(props);
 
   const ActionButton = tabs.actionButton;
 
@@ -73,6 +74,7 @@ const SectionView = (props: SectionViewProps) => {
                 onAddBadge={modal.openAddBadge}
                 notSeason={notSeason}
                 onOpenScreen={navigation.open}
+                onUpdatePlayer={updatePlayer}
               />
             </div>
           </SwiperSlide>

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { buildSectionViewModel } from "../../helpers/buildSectionViewModel";
 import { augmentCareerWithMatchStats } from "../../helpers/mergeMatchStats";
 import type { SectionViewProps } from "../../types/SectionViewProps";
@@ -6,6 +6,7 @@ import { useSectionCareer } from "../useSectionCareer";
 import { useSectionModal } from "../useSectionModal";
 import { useSectionNavigation } from "../useSectionNavigation";
 import { useSectionTabs } from "../useSectionTabs";
+import { Players } from "../../../../common/interfaces/playersInfo/players";
 
 type UseSectionViewParams = Pick<
   SectionViewProps,
@@ -47,6 +48,16 @@ export function useSectionView({
     [augmentedCareer, isPlayer, notSeason, player, season],
   );
 
+  const updatePlayer = useCallback(
+    (updatedPlayer: Players) => {
+      updateMatchesOptimistically(
+        { type: "UPDATE_PLAYER", player: updatedPlayer },
+        augmentedSeason.id,
+      );
+    },
+    [updateMatchesOptimistically, augmentedSeason.id],
+  );
+
   const navigation = useSectionNavigation({
     career: augmentedCareer,
     fallbackSeason: augmentedSeason,
@@ -76,5 +87,6 @@ export function useSectionView({
     navigation,
     tabs,
     modal,
+    updatePlayer,
   };
 }

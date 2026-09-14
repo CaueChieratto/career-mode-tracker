@@ -1,10 +1,11 @@
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../Firebase";
 import { getCareerById } from "../../helpers/Getters";
 import { updateCareerFirestore } from "../../helpers/Setters";
 import { Career } from "../../interfaces/Career";
 import { LeagueStats } from "../../interfaces/playersStats/leagueStats";
 import { requireAuth } from "./helpers/authHelpers";
+import { Players } from "../../interfaces/playersInfo/players";
 
 export const PlayersStatsService = {
   addLeagueStatsToPlayer: async (
@@ -75,19 +76,18 @@ export const PlayersStatsService = {
     leagueName: string,
   ): Promise<void> => {
     const user = requireAuth();
-    const career = await getCareerById(user.uid, careerId);
-    const season = career.clubData.find((s) => s.id === seasonId);
-    const player = season?.players.find((p) => p.id === playerId);
-
-    if (!player) throw new Error("Jogador não encontrado");
-
-    const updatedStatsLeagues = player.statsLeagues.filter(
-      (league) => league.leagueName !== leagueName,
-    );
     const playerRef = doc(
       db,
       `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/players`,
       playerId,
+    );
+
+    const playerSnap = await getDoc(playerRef);
+    if (!playerSnap.exists()) throw new Error("Jogador não encontrado");
+
+    const player = playerSnap.data() as Players;
+    const updatedStatsLeagues = (player.statsLeagues || []).filter(
+      (league) => league.leagueName !== leagueName,
     );
 
     await setDoc(playerRef, { ...player, statsLeagues: updatedStatsLeagues });

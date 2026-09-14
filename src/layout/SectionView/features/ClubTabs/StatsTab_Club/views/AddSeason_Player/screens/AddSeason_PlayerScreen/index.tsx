@@ -12,6 +12,7 @@ import Navbar from "../../../../../../../../../ui/Navbar";
 import { usePlayerStats } from "../../../../../../../../../common/hooks/Players/UsePlayerStats";
 import AddSeason_Player_Form from "../../components/AddSeason_Player_Form";
 import { OptimisticUpdateData } from "../../../../../../../helpers/updateSectionCareer";
+import { toRawPlayer } from "../../../../../../../helpers/mergeMatchStats";
 
 type Props = {
   career: Career;
@@ -66,11 +67,11 @@ export default function AddSeason_PlayerScreen({
     }
 
     if (targetPlayer) {
-      pendingPlayerRef.current = {
+      pendingPlayerRef.current = toRawPlayer({
         ...targetPlayer,
         ballonDor,
         statsLeagues: statsLeagues ?? targetPlayer.statsLeagues,
-      };
+      });
     }
 
     handleStatsSave(formData);

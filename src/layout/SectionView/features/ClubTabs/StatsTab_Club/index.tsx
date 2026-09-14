@@ -15,17 +15,20 @@ import { Copy } from "../../../../../common/utils/Copy";
 import { useAggregatedPlayers } from "../../../../../common/hooks/Players/UseAggregatedPlayers";
 import { augmentSeasonWithMatchStats } from "../../../helpers/mergeMatchStats";
 import { SectionScreen } from "../../../config/screens";
+import { Players } from "../../../../../common/interfaces/playersInfo/players";
 
 type StatsTab_ClubProps = {
   season: ClubData;
   career: Career;
   onOpenScreen?: (screen: SectionScreen) => void;
+  onUpdatePlayer?: (player: Players) => void;
 };
 
 export const StatsTab_Club = ({
   season,
   career,
   onOpenScreen,
+  onUpdatePlayer,
 }: StatsTab_ClubProps) => {
   const location = useLocation();
   const isGeralPage = location.pathname.includes("/Geral");
@@ -82,6 +85,7 @@ export const StatsTab_Club = ({
           career={career}
           season={season}
           onEditPlayerStats={handleEditPlayerStats}
+          onUpdatePlayer={onUpdatePlayer}
         />
       ) : (
         <NoStatsMessage

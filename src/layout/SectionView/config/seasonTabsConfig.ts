@@ -28,6 +28,7 @@ export type TabConfig = {
     onAddBadge?: (teamName: string) => void;
     notSeason?: boolean;
     onOpenScreen?: (screen: SectionScreen) => void;
+    onUpdatePlayer?: (player: Players) => void;
   }>;
   actionButton?: React.FC<{ onClick?: () => void }>;
   action?: () => void;

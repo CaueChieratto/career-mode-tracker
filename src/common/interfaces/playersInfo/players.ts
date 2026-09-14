@@ -25,6 +25,7 @@ export interface Players {
   contractTime: number;
   contract: Contract[];
   statsLeagues: LeagueStats[];
+  manualStatsLeagues?: LeagueStats[];
   isAcademy?: boolean;
   academyData?: AcademyPlayers;
   academyHistory?: AcademyPlayersHistory[];

@@ -98,6 +98,14 @@ export const getUnifiedPlayerLeagueStats = (
 
 type AugmentedClubData = ClubData & { _isAugmented?: boolean };
 type AugmentedPlayer = Players & { _isAugmented?: boolean };
+type MaybeAugmentedPlayer = Players & { _isAugmented?: boolean };
+
+export const toRawPlayer = (player: Players): Players => {
+  const clean = { ...player } as MaybeAugmentedPlayer;
+  delete clean._isAugmented;
+  delete clean.manualStatsLeagues;
+  return clean;
+};
 
 export const augmentSeasonWithMatchStats = (
   season: ClubData,
@@ -113,6 +121,7 @@ export const augmentSeasonWithMatchStats = (
 
     return {
       ...player,
+      manualStatsLeagues: player.statsLeagues,
       statsLeagues: getUnifiedPlayerLeagueStats(
         player,
         season.matches || [],

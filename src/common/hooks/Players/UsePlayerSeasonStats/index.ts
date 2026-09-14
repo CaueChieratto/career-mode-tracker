@@ -31,15 +31,13 @@ export const usePlayerSeasonStats = ({
 
   const [initialLeagues, setInitialLeagues] = useState<LeagueStats[]>([]);
   const [isGoalkeeper, setIsGoalkeeper] = useState(false);
+  const [isDeletingLeague, setIsDeletingLeague] = useState(false);
 
   useEffect(() => {
     if (player) {
-      setFormValues((prev) => ({
-        ...prev,
-        playerName: player.name,
-      }));
+      setFormValues((prev) => ({ ...prev, playerName: player.name }));
       handleBooleanChange("ballonDor", player.ballonDor > 0);
-      setInitialLeagues(player.statsLeagues || []);
+      setInitialLeagues(player.manualStatsLeagues ?? player.statsLeagues ?? []);
       setIsGoalkeeper(player.position === "GOL");
     }
   }, [player, setFormValues, handleBooleanChange]);
@@ -97,19 +95,23 @@ export const usePlayerSeasonStats = ({
     }, 0);
   };
 
-  const handleDeleteLeague = async (leagueName: string) => {
-    if (player) {
-      try {
-        await ServicePlayers.deleteLeagueStatsFromPlayer(
-          career.id,
-          season.id,
-          player.id,
-          leagueName,
-        );
-      } catch (error) {
-        console.error("Erro ao deletar a liga:", error);
-        alert("Não foi possível remover a liga.");
-      }
+  const handleDeleteLeague = async (leagueName: string): Promise<boolean> => {
+    if (!player) return false;
+    setIsDeletingLeague(true);
+    try {
+      await ServicePlayers.deleteLeagueStatsFromPlayer(
+        career.id,
+        season.id,
+        player.id,
+        leagueName,
+      );
+      return true;
+    } catch (error) {
+      console.error("Erro ao deletar a liga:", error);
+      alert("Não foi possível remover a liga.");
+      return false;
+    } finally {
+      setIsDeletingLeague(false);
     }
   };
 
@@ -126,5 +128,6 @@ export const usePlayerSeasonStats = ({
     handleAddOrEditLeague,
     handleDeleteLeague,
     isLoading,
+    isDeletingLeague,
   };
 };
