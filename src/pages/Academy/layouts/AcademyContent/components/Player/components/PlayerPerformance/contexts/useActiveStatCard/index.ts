@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-export type ActiveStatCardContextType = {
+type ActiveStatCardContextType = {
   activeCardId: string | null;
   toggleActiveCard: (id: string) => void;
 };

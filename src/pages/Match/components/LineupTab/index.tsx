@@ -68,6 +68,7 @@ export const LineupTab = ({
           <PlayerPicker
             players={activePlayers}
             assignedIds={assignedPlayerIds}
+            activeSlotId={selectingSlotId}
             onSelect={assignPlayer}
           />
         )}

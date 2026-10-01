@@ -196,28 +196,11 @@ export function useMatchActions() {
       const matchToDelete = season.matches?.find(
         (m) => m.matchesId === matchesId,
       );
-
-      await ServiceMatches.deleteMatchFromSeason(careerId, seasonId, matchesId);
-
-      if (matchToDelete) {
-        const opponentName =
-          matchToDelete.homeTeam === career.clubName
-            ? matchToDelete.awayTeam
-            : matchToDelete.homeTeam;
-
-        const hasOtherMatchesAgainstOpponent = season.matches?.some(
-          (m) =>
-            m.matchesId !== matchesId &&
-            (m.homeTeam === opponentName || m.awayTeam === opponentName),
-        );
-
-        if (!hasOtherMatchesAgainstOpponent) {
-          await ServiceMatches.removeTeamFromSeason(careerId, seasonId, {
-            name: opponentName,
-            badge: "",
-          });
-        }
+      if (!matchToDelete) {
+        throw new Error("Partida não encontrada no estado local");
       }
+
+      await ServiceMatches.deleteMatchFromSeason(career, season, matchToDelete);
 
       onSuccess({ type: "DELETE", matchId: matchesId });
     } catch {
@@ -226,11 +209,9 @@ export function useMatchActions() {
       setIsSaving(false);
     }
   }, [
-    careerId,
-    seasonId,
     matchesId,
-    season?.matches,
-    career?.clubName,
+    season,
+    career,
     onSuccess,
   ]);
 

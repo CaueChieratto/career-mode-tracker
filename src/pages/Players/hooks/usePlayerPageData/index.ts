@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useCareers } from "../../../../common/hooks/Career/UseCareer";
 import { useSeasonView } from "../../../../common/hooks/Seasons/UseSeasonView";
 import { getSeasonTabsConfig } from "../../../../layout/SectionView/config/seasonTabsConfig";
 import { createSpoofedCareer } from "../../helpers/createSpoofedCareer";
@@ -13,8 +12,12 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
 export const usePlayerPageData = () => {
-  const { loading, career, season } = useSeasonView(true, true);
-  const { careers: allCareers } = useCareers();
+  const {
+    loading,
+    career,
+    careers: allCareers,
+    season,
+  } = useSeasonView(true, true);
   const { playerId, seasonId } = useParams<PlayerPageParams>();
   const location = useLocation();
   const navigate = useNavigate();

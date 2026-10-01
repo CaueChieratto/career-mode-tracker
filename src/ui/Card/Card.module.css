@@ -17,10 +17,3 @@
   align-items: center;
   z-index: 1500;
 }
-
-.lock {
-  position: absolute;
-  bottom: -24px;
-  left: 50%;
-  transform: translateX(-50%);
-}

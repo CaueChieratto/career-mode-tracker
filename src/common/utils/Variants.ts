@@ -1,32 +1,22 @@
 import Styles from "../../components/Button/Button.module.css";
 
-export const FONT_SIZES = ["medium", "large"] as const;
-export const SHADOW = ["no", "yes"] as const;
-export const FONT_WEIGHTS = ["light", "bold"] as const;
-export const SIZES = ["normal", "big", "small"] as const;
-export const WIDTH = ["normal", "big"] as const;
-export const RADII = ["square", "rounded", "default", "moreRounded"] as const;
-export const ANIMATIONS = ["none", "active"] as const;
-export const GAP = ["normal", "gap"] as const;
-export const TYPE_BUTTON = [
-  "primary",
-  "secondary",
-  "primaryDelete",
-  "secondaryDelete",
-  "transparent",
-  "addPlayer",
-  "default",
-] as const;
+export type FontSize = "medium" | "large";
+export type Shadow = "no" | "yes";
+export type FontWeight = "light" | "bold";
+export type Size = "normal" | "big" | "small";
+export type Width = "normal" | "big";
+export type Radius = "square" | "rounded" | "default" | "moreRounded";
+export type Animation = "none" | "active";
+export type Gap = "normal" | "gap";
 
-export type FontSize = (typeof FONT_SIZES)[number];
-export type Shadow = (typeof SHADOW)[number];
-export type FontWeight = (typeof FONT_WEIGHTS)[number];
-export type Size = (typeof SIZES)[number];
-export type Width = (typeof WIDTH)[number];
-export type Radius = (typeof RADII)[number];
-export type Animation = (typeof ANIMATIONS)[number];
-export type Gap = (typeof GAP)[number];
-export type TypeButton = (typeof TYPE_BUTTON)[number];
+export type TypeButton =
+  | "primary"
+  | "secondary"
+  | "primaryDelete"
+  | "secondaryDelete"
+  | "transparent"
+  | "addPlayer"
+  | "default";
 
 export const classMap = {
   fontSize: {

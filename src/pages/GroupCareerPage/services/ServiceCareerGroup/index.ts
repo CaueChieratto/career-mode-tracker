@@ -27,6 +27,9 @@ export const ServiceCareerGroup = {
           try {
             return await getCareerById(user.uid, id);
           } catch (error) {
+            if (!(error instanceof Error) || !("code" in error) || error.code !== "career/not-found") {
+              throw error;
+            }
             console.warn(
               error,
               `Carreira ${id} não encontrada no grupo ${groupId}`,

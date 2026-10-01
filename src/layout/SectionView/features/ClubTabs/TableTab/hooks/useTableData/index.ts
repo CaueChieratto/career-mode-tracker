@@ -9,7 +9,11 @@ import {
 import { TableTeamData } from "../../../../../../../common/interfaces/TableTeamData";
 import { leaguesByContinent } from "../../../../../../../common/utils/league";
 
-export const useTableData = (career: Career, season: ClubData) => {
+export const useTableData = (
+  career: Career,
+  season: ClubData,
+  isActive: boolean = true,
+) => {
   const [rawTableData, setRawTableData] = useState<TableTeamData[]>(() => {
     return (season.table as unknown as TableTeamData[]) || [];
   });
@@ -41,6 +45,8 @@ export const useTableData = (career: Career, season: ClubData) => {
   }, [season.table]);
 
   useEffect(() => {
+    if (!isActive) return;
+
     const fetchTable = async () => {
       try {
         if (career.id && season.id) {
@@ -55,7 +61,7 @@ export const useTableData = (career: Career, season: ClubData) => {
       }
     };
     fetchTable();
-  }, [career.id, season.id, career.updatedAt]);
+  }, [career.id, season.id, career.updatedAt, isActive]);
 
   const tableData = useMemo<TableRowData[]>(() => {
     const getQualificationZone = (

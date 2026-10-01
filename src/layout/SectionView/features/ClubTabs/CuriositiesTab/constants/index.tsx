@@ -11,7 +11,7 @@ import {
   RankingType,
 } from "../../../../../../common/interfaces/Curiosities";
 
-export interface RankingCardConfig {
+interface RankingCardConfig {
   key: keyof CuriositiesRankings;
   title: string;
   icon: React.ReactNode;

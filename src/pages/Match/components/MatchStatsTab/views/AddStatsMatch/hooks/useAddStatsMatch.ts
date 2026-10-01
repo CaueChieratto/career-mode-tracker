@@ -72,7 +72,7 @@ export const useAddStatsMatch = ({
     setIsSaving(true);
     try {
       const matchToSave = buildMatchUpdate(formValues, match, isUserHome);
-      await ServiceMatches.updateMatchInSeason(
+      await ServiceMatches.updateMatchStatsInSeason(
         career.id,
         season.id,
         matchToSave,

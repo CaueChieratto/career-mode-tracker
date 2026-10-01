@@ -3,7 +3,8 @@ import { db } from "../Firebase";
 import { Career } from "../../interfaces/Career";
 import { ClubData } from "../../interfaces/club/clubData";
 import { Players } from "../../interfaces/playersInfo/players";
-import { Match } from "../../interfaces/Match";
+import { mergeModernAndLegacy } from "../../helpers/mergeModernAndLegacy";
+import { ServiceMatches } from "../../../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
 import { augmentSeasonWithMatchStats } from "../../../layout/SectionView/helpers/mergeMatchStats";
 import { requireAuth } from "./helpers/authHelpers";
 import { parseFirestoreDate } from "./helpers/dateHelpers";
@@ -30,32 +31,21 @@ const fetchCareerSeasonsData = async (
       const enrichedSeasons: ClubData[] = [];
 
       for (const season of clubData) {
-        let seasonPlayers = season.players || [];
-
-        if (seasonPlayers.length === 0) {
-          const playersRef = collection(
-            db,
-            `users/${userUid}/careers/${docSnap.id}/seasons/${season.id}/players`,
-          );
-          const playersSnap = await getDocs(playersRef);
-          seasonPlayers = playersSnap.docs.map(
-            (pDoc) => pDoc.data() as Players,
-          );
-        }
-
-        let seasonMatches = season.matches || [];
-        if (seasonMatches.length === 0) {
-          const matchesRef = collection(
-            db,
-            `users/${userUid}/careers/${docSnap.id}/seasons/${season.id}/matches`,
-          );
-          const matchesSnap = await getDocs(matchesRef);
-          if (!matchesSnap.empty) {
-            seasonMatches = matchesSnap.docs.map(
-              (mDoc) => mDoc.data() as Match,
-            );
-          }
-        }
+        const playersRef = collection(
+          db,
+          `users/${userUid}/careers/${docSnap.id}/seasons/${season.id}/players`,
+        );
+        const playersSnap = await getDocs(playersRef);
+        const seasonPlayers = mergeModernAndLegacy(
+          playersSnap.docs.map((pDoc) => pDoc.data() as Players),
+          season.players || [],
+          (p) => p.id,
+        );
+        const seasonMatches = mergeModernAndLegacy(
+          await ServiceMatches.getMatchesBySeason(docSnap.id, season.id),
+          season.matches || [],
+          (m) => m.matchesId,
+        );
 
         enrichedSeasons.push({
           ...season,
@@ -90,7 +80,7 @@ export const PlayersGroupService = {
           careerData.clubName,
         );
         augmentedSeason.players.forEach((p) => {
-          const uniqueKey = `${p.name.trim().toLowerCase()}-${p.nation.trim().toLowerCase()}`;
+          const uniqueKey = p.id;
           const history = playerHistoryMap.get(uniqueKey) || [];
           playerHistoryMap.set(uniqueKey, [...history, p]);
         });
@@ -147,7 +137,7 @@ export const PlayersGroupService = {
 
       for (const season of seasons) {
         season.players.forEach((player) => {
-          const uniqueKey = `${player.name.trim().toLowerCase()}-${player.nation.trim().toLowerCase()}`;
+          const uniqueKey = player.id;
           const history = playerHistoryMap.get(uniqueKey) || [];
           playerHistoryMap.set(uniqueKey, [...history, player]);
         });

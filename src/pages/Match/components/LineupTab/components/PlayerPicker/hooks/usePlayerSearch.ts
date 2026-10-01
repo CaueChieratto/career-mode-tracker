@@ -5,14 +5,19 @@ import { POSITION_ORDER } from "../constants/POSITION_ORDER";
 export const usePlayerSearch = (
   players: Players[],
   assignedIds: Set<string>,
+  activeSlotId: string,
 ) => {
   const [search, setSearch] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const el = searchRef.current;
+    if (!el || document.visibilityState !== "visible") return;
+
+    el.focus({ preventScroll: true });
+
     const timeoutId = setTimeout(() => {
-      const el = searchRef.current;
-      if (!el) return;
+      if (!el.isConnected) return;
 
       const rect = el.getBoundingClientRect();
       const absoluteTop = rect.top + window.scrollY;
@@ -27,7 +32,7 @@ export const usePlayerSearch = (
     }, 150);
 
     return () => clearTimeout(timeoutId);
-  }, []);
+  }, [activeSlotId]);
 
   const availablePlayers = useMemo(() => {
     return players

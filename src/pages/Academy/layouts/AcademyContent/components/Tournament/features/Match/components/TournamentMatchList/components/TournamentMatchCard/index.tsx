@@ -18,7 +18,7 @@ export const TournamentMatchCard = ({
   onEdit,
   onEnterMatch,
 }: TournamentMatchCardProps) => {
-  const { career, allCareers } = useAcademyContext();
+  const { career, allCareers, allPlayersAcademy } = useAcademyContext();
   const opponentBadge = getOpponentBadge(allCareers, match.opponentTeam);
 
   return (
@@ -39,7 +39,7 @@ export const TournamentMatchCard = ({
         homePenalties={match.userPenalties}
         awayPenalties={match.opponentPenalties}
       />
-      <TournamentMatchLineup lineup={match.lineup} />
+      <TournamentMatchLineup lineup={match.lineup} allPlayersAcademy={allPlayersAcademy} />
       {onEnterMatch && (
         <TournamentMatchActions
           onEnterMatch={() => onEnterMatch(match)}

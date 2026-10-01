@@ -7,7 +7,7 @@ import { OptimisticTableData } from "..";
 
 type UseFormReturn = ReturnType<typeof useForm>;
 
-export type AddTeamsToTableContextType = UseFormReturn & {
+type AddTeamsToTableContextType = UseFormReturn & {
   career: Career;
   season: ClubData;
   teamId?: string;

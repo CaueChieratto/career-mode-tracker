@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Career } from "../../../../../../common/interfaces/Career";
 import { augmentCareerWithMatchStats } from "../../../../../../layout/SectionView/helpers/mergeMatchStats";
 
-export interface PlayerStatSummary {
+interface PlayerStatSummary {
   name: string;
   games: number;
   goals: number;
@@ -10,12 +10,12 @@ export interface PlayerStatSummary {
   goalContributions: number;
 }
 
-export interface TransferSummary {
+interface TransferSummary {
   name: string;
   value: number;
 }
 
-export interface StatsSummary {
+interface StatsSummary {
   mostGames: PlayerStatSummary;
   mostGoals: PlayerStatSummary;
   mostAssists: PlayerStatSummary;

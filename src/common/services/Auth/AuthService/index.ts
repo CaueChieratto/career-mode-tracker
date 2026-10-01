@@ -2,7 +2,6 @@ import { auth } from "../../Firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut,
 } from "firebase/auth";
 
 export const AuthService = {
@@ -28,11 +27,5 @@ export const AuthService = {
     localStorage.setItem("isLoggedIn", "true");
 
     return userCredential.user;
-  },
-
-  logout: async () => {
-    localStorage.removeItem("isLoggedIn");
-
-    await signOut(auth);
   },
 };

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import Styles from "../../forms/components/PlayerForm/PlayerForm.module.css";
 import Button from "../../../../../../../../components/Button";
 import SearchableSelect from "../../../../../../../../components/SearchableSelect";
@@ -16,9 +16,16 @@ type PromoteAcademyPlayerFormProps = {
 export const PromoteAcademyPlayerForm = ({
   onComplete,
 }: PromoteAcademyPlayerFormProps) => {
-  const { career, seasonId, playersAcademy, refetchPlayers } =
-    useAcademyContext();
+  const {
+    career,
+    seasonId,
+    playersAcademy,
+    allTournamentsAcademy,
+    hasLoadedAllTournaments,
+    applyPromotedPlayer,
+  } = useAcademyContext();
   const [isLoading, setIsLoading] = useState(false);
+  const submitLockRef = useRef(false);
   const [selectedPlayerName, setSelectedPlayerName] = useState("");
   const [promotionDate, setPromotionDate] = useState("");
 
@@ -31,11 +38,14 @@ export const PromoteAcademyPlayerForm = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitLockRef.current) return;
+    if (!hasLoadedAllTournaments) return;
     if (!selectedPlayerName || !promotionDate) return;
     const playerToPromote = playersAcademy.find(
       (p) => p.name === selectedPlayerName,
     );
     if (!playerToPromote) return;
+    submitLockRef.current = true;
     setIsLoading(true);
     try {
       const [day, month] = promotionDate.split("/");
@@ -48,18 +58,21 @@ export const PromoteAcademyPlayerForm = ({
 
       const finalDate = `${day}/${month}/${year}`;
 
-      await AcademyService.promotePlayerToProfessional(
+      const { academyPlayer: promotedPlayer } =
+        await AcademyService.promotePlayerToProfessional(
         career,
         seasonId,
         playerToPromote,
         finalDate,
+        allTournamentsAcademy,
       );
-      refetchPlayers();
+      applyPromotedPlayer(promotedPlayer);
       onComplete();
     } catch (error) {
       console.error(error);
       alert("Falha ao promover o jogador. Tente novamente.");
     } finally {
+      submitLockRef.current = false;
       setIsLoading(false);
     }
   };
@@ -100,7 +113,12 @@ export const PromoteAcademyPlayerForm = ({
       <Button
         className={Styles.submitBtn}
         type="submit"
-        disabled={isLoading || !selectedPlayerName || promotionDate.length < 5}
+        disabled={
+          isLoading ||
+          !hasLoadedAllTournaments ||
+          !selectedPlayerName ||
+          promotionDate.length < 5
+        }
       >
         {isLoading ? "Promovendo..." : `Promover ${selectedPlayerName}`}
       </Button>

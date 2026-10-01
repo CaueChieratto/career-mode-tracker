@@ -1,10 +1,10 @@
 import { League } from "../interfaces/League";
 
-export type CountryLeagues = {
+type CountryLeagues = {
   [country: string]: League[];
 };
 
-export type ContinentLeagues = {
+type ContinentLeagues = {
   [continent: string]: CountryLeagues;
 };
 

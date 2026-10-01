@@ -170,8 +170,11 @@ export const buildReturnContractHistory = (
       : null;
 
   if (player.incomingLoan && lastContract) {
-    lastContract.dataExit = parsedDate;
-    lastContract.leftClub = lastContract.fromClub || "Fim de Empréstimo";
+    contractHistory[contractHistory.length - 1] = {
+      ...lastContract,
+      dataExit: parsedDate,
+      leftClub: lastContract.fromClub || "Fim de Empréstimo",
+    };
   } else if (!player.incomingLoan && lastContract) {
     contractHistory.push({
       buyValue: 0,

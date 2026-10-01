@@ -10,64 +10,11 @@
   gap: 12px;
 }
 
-.sectionTitle {
-  font-size: 16px;
-  color: var(--blackColor);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-}
-
-.sectionTitle svg {
-  color: var(--club-color);
-}
-
 .contentBox {
   background-color: var(--highlight-bg);
   border: 1px solid var(--border-input);
   border-radius: 8px;
   padding: 16px;
-}
-
-.text {
-  margin: 0;
-  font-size: 14px;
-  color: var(--color-secondary);
-  line-height: 1.5;
-}
-
-.emptyText {
-  margin: 0;
-  font-size: 14px;
-  color: var(--color-tertiary);
-  font-style: italic;
-}
-
-.historyList {
-  margin: 0;
-  padding-left: 16px;
-  font-size: 14px;
-  color: var(--color-secondary);
-}
-
-.historyList li {
-  margin-bottom: 8px;
-}
-
-.historyList li:last-child {
-  margin-bottom: 0;
-}
-
-.editBtn {
-  background-color: var(--club-color);
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
 }
 
 .deleteBtn {

@@ -1,5 +1,5 @@
 import { FaChartLine, FaTrophy, FaUserEdit } from "react-icons/fa";
-import Flag from "react-world-flags";
+import LazyFlag from "../../../../../../../../components/LazyFlag";
 import { FIFA_COUNTRY_CODES } from "../../../../../../../../common/constants/FIFA_COUNTRY_CODES";
 import { FocusedCard } from "../../../Cards/FocusedCard";
 import { AddPlayerAnnotations } from "../../components/AddPlayerAnnotations";
@@ -61,7 +61,7 @@ export const PlayerWorkspace = ({ selectedPlayer }: PlayerWorkspaceProps) => {
                   FIFA_COUNTRY_CODES[
                     selectedPlayer.nationality?.toUpperCase()
                   ] ? (
-                    <Flag
+                    <LazyFlag
                       code={
                         FIFA_COUNTRY_CODES[
                           selectedPlayer.nationality?.toUpperCase()

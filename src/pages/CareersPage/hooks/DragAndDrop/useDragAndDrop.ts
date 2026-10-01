@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Career } from "../../../../common/interfaces/Career";
+import { lockBodyScroll } from "../../../../common/utils/bodyScrollLock";
 
 const preventTouchScroll = (e: TouchEvent) => {
   e.preventDefault();
@@ -23,6 +24,12 @@ export const useDragAndDrop = (
   const pointerPosRef = useRef({ x: 0, y: 0 });
   const scrollSpeedRef = useRef(0);
   const scrollFrameRef = useRef<number | null>(null);
+  const unlockScrollRef = useRef<(() => void) | null>(null);
+
+  const unlockScroll = () => {
+    unlockScrollRef.current?.();
+    unlockScrollRef.current = null;
+  };
 
   const updateDropTarget = useCallback((x: number, y: number) => {
     const el = document.elementFromPoint(x, y);
@@ -76,7 +83,7 @@ export const useDragAndDrop = (
       console.debug("Pointer capture not supported", error);
     }
 
-    document.body.style.overflow = "hidden";
+    unlockScrollRef.current ??= lockBodyScroll();
     document.body.style.touchAction = "none";
 
     window.addEventListener("touchmove", preventTouchScroll, {
@@ -118,7 +125,7 @@ export const useDragAndDrop = (
   };
 
   const handleDragEnd = () => {
-    document.body.style.overflow = "";
+    unlockScroll();
     document.body.style.touchAction = "";
 
     window.removeEventListener("touchmove", preventTouchScroll);
@@ -148,7 +155,7 @@ export const useDragAndDrop = (
 
   useEffect(() => {
     return () => {
-      document.body.style.overflow = "";
+      unlockScroll();
       document.body.style.touchAction = "";
       if (scrollFrameRef.current) cancelAnimationFrame(scrollFrameRef.current);
       window.removeEventListener("touchmove", preventTouchScroll);

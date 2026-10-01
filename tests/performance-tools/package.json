@@ -1,0 +1,9 @@
+{
+  "name": "career-tracker-performance-tools",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "playwright": "1.55.1",
+    "web-vitals": "5.1.0"
+  }
+}

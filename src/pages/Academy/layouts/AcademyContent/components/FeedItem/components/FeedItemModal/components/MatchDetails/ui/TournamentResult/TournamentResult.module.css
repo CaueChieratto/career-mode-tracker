@@ -28,14 +28,6 @@
   margin-bottom: 12px;
 }
 
-.tournResultWrapper {
-  max-width: 300px;
-  overflow: hidden;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
-
 .tournResult {
   font-size: 24px;
   font-weight: 900;

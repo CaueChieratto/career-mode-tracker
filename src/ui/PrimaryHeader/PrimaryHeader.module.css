@@ -17,15 +17,3 @@
   font-size: 22px;
   color: var(--blackColor);
 }
-
-.button {
-  margin: 10px 0;
-  border: 1px solid #256648;
-  background-color: #52a383;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  padding: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-}

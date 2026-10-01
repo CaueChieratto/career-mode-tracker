@@ -1,6 +1,6 @@
 import type { Career } from "../../../common/interfaces/Career";
 
-export type CareerSeason = NonNullable<Career["clubData"]>[number];
+type CareerSeason = NonNullable<Career["clubData"]>[number];
 
 export type CareerPlayer = NonNullable<CareerSeason["players"]>[number];
 

@@ -6,7 +6,7 @@ import { OptimisticMatchData } from "..";
 
 type UseFormReturn = ReturnType<typeof useForm>;
 
-export type AddMatchesContextType = UseFormReturn & {
+type AddMatchesContextType = UseFormReturn & {
   career: Career;
   season: ClubData;
   matchesId?: string;

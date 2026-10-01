@@ -27,6 +27,13 @@ export const AddStatsMatchScreen = ({
   const { isSaving, fields, formValues, handleInputChange, saveStats } =
     useAddStatsMatch({ career, season, match, onClose, onSaved });
 
+  const handleSave = () => {
+    void saveStats().catch((error) => {
+      console.error("Erro ao salvar estatÃ­sticas da partida:", error);
+      window.alert("NÃ£o foi possÃ­vel salvar as estatÃ­sticas da partida.");
+    });
+  };
+
   if (isSaving) return <Load />;
 
   return (
@@ -39,7 +46,7 @@ export const AddStatsMatchScreen = ({
         titleText="Estatísticas da Partida"
       />
       <Navbar
-        save={saveStats}
+        save={handleSave}
         options={["", "Salvar", ""]}
         activeOption={1}
         onOptionClick={() => {}}

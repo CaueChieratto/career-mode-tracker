@@ -29,6 +29,7 @@ export type TabConfig = {
     notSeason?: boolean;
     onOpenScreen?: (screen: SectionScreen) => void;
     onUpdatePlayer?: (player: Players) => void;
+    isActive?: boolean;
   }>;
   actionButton?: React.FC<{ onClick?: () => void }>;
   action?: () => void;

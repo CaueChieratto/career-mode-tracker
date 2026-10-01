@@ -11,7 +11,7 @@ import { usePlayerStats } from "./hooks/usePlayerStats";
 
 import Styles from "./PlayerDetailedStatsTab.module.css";
 
-export type PlayerDetailedStatsTabProps = {
+type PlayerDetailedStatsTabProps = {
   season: ClubData;
   career: Career;
   player?: Players;

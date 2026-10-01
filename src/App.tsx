@@ -2,17 +2,35 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Welcome from "./pages/Welcome";
 import CareersPage from "./pages/CareersPage";
 import { Career } from "./common/interfaces/Career";
-import { createElement } from "react";
+import { createElement, lazy, Suspense } from "react";
 import AddSeasons from "./pages/AddSeasons";
 import Season from "./pages/Season";
 import Geral from "./pages/Geral";
 import Players from "./pages/Players";
-import Tutorial from "./pages/Tutorial";
-import { Match } from "./pages/Match";
 import { useIsMobile } from "./common/hooks/useIsMobile";
-import { ComparePlayers } from "./pages/ComparePlayers";
-import { Academy } from "./pages/Academy";
-import { GroupCareerPage } from "./pages/GroupCareerPage";
+import Load from "./components/Load";
+
+const Academy = lazy(() =>
+  import("./pages/Academy").then((m) => ({ default: m.Academy })),
+);
+const GroupCareerPage = lazy(() =>
+  import("./pages/GroupCareerPage").then((m) => ({
+    default: m.GroupCareerPage,
+  })),
+);
+const ComparePlayers = lazy(() =>
+  import("./pages/ComparePlayers").then((m) => ({
+    default: m.ComparePlayers,
+  })),
+);
+const Match = lazy(() =>
+  import("./pages/Match").then((m) => ({ default: m.Match })),
+);
+const Tutorial = lazy(() => import("./pages/Tutorial"));
+
+const withSuspense = (element: React.ReactNode) => (
+  <Suspense fallback={<Load />}>{element}</Suspense>
+);
 
 type AppProps = {
   career?: Career;
@@ -41,7 +59,7 @@ export default function App({ career }: AppProps) {
 
   const router = createBrowserRouter([
     { path: "/", element: <Welcome /> },
-    { path: "/Career/:careerId/Academy", element: <Academy /> },
+    { path: "/Career/:careerId/Academy", element: withSuspense(<Academy />) },
     { path: "/Career/:careerId/Geral", element: <Geral /> },
     { path: "/Career/:careerId/Geral/Player/:playerId", element: <Players /> },
     {
@@ -57,27 +75,27 @@ export default function App({ career }: AppProps) {
     },
     {
       path: "/CareerGroup/:groupId/Geral",
-      element: <GroupCareerPage />,
+      element: withSuspense(<GroupCareerPage />),
     },
     {
       path: "/Career/:careerId/Season/:seasonId/Compare",
-      element: <ComparePlayers />,
+      element: withSuspense(<ComparePlayers />),
     },
     {
       path: "/Career/:careerId/Geral/Compare",
-      element: <ComparePlayers />,
+      element: withSuspense(<ComparePlayers />),
     },
     {
       path: "/Career/:careerId/Geral/Player/:playerId/Compare",
-      element: <ComparePlayers />,
+      element: withSuspense(<ComparePlayers />),
     },
 
     {
       path: "/Career/:careerId/Season/:seasonId/Match/:matchesId",
-      element: <Match />,
+      element: withSuspense(<Match />),
     },
 
-    { path: "/tutorial", element: <Tutorial /> },
+    { path: "/tutorial", element: withSuspense(<Tutorial />) },
   ]);
 
   return <RouterProvider router={router} />;

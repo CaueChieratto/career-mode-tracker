@@ -5,32 +5,6 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
   BRL: "R$",
 };
 
-export const formatValue = (
-  value: number | string,
-  currencyCode: string = "EUR",
-): string => {
-  const num =
-    typeof value === "string"
-      ? parseFloat(value.replace(/[^0-9.]/g, ""))
-      : value;
-
-  if (isNaN(num) || num === 0) {
-    return "";
-  }
-
-  const symbol = CURRENCY_SYMBOLS[currencyCode] || currencyCode;
-
-  if (num >= 1000000) {
-    const millions = num / 1000000;
-    return `${symbol}${millions % 1 === 0 ? millions : millions.toFixed(1)}M`;
-  }
-  if (num >= 1000) {
-    const thousands = num / 1000;
-    return `${symbol}${thousands % 1 === 0 ? thousands : thousands.toFixed(1)}k`;
-  }
-  return `${symbol}${num}`;
-};
-
 export const parseValue = (value: string): number => {
   if (!value || typeof value !== "string") return 0;
 

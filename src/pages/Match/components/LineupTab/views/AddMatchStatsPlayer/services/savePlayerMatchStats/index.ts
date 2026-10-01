@@ -73,15 +73,9 @@ export const savePlayerMatchStats = async ({
 }> => {
   const newStats = buildPlayerStats(player.id, formValues, booleanValues);
 
-  await ServiceMatches.savePlayerStatToSubcollection(
-    career.id,
-    season.id,
-    match.matchesId,
-    newStats,
-  );
-
   const currentPlayerStats = match.playerStats || [];
   let counterpartStats: PlayerMatchStat | undefined;
+  const statsToSave: PlayerMatchStat[] = [newStats];
 
   if (newStats.substituteIn && newStats.substituteIn !== NO_SUBSTITUTE_VALUE) {
     const counterpart = season.players.find(
@@ -123,12 +117,7 @@ export const savePlayerMatchStats = async ({
           counterpartMinutes,
         );
 
-        await ServiceMatches.savePlayerStatToSubcollection(
-          career.id,
-          season.id,
-          match.matchesId,
-          counterpartStats,
-        );
+        statsToSave.push(counterpartStats);
       }
     }
   }
@@ -140,6 +129,14 @@ export const savePlayerMatchStats = async ({
   if (counterpartStats) {
     upsertPlayerStats(updatedPlayerStats, counterpartStats);
   }
+
+  await ServiceMatches.savePlayerStatsToSubcollection(
+    career.id,
+    season.id,
+    match.matchesId,
+    statsToSave,
+    updatedPlayerStats,
+  );
 
   return {
     updatedPlayerStats,

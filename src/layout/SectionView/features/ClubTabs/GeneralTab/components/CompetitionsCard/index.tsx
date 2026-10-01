@@ -48,6 +48,15 @@ const CompetitionsCard = ({
     setLeagues(getSortedLeagues(season?.leagues || []));
   }, [season?.leagues]);
 
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {

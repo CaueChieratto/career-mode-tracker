@@ -33,7 +33,7 @@ export interface SquadFormSection<T extends SquadFormField> {
   fields: T[][];
 }
 
-export interface FieldConditionContext {
+interface FieldConditionContext {
   isEditing: boolean;
   isLoaned: boolean;
   isIncomingLoanPlayer: boolean;

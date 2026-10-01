@@ -52,6 +52,9 @@ export const useSavePlayerStats = ({
       });
 
       onClose();
+    } catch (error) {
+      console.error("Erro: ", error);
+      alert("Erro ao salvar as estatísticas do jogador. Tente novamente.");
     } finally {
       setIsSaving(false);
     }

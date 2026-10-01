@@ -4,7 +4,7 @@ import { PlayerCircle } from "../../pages/Match/components/LineupTab/layouts/Sec
 import { OverflowText } from "../OverflowText";
 import { toSingular } from "../../pages/Academy/layouts/AcademyContent/components/FeedItem/helpers/toSingular";
 
-export type PlayerInfoProps = {
+type PlayerInfoProps = {
   name: string;
   position: string;
   shirtNumber: string | number;

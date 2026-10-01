@@ -36,47 +36,6 @@
   gap: 18px;
 }
 
-.button {
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  padding: 12px;
-  text-transform: uppercase;
-  width: 100%;
-  color: white;
-}
-
-.button:first-of-type {
-  background-color: #007bff;
-}
-
-.button:last-of-type {
-  background-color: #28a745;
-}
-
-.button:first-of-type:hover {
-  background-color: #0074f0;
-}
-
-.button:first-of-type:active {
-  background-color: #007bff;
-}
-
-.button:last-of-type {
-  background-color: #28a745;
-}
-
-.button:last-of-type:hover {
-  background-color: #28a746e5;
-}
-
-.button:last-of-type:active {
-  background-color: #28a745;
-}
-
 @media (min-width: 750px) {
   .login {
     margin: 12px 150px;

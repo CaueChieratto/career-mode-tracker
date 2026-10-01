@@ -2,7 +2,7 @@ export type PlayerDataPayload = {
   name: string;
   nationality: string;
   age: number;
-  shirtNumber: number;
+  shirtNumber?: number;
   height: number;
   weight: number;
   sector: string;

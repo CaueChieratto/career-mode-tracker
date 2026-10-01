@@ -20,7 +20,7 @@ export const useSaveLineup = ({
       playerStats: PlayerMatchStat[],
       removedPlayerIds: string[],
     ) => {
-      if (!careerId || !seasonId) return;
+      if (!careerId || !seasonId) return false;
 
       try {
         await ServiceLineup.saveLineupToMatch(
@@ -31,9 +31,11 @@ export const useSaveLineup = ({
           playerStats,
           removedPlayerIds,
         );
+        return true;
       } catch (error) {
         console.error("Erro: ", error);
         alert("Erro ao salvar a formação. Tente novamente.");
+        return false;
       }
     },
     [careerId, seasonId, matchId],

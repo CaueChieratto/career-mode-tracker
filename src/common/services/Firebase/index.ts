@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -16,3 +17,26 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const functions = getFunctions(app);
+
+const useEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true";
+
+if (useEmulator) {
+  try {
+    connectAuthEmulator(auth, "http://127.0.0.1:9098", {
+      disableWarnings: true,
+    });
+  } catch {
+    // Emulator may already be connected during hot module reloading
+  }
+  try {
+    connectFirestoreEmulator(db, "127.0.0.1", 8089);
+  } catch {
+    // Emulator may already be connected during hot module reloading
+  }
+  try {
+    connectFunctionsEmulator(functions, "127.0.0.1", 5002);
+  } catch {
+    // Emulator may already be connected during hot module reloading
+  }
+}

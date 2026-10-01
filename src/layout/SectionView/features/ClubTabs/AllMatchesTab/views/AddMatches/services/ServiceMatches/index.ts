@@ -1,11 +1,13 @@
+import { ServiceTable } from "../../../../../TableTab/views/AddTeamsToTable/services/ServiceTable";
 import {
   collection,
+  deleteField,
   doc,
   setDoc,
-  deleteDoc,
   getDocs,
   updateDoc,
   getDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { auth, db } from "../../../../../../../../../common/services/Firebase";
 import { Match } from "../../../../../../../../../common/interfaces/Match";
@@ -13,6 +15,68 @@ import { updateCareerFirestore } from "../../../../../../../../../common/helpers
 import { Career } from "../../../../../../../../../common/interfaces/Career";
 import { Teams } from "../../../../../../../../../common/interfaces/Teams";
 import { PlayerMatchStat } from "../../../../../../../../../common/interfaces/PlayerMatchStat";
+import { ClubData } from "../../../../../../../../../common/interfaces/club/clubData";
+import { TableTeamData } from "../../../../../../../../../common/interfaces/TableTeamData";
+import {
+  buildStandingsRows,
+  getAffectedStandingsTeams,
+} from "../../../../../TableTab/views/AddTeamsToTable/services/ServiceTable/buildStandingsRows";
+
+const MATCH_STATS_FIELDS = [
+  "homePossession",
+  "awayPossession",
+  "homeXG",
+  "awayXG",
+  "homeBallRecovery",
+  "awayBallRecovery",
+  "homeFinishings",
+  "awayFinishings",
+  "homeFinishingsOnTarget",
+  "awayFinishingsOnTarget",
+  "homePasses",
+  "awayPasses",
+  "homePassesCompleted",
+  "awayPassesCompleted",
+  "homeDefenses",
+  "awayDefenses",
+  "homeYellowCards",
+  "awayYellowCards",
+  "homeRedCards",
+  "awayRedCards",
+] as const satisfies readonly (keyof Match)[];
+
+const MATCH_DETAILS_FIELDS = [
+  "homeScore",
+  "awayScore",
+  "stoppage1T",
+  "stoppage2T",
+  "stoppageET1",
+  "stoppageET2",
+  "hasExtraTime",
+  "status",
+  "result",
+  "opponentEvents",
+  "opponentMvpName",
+  "opponentMvpRating",
+] as const satisfies readonly (keyof Match)[];
+
+const getLocalTable = (
+  season: ClubData,
+  previous: Match,
+  next?: Match,
+): TableTeamData[] => {
+  const affected = getAffectedStandingsTeams(previous, next, season);
+  if (affected.length === 0) return [];
+  if (!season.matches || !season.table) {
+    throw new Error(
+      "Snapshot local de partidas/classificação indisponível para atualização sem leituras.",
+    );
+  }
+  return season.table as unknown as TableTeamData[];
+};
+
+const createStableTableRowId = (teamName: string) =>
+  `team-${encodeURIComponent(teamName.trim().toLowerCase())}`;
 
 export const ServiceMatches = {
   getAllTeamsAcrossUserCareers: async (): Promise<string[]> => {
@@ -79,6 +143,10 @@ export const ServiceMatches = {
       snapshot.docs.map(async (matchDoc) => {
         const match = matchDoc.data() as Match;
 
+        if (match._playerStatsVersion === 1) {
+          return match;
+        }
+
         const statsSnap = await getDocs(
           collection(matchDoc.ref, "playerStats"),
         );
@@ -100,6 +168,15 @@ export const ServiceMatches = {
     seasonId: string,
     match: Match,
   ): Promise<void> => {
+    if (match.status === "FINISHED") {
+      await ServiceTable.reconcileMatch(
+        careerId,
+        seasonId,
+        match.matchesId,
+        match,
+      );
+      return;
+    }
     const user = auth.currentUser;
     if (!user) throw new Error("Usuário não autenticado");
 
@@ -199,6 +276,21 @@ export const ServiceMatches = {
     careerId: string,
     seasonId: string,
     updatedMatch: Match,
+    removePenalties = false,
+  ): Promise<void> => {
+    await ServiceTable.reconcileMatch(
+      careerId,
+      seasonId,
+      updatedMatch.matchesId,
+      updatedMatch,
+      removePenalties,
+    );
+  },
+
+  updateMatchStatsInSeason: async (
+    careerId: string,
+    seasonId: string,
+    updatedMatch: Match,
   ): Promise<void> => {
     const user = auth.currentUser;
     if (!user) throw new Error("Usuário não autenticado");
@@ -208,57 +300,152 @@ export const ServiceMatches = {
       `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/matches`,
       updatedMatch.matchesId,
     );
+    const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+    const statsUpdate = Object.fromEntries(
+      MATCH_STATS_FIELDS.map((field) => [field, updatedMatch[field] ?? null]),
+    );
 
-    await setDoc(matchRef, updatedMatch, { merge: true });
+    const batch = writeBatch(db);
+    batch.update(matchRef, statsUpdate);
+    batch.update(careerRef, { updatedAt: Date.now() });
+    await batch.commit();
+  },
 
-    await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
+  updateMatchDetailsInSeason: async (
+    career: Career,
+    season: ClubData,
+    previousMatch: Match,
+    updatedMatch: Match,
+    removePenalties = false,
+  ): Promise<void> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Usuário não autenticado");
+
+    const base = `users/${user.uid}/careers/${career.id}/seasons/${season.id}`;
+    const matchRef = doc(db, `${base}/matches/${updatedMatch.matchesId}`);
+    const careerRef = doc(db, `users/${user.uid}/careers/${career.id}`);
+    const table = getLocalTable(season, previousMatch, updatedMatch);
+    const rows = buildStandingsRows({
+      career,
+      season,
+      previous: previousMatch,
+      next: updatedMatch,
+      matches: season.matches || [],
+      table,
+      createRowId: createStableTableRowId,
+    });
+    const writeCount = rows.length + 2;
+    if (writeCount > 500) {
+      throw new Error(
+        "A atualização da partida excede o limite de 500 escritas para commit atômico.",
+      );
+    }
+
+    const detailsUpdate = Object.fromEntries(
+      MATCH_DETAILS_FIELDS.map((field) => [
+        field,
+        updatedMatch[field] ?? null,
+      ]),
+    );
+    const batch = writeBatch(db);
+    batch.update(matchRef, {
+      ...detailsUpdate,
+      ...(removePenalties
+        ? { homePenScore: deleteField(), awayPenScore: deleteField() }
+        : {
+            homePenScore: updatedMatch.homePenScore ?? null,
+            awayPenScore: updatedMatch.awayPenScore ?? null,
+          }),
+    });
+    for (const row of rows) {
+      batch.set(doc(db, `${base}/table/${row.id}`), row, { merge: true });
+    }
+    batch.update(careerRef, { updatedAt: Date.now() });
+    await batch.commit();
   },
 
   deleteMatchFromSeason: async (
+    career: Career,
+    season: ClubData,
+    match: Match,
+  ): Promise<void> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Usuário não autenticado");
+
+    const base = `users/${user.uid}/careers/${career.id}/seasons/${season.id}`;
+    const matchRef = doc(db, `${base}/matches/${match.matchesId}`);
+    const careerRef = doc(db, `users/${user.uid}/careers/${career.id}`);
+    const playerIds = Array.from(
+      new Set((match.playerStats || []).map((stat) => stat.playerId)),
+    );
+    const table = getLocalTable(season, match, undefined);
+    const rows = buildStandingsRows({
+      career,
+      season,
+      previous: match,
+      matches: season.matches || [],
+      table,
+      createRowId: createStableTableRowId,
+    });
+    const writeCount = playerIds.length + rows.length + 2;
+    if (writeCount > 500) {
+      throw new Error(
+        "A exclusão da partida excede o limite de 500 escritas para commit atômico.",
+      );
+    }
+
+    const batch = writeBatch(db);
+    for (const playerId of playerIds) {
+      batch.delete(doc(matchRef, "playerStats", playerId));
+    }
+    for (const row of rows) {
+      batch.set(doc(db, `${base}/table/${row.id}`), row, { merge: true });
+    }
+    batch.delete(matchRef);
+    batch.update(careerRef, { updatedAt: Date.now() });
+    await batch.commit();
+  },
+
+  savePlayerStatsToSubcollection: async (
     careerId: string,
     seasonId: string,
     matchId: string,
-  ): Promise<void> => {
+    playerStats: PlayerMatchStat[],
+    updatedPlayerStats: PlayerMatchStat[],
+  ) => {
     const user = auth.currentUser;
     if (!user) throw new Error("Usuário não autenticado");
 
     const matchRef = doc(
       db,
-      `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/matches`,
-      matchId,
+      `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/matches/${matchId}`,
     );
 
-    const statsCollectionRef = collection(matchRef, "playerStats");
-    const statsSnapshot = await getDocs(statsCollectionRef);
-
-    if (!statsSnapshot.empty) {
-      const deleteStatsPromises = statsSnapshot.docs.map((statDoc) =>
-        deleteDoc(statDoc.ref),
+    const finalStatsByPlayer = new Map(
+      updatedPlayerStats.map((stat) => [stat.playerId, stat]),
+    );
+    for (const stat of playerStats) {
+      finalStatsByPlayer.set(stat.playerId, stat);
+    }
+    const finalPlayerStats = Array.from(finalStatsByPlayer.values());
+    if (finalPlayerStats.length + 2 > 500) {
+      throw new Error(
+        "A atualização das estatísticas excede o limite de 500 escritas para commit atômico.",
       );
-      await Promise.all(deleteStatsPromises);
     }
 
-    await deleteDoc(matchRef);
-
-    await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
-  },
-
-  savePlayerStatToSubcollection: async (
-    careerId: string,
-    seasonId: string,
-    matchId: string,
-    playerStat: PlayerMatchStat,
-  ) => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Usuário não autenticado");
-
-    const statRef = doc(
-      db,
-      `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/matches/${matchId}/playerStats`,
-      playerStat.playerId,
-    );
-
-    await setDoc(statRef, playerStat, { merge: true });
+    const batch = writeBatch(db);
+    for (const stat of finalPlayerStats) {
+      batch.set(doc(matchRef, "playerStats", stat.playerId), stat);
+    }
+    batch.update(matchRef, {
+      playerStats: finalPlayerStats,
+      _playerStatsVersion: 1,
+    });
+    batch.update(doc(db, `users/${user.uid}/careers/${careerId}`), {
+      updatedAt: Date.now(),
+    });
+    await batch.commit();
   },
 
   findTeamAcrossUserCareers: async (
@@ -289,75 +476,5 @@ export const ServiceMatches = {
     }
 
     return null;
-  },
-
-  migrateOldMatchesToSubcollections: async (): Promise<void> => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Usuário não autenticado");
-
-    console.log("🔍 Iniciando verificação de partidas antigas...");
-
-    const careersRef = collection(db, `users/${user.uid}/careers`);
-    const snapshot = await getDocs(careersRef);
-
-    for (const careerDoc of snapshot.docs) {
-      const career = careerDoc.data() as Career;
-      let careerChanged = false;
-
-      if (!career.clubData) continue;
-
-      const newClubData = [...career.clubData];
-
-      for (let i = 0; i < newClubData.length; i++) {
-        const season = newClubData[i];
-
-        if (season.matches && season.matches.length > 0) {
-          console.log(
-            `⏳ Copiando ${season.matches.length} partidas da temporada ${season.id} (${career.clubName})...`,
-          );
-
-          let successCount = 0;
-
-          for (const match of season.matches) {
-            try {
-              const matchRef = doc(
-                db,
-                `users/${user.uid}/careers/${career.id}/seasons/${season.id}/matches`,
-                match.matchesId,
-              );
-              await setDoc(matchRef, match);
-              successCount++;
-            } catch (err) {
-              console.error(
-                `❌ Erro ao copiar a partida ${match.matchesId}:`,
-                err,
-              );
-            }
-          }
-
-          if (successCount === season.matches.length) {
-            newClubData[i] = { ...season, matches: [] };
-            careerChanged = true;
-            console.log(
-              `✅ Temporada migrada com sucesso! Array antigo limpo.`,
-            );
-          } else {
-            console.warn(
-              `⚠️ Migração parcial (${successCount}/${season.matches.length}). O array antigo NÃO foi apagado por segurança.`,
-            );
-          }
-        }
-      }
-
-      if (careerChanged) {
-        const careerRef = doc(db, `users/${user.uid}/careers/${career.id}`);
-        await updateDoc(careerRef, { clubData: newClubData });
-        console.log(
-          `✅ Carreira ${career.clubName} atualizada e leve novamente!`,
-        );
-      }
-    }
-
-    console.log("🎉 Processo de migração totalmente finalizado!");
   },
 };

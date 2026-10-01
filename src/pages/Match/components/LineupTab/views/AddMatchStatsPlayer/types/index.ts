@@ -10,12 +10,6 @@ export type PlayerStatsFormValues = FormApi["formValues"];
 
 export type PlayerStatsBooleanValues = FormApi["booleanValues"];
 
-export type SetPlayerStatsFormValues = FormApi["setFormValues"];
-
-export type HandleFormInputChange = FormApi["handleInputChange"];
-
-export type HandleFormBooleanChange = FormApi["handleBooleanChange"];
-
 export type PlayerStatsInputEvent = ChangeEvent<
   HTMLInputElement | HTMLSelectElement
 >;
@@ -39,13 +33,4 @@ export interface PlayerStatsFormProps {
     options: string[];
   };
   availableGoalsForAssist: string[];
-}
-
-export interface PlayerStatsInputProps {
-  match: Match;
-  season: ClubData;
-  playerId: string;
-  formValues: PlayerStatsFormValues;
-  setFormValues: SetPlayerStatsFormValues;
-  handleInputChange: HandleFormInputChange;
 }

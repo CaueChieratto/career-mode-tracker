@@ -2,11 +2,13 @@ import { GiPoliceBadge } from "react-icons/gi";
 import { GoNumber } from "react-icons/go";
 import { FaTrashCan, FaTrophy } from "react-icons/fa6";
 import { Field } from "../../../../../../../../../components/FormSection";
+import { TableTeamStatField } from "../../helpers/tableTeamFormStats";
 
 export const getTableTeamFormFields = (
   teamOptions: readonly string[],
   hasSelectedTeam: boolean,
   isEditing: boolean,
+  numericPlaceholders: Partial<Record<TableTeamStatField, string>> = {},
 ): {
   title: string;
   editOnly?: boolean;
@@ -65,6 +67,7 @@ export const getTableTeamFormFields = (
             id: "played",
             name: "Jogos (J)",
             inputType: "number",
+            placeholder: numericPlaceholders.played,
             maxLength: 2,
             icon: <GoNumber />,
           },
@@ -72,6 +75,7 @@ export const getTableTeamFormFields = (
             id: "won",
             name: "Vitórias (V)",
             inputType: "number",
+            placeholder: numericPlaceholders.won,
             maxLength: 2,
             icon: <GoNumber />,
           },
@@ -81,6 +85,7 @@ export const getTableTeamFormFields = (
             id: "drawn",
             name: "Empates (E)",
             inputType: "number",
+            placeholder: numericPlaceholders.drawn,
             maxLength: 2,
             icon: <GoNumber />,
           },
@@ -88,6 +93,7 @@ export const getTableTeamFormFields = (
             id: "lost",
             name: "Derrotas (D)",
             inputType: "number",
+            placeholder: numericPlaceholders.lost,
             maxLength: 2,
             icon: <GoNumber />,
           },
@@ -103,6 +109,7 @@ export const getTableTeamFormFields = (
             id: "goalsFor",
             name: "Gols Pró (GP)",
             inputType: "number",
+            placeholder: numericPlaceholders.goalsFor,
             maxLength: 3,
             icon: <GoNumber />,
           },
@@ -110,6 +117,7 @@ export const getTableTeamFormFields = (
             id: "goalsAgainst",
             name: "Gols Contra (GC)",
             inputType: "number",
+            placeholder: numericPlaceholders.goalsAgainst,
             maxLength: 3,
             icon: <GoNumber />,
           },

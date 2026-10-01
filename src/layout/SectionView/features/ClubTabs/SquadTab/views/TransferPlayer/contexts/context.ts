@@ -6,7 +6,7 @@ import { Players } from "../../../../../../../../common/interfaces/playersInfo/p
 
 type UseTransferFormReturn = ReturnType<typeof useTransferForm>;
 
-export type TransferPlayerContextType = UseTransferFormReturn & {
+type TransferPlayerContextType = UseTransferFormReturn & {
   career: Career;
   season: ClubData;
   player: Players;

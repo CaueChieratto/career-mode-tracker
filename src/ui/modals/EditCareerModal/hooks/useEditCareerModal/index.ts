@@ -6,7 +6,7 @@ import { convertStringToDate } from "../../helpers/convertStringToDate";
 import { SaveEditClub } from "../SaveEditClub";
 import { useClubImgAndColor } from "../useClubImgAndColor";
 
-export type UseEditCareerModalProps = {
+type UseEditCareerModalProps = {
   selectedCareer: Career;
   setSelectedCareer: React.Dispatch<React.SetStateAction<Career>>;
   closeModal: () => void;

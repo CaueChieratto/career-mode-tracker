@@ -1,0 +1,173 @@
+--- before/src/common/services/ServiceSeasons/index.ts
++++ src/common/services/ServiceSeasons/index.ts
+@@ -64,6 +64,7 @@
+ 
+         if (shouldReturnLoan) {
+           updatedPlayer.loan = false;
++          updatedPlayer.contract = [...player.contract];
+           const lastContract = player.contract[player.contract.length - 1];
+           updatedPlayer.contract.push({
+             buyValue: 0,
+--- before/src/layout/SectionView/helpers/mergeMatchStats/index.ts
++++ src/layout/SectionView/helpers/mergeMatchStats/index.ts
+@@ -165,6 +165,7 @@
+       if (!playerMap[key]) {
+         playerMap[key] = {
+           ...player,
++          ballonDor: 0,
+           statsLeagues: [],
+           _leagueMap: {},
+         };
+--- before/src/common/services/ServicePlayers/helpers/contractHelpers/index.ts
++++ src/common/services/ServicePlayers/helpers/contractHelpers/index.ts
+@@ -170,8 +170,11 @@
+       : null;
+ 
+   if (player.incomingLoan && lastContract) {
+-    lastContract.dataExit = parsedDate;
+-    lastContract.leftClub = lastContract.fromClub || "Fim de Empréstimo";
++    contractHistory[contractHistory.length - 1] = {
++      ...lastContract,
++      dataExit: parsedDate,
++      leftClub: lastContract.fromClub || "Fim de Empréstimo",
++    };
+   } else if (!player.incomingLoan && lastContract) {
+     contractHistory.push({
+       buyValue: 0,
+--- before/src/pages/Match/components/LineupTab/hooks/useLineupPersistence/index.ts
++++ src/pages/Match/components/LineupTab/hooks/useLineupPersistence/index.ts
+@@ -47,11 +47,12 @@
+         match.playerStats,
+       );
+ 
+-      await saveLineup(
++      const saved = await saveLineup(
+         currentSavedLineup,
+         updatedPlayerStats,
+         removedPlayerIds,
+       );
++      if (!saved) return;
+ 
+       savedLineupRef.current = currentSavedLineup;
+ 
+--- before/src/pages/Match/components/LineupTab/hooks/useSaveLineup/index.ts
++++ src/pages/Match/components/LineupTab/hooks/useSaveLineup/index.ts
+@@ -20,7 +20,7 @@
+       playerStats: PlayerMatchStat[],
+       removedPlayerIds: string[],
+     ) => {
+-      if (!careerId || !seasonId) return;
++      if (!careerId || !seasonId) return false;
+ 
+       try {
+         await ServiceLineup.saveLineupToMatch(
+@@ -31,9 +31,11 @@
+           playerStats,
+           removedPlayerIds,
+         );
++        return true;
+       } catch (error) {
+         console.error("Erro: ", error);
+         alert("Erro ao salvar a formação. Tente novamente.");
++        return false;
+       }
+     },
+     [careerId, seasonId, matchId],
+--- before/src/pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/useAddDetails.ts
++++ src/pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/useAddDetails.ts
+@@ -140,6 +140,7 @@
+         career.id,
+         season.id,
+         updatedMatch as Match,
++        !booleanValues.hasPenalties,
+       );
+       const matchLeagueName = match.league.trim().toLowerCase();
+       const foundLeagueInDb = season.leagues?.find(
+--- before/src/pages/Academy/layouts/AcademyContent/services/AcademyService/helpers/buildPlayerAcademyTournaments/index.ts
++++ src/pages/Academy/layouts/AcademyContent/services/AcademyService/helpers/buildPlayerAcademyTournaments/index.ts
+@@ -31,7 +31,7 @@
+             if (pStat.cleanSheets) cleanStats.cleanSheets = pStat.cleanSheets;
+           }
+ 
+-          return {
++          const playerMatch = {
+             id: m.id,
+             date: m.date,
+             opponentTeam: m.opponentTeam,
+@@ -47,6 +47,10 @@
+               : {}),
+             lineup: [cleanStats as PlayerMatchesStats],
+           };
++          for (const field of ["status", "result", "userGoals", "opponentGoals"] as const) {
++            if (playerMatch[field] === undefined) delete playerMatch[field];
++          }
++          return playerMatch;
+         }),
+       });
+     }
+--- before/src/pages/Academy/layouts/AcademyContent/services/AcademyService/helpers/buildPromotedPlayer/index.ts
++++ src/pages/Academy/layouts/AcademyContent/services/AcademyService/helpers/buildPromotedPlayer/index.ts
+@@ -59,7 +59,7 @@
+     statsLeagues: [],
+     ballonDor: 0,
+     isAcademy: true,
+-    academyNickname: academyNickname,
++    ...(academyNickname !== undefined ? { academyNickname } : {}),
+     academyData: compactAcademyData as AcademyPlayers,
+     academyHistory: academyPlayer.evolutionHistory,
+     academyTournaments,
+--- before/src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches/index.ts
++++ src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches/index.ts
+@@ -3,6 +3,7 @@
+   doc,
+   setDoc,
+   deleteDoc,
++  deleteField,
+   getDocs,
+   updateDoc,
+   getDoc,
+@@ -199,6 +200,7 @@
+     careerId: string,
+     seasonId: string,
+     updatedMatch: Match,
++    removePenalties = false,
+   ): Promise<void> => {
+     const user = auth.currentUser;
+     if (!user) throw new Error("Usuário não autenticado");
+@@ -209,7 +211,13 @@
+       updatedMatch.matchesId,
+     );
+ 
+-    await setDoc(matchRef, updatedMatch, { merge: true });
++    await setDoc(matchRef, {
++      ...updatedMatch,
++      ...(removePenalties ? {
++        homePenScore: deleteField(),
++        awayPenScore: deleteField(),
++      } : {}),
++    }, { merge: true });
+ 
+     await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
+   },
+--- before/src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/validators/validateMatchForm/index.ts
++++ src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/validators/validateMatchForm/index.ts
+@@ -1,3 +1,5 @@
++import { parseBrasilDate } from "../../../../../../../../../common/utils/Date";
++
+ interface MatchFormValues {
+   date: string;
+   league: string;
+@@ -19,11 +21,8 @@
+     };
+   }
+ 
+-  const [dayStr, monthStr] = date.split("/");
+-  const day = Number(dayStr);
+-  const month = Number(monthStr);
+-
+-  if (isNaN(day) || isNaN(month)) {
++  // O formulário não informa o ano; permita 29/02 usando um ano bissexto.
++  if (!/^\d{1,2}\/\d{1,2}$/.test(date) || !parseBrasilDate(date, 2000)) {
+     return {
+       valid: false,
+       message: "Data inválida. Use o formato DD/MM.",

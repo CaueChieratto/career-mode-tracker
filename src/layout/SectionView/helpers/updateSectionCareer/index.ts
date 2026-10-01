@@ -6,7 +6,7 @@ import { TableTeamData } from "../../../../common/interfaces/TableTeamData";
 import type { OptimisticMatchData } from "../../features/ClubTabs/AllMatchesTab/views/AddMatches";
 import { OptimisticTableData } from "../../features/ClubTabs/TableTab/views/AddTeamsToTable";
 
-export type OptimisticPlayerData = {
+type OptimisticPlayerData = {
   type: "UPDATE_PLAYER";
   player: Players;
 };

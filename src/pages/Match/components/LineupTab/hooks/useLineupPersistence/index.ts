@@ -47,11 +47,12 @@ export const useLineupPersistence = ({
         match.playerStats,
       );
 
-      await saveLineup(
+      const saved = await saveLineup(
         currentSavedLineup,
         updatedPlayerStats,
         removedPlayerIds,
       );
+      if (!saved) return;
 
       savedLineupRef.current = currentSavedLineup;
 

@@ -1,7 +1,7 @@
 import { Match } from "../../../../../../../../../common/interfaces/Match";
 import { MatchWithOpponentEvents } from "../../../../../../../../../common/interfaces/OpponentEventsMatches";
 
-export interface InitialMatchState {
+interface InitialMatchState {
   initialFormValues: Record<string, string>;
   booleansToSet: { key: string; value: boolean }[];
 }

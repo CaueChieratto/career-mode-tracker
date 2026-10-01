@@ -21,6 +21,7 @@ export type FeedEvent = {
     opponentPenalties?: number;
     status?: string;
     lineup?: Array<{
+      playerId: string;
       playerName: string;
       rating: number | null;
       goals: number | null;

@@ -1,0 +1,297 @@
+{
+  "generatedAt": "2026-09-23T14:13:59.012Z",
+  "results": [
+    {
+      "command": "typecheck",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:09:18.047Z",
+      "finishedAt": "2026-09-23T14:09:39.795Z"
+    },
+    {
+      "command": "typecheck:tests",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:09:39.796Z",
+      "finishedAt": "2026-09-23T14:09:45.084Z"
+    },
+    {
+      "command": "lint",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:09:45.085Z",
+      "finishedAt": "2026-09-23T14:10:14.078Z"
+    },
+    {
+      "command": "test:run",
+      "exitCode": 0,
+      "summary": [
+        "Test Files  11 passed (11)",
+        "Tests  116 passed | 11 todo (127)"
+      ],
+      "startedAt": "2026-09-23T14:10:14.078Z",
+      "finishedAt": "2026-09-23T14:10:59.660Z"
+    },
+    {
+      "command": "test:integration",
+      "exitCode": 0,
+      "summary": [
+        "Test Files  9 passed (9)",
+        "Tests  67 passed | 15 todo (82)"
+      ],
+      "startedAt": "2026-09-23T14:10:59.661Z",
+      "finishedAt": "2026-09-23T14:12:27.494Z"
+    },
+    {
+      "command": "test:coverage:all",
+      "exitCode": 0,
+      "summary": [
+        "Test Files  20 passed (20)",
+        "Tests  183 passed | 26 todo (209)"
+      ],
+      "startedAt": "2026-09-23T14:12:27.494Z",
+      "finishedAt": "2026-09-23T14:13:23.868Z"
+    },
+    {
+      "command": "build",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:23.869Z",
+      "finishedAt": "2026-09-23T14:13:55.672Z"
+    },
+    {
+      "command": "syntax-action.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:55.673Z",
+      "finishedAt": "2026-09-23T14:13:55.755Z"
+    },
+    {
+      "command": "syntax-advanced.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:55.756Z",
+      "finishedAt": "2026-09-23T14:13:55.840Z"
+    },
+    {
+      "command": "syntax-browser-init.js",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:55.841Z",
+      "finishedAt": "2026-09-23T14:13:55.921Z"
+    },
+    {
+      "command": "syntax-browser.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:55.921Z",
+      "finishedAt": "2026-09-23T14:13:56.000Z"
+    },
+    {
+      "command": "syntax-build.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.000Z",
+      "finishedAt": "2026-09-23T14:13:56.080Z"
+    },
+    {
+      "command": "syntax-compare.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.081Z",
+      "finishedAt": "2026-09-23T14:13:56.159Z"
+    },
+    {
+      "command": "syntax-firebase-client.js",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.159Z",
+      "finishedAt": "2026-09-23T14:13:56.236Z"
+    },
+    {
+      "command": "syntax-inspect.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.236Z",
+      "finishedAt": "2026-09-23T14:13:56.317Z"
+    },
+    {
+      "command": "syntax-journeys.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.317Z",
+      "finishedAt": "2026-09-23T14:13:56.399Z"
+    },
+    {
+      "command": "syntax-large-targets.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.400Z",
+      "finishedAt": "2026-09-23T14:13:56.482Z"
+    },
+    {
+      "command": "syntax-measure.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.483Z",
+      "finishedAt": "2026-09-23T14:13:56.571Z"
+    },
+    {
+      "command": "syntax-network-guard.cjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.571Z",
+      "finishedAt": "2026-09-23T14:13:56.651Z"
+    },
+    {
+      "command": "syntax-pilot.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.651Z",
+      "finishedAt": "2026-09-23T14:13:56.741Z"
+    },
+    {
+      "command": "syntax-report.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.742Z",
+      "finishedAt": "2026-09-23T14:13:56.846Z"
+    },
+    {
+      "command": "syntax-reseed.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.847Z",
+      "finishedAt": "2026-09-23T14:13:56.930Z"
+    },
+    {
+      "command": "syntax-run-all.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:56.931Z",
+      "finishedAt": "2026-09-23T14:13:57.017Z"
+    },
+    {
+      "command": "syntax-run.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:57.018Z",
+      "finishedAt": "2026-09-23T14:13:57.097Z"
+    },
+    {
+      "command": "syntax-sdk-adapter.js",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:57.097Z",
+      "finishedAt": "2026-09-23T14:13:57.183Z"
+    },
+    {
+      "command": "syntax-seed.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:57.184Z",
+      "finishedAt": "2026-09-23T14:13:57.266Z"
+    },
+    {
+      "command": "syntax-service.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:57.266Z",
+      "finishedAt": "2026-09-23T14:13:57.368Z"
+    },
+    {
+      "command": "syntax-summarize.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:57.368Z",
+      "finishedAt": "2026-09-23T14:13:57.445Z"
+    },
+    {
+      "command": "syntax-trace.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:57.446Z",
+      "finishedAt": "2026-09-23T14:13:57.544Z"
+    },
+    {
+      "command": "syntax-validate.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:57.545Z",
+      "finishedAt": "2026-09-23T14:13:57.644Z"
+    },
+    {
+      "command": "syntax-verify-source.mjs",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:57.644Z",
+      "finishedAt": "2026-09-23T14:13:57.735Z"
+    },
+    {
+      "command": "source-integrity",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:57.736Z",
+      "finishedAt": "2026-09-23T14:13:58.573Z"
+    },
+    {
+      "command": "git-diff-check",
+      "exitCode": 0,
+      "summary": [],
+      "startedAt": "2026-09-23T14:13:58.574Z",
+      "finishedAt": "2026-09-23T14:13:58.806Z"
+    }
+  ],
+  "coverage": {
+    "lines": {
+      "total": 47293,
+      "covered": 2756,
+      "skipped": 0,
+      "pct": 5.82
+    },
+    "statements": {
+      "total": 47293,
+      "covered": 2756,
+      "skipped": 0,
+      "pct": 5.82
+    },
+    "functions": {
+      "total": 787,
+      "covered": 69,
+      "skipped": 0,
+      "pct": 8.76
+    },
+    "branches": {
+      "total": 1296,
+      "covered": 493,
+      "skipped": 0,
+      "pct": 38.04
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "productionBuild": [
+    {
+      "name": "index-C3488Qqm.css",
+      "bytes": 143231,
+      "gzip": 28104,
+      "sha256": "9a9632ef1c40b43333c4c796682dcb77293250cf77b134ed0cecbd5c7058d4fd"
+    },
+    {
+      "name": "index-DmePlK1f.js",
+      "bytes": 5256697,
+      "gzip": 1678953,
+      "sha256": "705916ff67019855a74b00ea6f9262fc8c6c7036566ae46fda9cc9aa4c6ae60d"
+    }
+  ],
+  "sourceIntegrity": {
+    "compared": 938,
+    "changed": [],
+    "added": [],
+    "checkedAt": "2026-09-23T14:13:58.555Z"
+  }
+}

@@ -4,14 +4,6 @@
   gap: 12px;
 }
 
-.title {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--blackColor);
-  text-align: center;
-  padding-top: 16px;
-}
-
 .noTransfers {
   text-align: center;
   color: #666;
@@ -35,14 +27,6 @@
   padding: 16px 8px;
   border-bottom: 1px solid #cdcdcd;
   position: relative;
-}
-
-.icon {
-  position: absolute;
-  height: 16px;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
 }
 
 .playerName {

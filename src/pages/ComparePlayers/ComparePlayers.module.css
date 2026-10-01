@@ -44,21 +44,6 @@
   animation: fadeInDown 0.2s ease;
 }
 
-.seasonSelect {
-  padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--border-input);
-  background-color: var(--card-background);
-  color: var(--colorSpan);
-  font-weight: 600;
-  cursor: pointer;
-  outline: none;
-}
-
-.seasonSelect:focus {
-  border-color: #3b82f6;
-}
-
 .modeToggle {
   display: flex;
   justify-content: center;

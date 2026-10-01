@@ -1,0 +1,136 @@
+--- a/src/pages/Academy/layouts/AcademyContent/services/AcademyService/index.ts
++++ b/src/pages/Academy/layouts/AcademyContent/services/AcademyService/index.ts
+@@ -1,6 +1,7 @@
+-import { getDocs, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
++import { getDocs, setDoc, deleteDoc, updateDoc, doc, getDocsFromServer, runTransaction } from "firebase/firestore";
+ import { v4 as uuidv4 } from "uuid";
+-import { ServicePlayers } from "../../../../../../common/services/ServicePlayers";
++import { Players } from "../../../../../../common/interfaces/playersInfo/players";
++import { db } from "../../../../../../common/services/Firebase";
+ import { AcademyPlayers } from "../../interfaces/AcademyPlayers/AcademyPlayers";
+ import { AcademyTournaments } from "../../interfaces/AcademyTournaments/AcademyTournaments";
+ import { Career } from "../../../../../../common/interfaces/Career";
+@@ -132,53 +133,77 @@
+     promotionDate?: string,
+   ): Promise<void> => {
+     const user = requireUser();
+-    const pDate = promotionDate || new Date().toLocaleDateString("pt-BR");
++    const requestedDate = promotionDate || new Date().toLocaleDateString("pt-BR");
+     const careerId = career.id;
+-
+-    const promotionEvolution = buildEvolutionHistory(
+-      pDate,
+-      "Promovido ao elenco profissional.",
+-      "academy",
+-      "promoted",
+-    );
+-
+-    const promotedAcademyPlayer: AcademyPlayers = {
+-      ...academyPlayer,
+-      status: "promoted",
+-      exitDate: pDate,
+-      evolutionHistory: [...academyPlayer.evolutionHistory, promotionEvolution],
+-    };
+-
+-    await setDoc(
+-      getAcademyDoc(
+-        user.uid,
+-        careerId,
+-        seasonId,
+-        "academyPlayers",
+-        academyPlayer.id,
+-      ),
+-      promotedAcademyPlayer,
+-      { merge: true },
+-    );
+-
+-    const promises = career.clubData.map((season) =>
+-      AcademyService.getTournamentsAcademy(careerId, season.id),
+-    );
+-    const results = await Promise.all(promises);
+-
+-    const playerTournaments = buildPlayerAcademyTournaments(
+-      results.flat(),
+-      academyPlayer.id,
+-    );
+-
+-    const newProPlayer = buildPromotedPlayer(
+-      promotedAcademyPlayer,
+-      pDate,
+-      playerTournaments,
+-      career.academy?.nickname,
+-    );
+-
+-    await ServicePlayers.addPlayerToSeason(careerId, seasonId, newProPlayer);
++    const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
++    const academyRef = getAcademyDoc(user.uid, careerId, seasonId, "academyPlayers", academyPlayer.id);
++    const eventId = `promotion:${JSON.stringify([seasonId, academyPlayer.id])}`;
++
++    // The source and career are read again on SDK retries; the three writes commit together.
++    await runTransaction(db, async transaction => {
++      const careerSnap = await transaction.get(careerRef);
++      if (!careerSnap.exists()) throw new Error("Carreira não encontrada");
++      const currentCareer = careerSnap.data() as Career;
++      if (!currentCareer.clubData.some(s => s.id === seasonId)) throw new Error("Temporada não encontrada");
++      const academySnap = await transaction.get(academyRef);
++      if (!academySnap.exists()) throw new Error("Jogador da base não encontrado");
++      const source = academySnap.data() as AcademyPlayers;
++      if (source.id !== academyPlayer.id || source.status === "released") throw new Error("Origem de promoção inválida");
++
++      // Reuse historical professional IDs only through the persisted academy identity.
++      const linkedIds = new Set<string>();
++      let embeddedTarget: Players | undefined;
++      for (const season of currentCareer.clubData) {
++        const snapshot = await getDocsFromServer(getAcademyCollection(user.uid, careerId, season.id, "players"));
++        const modernIds = new Set(snapshot.docs.map(d => d.id));
++        const candidates = snapshot.docs.filter(d => d.data().isAcademy && d.data().academyData?.id === source.id);
++        const confirmed = await Promise.all(candidates.map(d => transaction.get(d.ref)));
++        const linked = confirmed.filter(d => d.exists()).map(d => ({ ...d.data(), id: d.id }) as Players);
++        linked.push(...(season.players || []).filter(p => !modernIds.has(p.id)));
++        for (const player of linked.filter(p => p.isAcademy && p.academyData?.id === source.id)) {
++          linkedIds.add(player.id);
++          if (season.id === seasonId && !modernIds.has(player.id)) embeddedTarget = player;
++        }
++      }
++      if (linkedIds.size > 1) throw new Error("Mais de um profissional vinculado à mesma origem");
++      const professionalId = [...linkedIds][0] || `academy-${source.id}`;
++      const professionalRef = getAcademyDoc(user.uid, careerId, seasonId, "players", professionalId);
++      const professionalSnap = await transaction.get(professionalRef);
++      const existing = professionalSnap.exists() ? professionalSnap.data() as Players : embeddedTarget;
++      const history = source.evolutionHistory || [];
++      const previousEvent = history.find(h => h.id === eventId) || (source.status === "promoted"
++        ? [...history].reverse().find(h => h.changedAttribute === "status" && h.oldValue === "academy" && h.newValue === "promoted") : undefined);
++      if (existing) {
++        if (source.status === "promoted" && previousEvent && existing.isAcademy &&
++          existing.academyData?.id === source.id && existing.academyData.status === "promoted" &&
++          existing.academyHistory?.some(h => h.id === previousEvent.id)) {
++          if (!currentCareer.updatedAt) transaction.update(careerRef, { updatedAt: Date.now() });
++          return;
++        }
++        throw new Error("Vínculo de promoção existente inconsistente");
++      }
++      if (source.status === "promoted" && !previousEvent) throw new Error("Histórico de promoção ausente");
++      const pDate = previousEvent?.date || requestedDate;
++      const promotionEvolution = previousEvent || { ...buildEvolutionHistory(
++        pDate, "Promovido ao elenco profissional.", "academy", "promoted",
++      ), id: eventId };
++      const promotedAcademyPlayer: AcademyPlayers = { ...source, status: "promoted", exitDate: source.status === "promoted" ? source.exitDate || pDate : pDate,
++        evolutionHistory: previousEvent ? history : [...history, promotionEvolution] };
++
++      // Enumerate tournament membership, then validate each observed document in this transaction.
++      // Concurrent additions to these collections are not locked by this enumeration.
++      const tournaments: AcademyTournaments[] = [];
++      for (const season of currentCareer.clubData) {
++        const snapshot = await getDocsFromServer(getAcademyCollection(user.uid, careerId, season.id, "academyTournaments"));
++        const confirmed = await Promise.all(snapshot.docs.map(d => transaction.get(d.ref)));
++        tournaments.push(...confirmed.filter(d => d.exists()).map(d => d.data() as AcademyTournaments));
++      }
++      const professional = { ...buildPromotedPlayer(promotedAcademyPlayer, pDate,
++        buildPlayerAcademyTournaments(tournaments, source.id), currentCareer.academy?.nickname), id: professionalId };
++      transaction.set(academyRef, promotedAcademyPlayer, { merge: true });
++      transaction.set(professionalRef, professional);
++      transaction.update(careerRef, { updatedAt: Math.max(Date.now(), (currentCareer.updatedAt || 0) + 1) });
++    });
+   },
+ 
+   releasePlayerAcademy: async (

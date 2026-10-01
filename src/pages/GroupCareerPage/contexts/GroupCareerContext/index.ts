@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 import { CareerGroup } from "../../../../common/interfaces/CareerGroup";
 import { SeasonByCareer } from "../../hooks/useGroupSeasonView";
 
-export type GroupCareerContextType = {
+type GroupCareerContextType = {
   save: CareerGroup;
   seasonsByCareer: SeasonByCareer[];
 };

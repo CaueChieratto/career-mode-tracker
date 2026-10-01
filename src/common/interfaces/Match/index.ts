@@ -17,6 +17,7 @@ export type Match = {
   result: MatchResult;
   status: MatchStatus;
   playerStats?: PlayerMatchStat[];
+  _playerStatsVersion?: number;
   opponentEvents?: OpponentEvents[];
   lineup?: SavedLineup;
   stoppage1T?: number;

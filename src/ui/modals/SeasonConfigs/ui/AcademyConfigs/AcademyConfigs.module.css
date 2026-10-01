@@ -107,12 +107,6 @@
   color: var(--color-add-player);
 }
 
-.actions_wrapper {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
-
 .save_button {
   background: var(--club-color);
   border-radius: 8px;

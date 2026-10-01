@@ -33,6 +33,13 @@ export const AddDetailsScreen = ({
     saveDetails,
   } = useAddDetails({ career, season, match, onClose, onSaved });
 
+  const handleSave = () => {
+    void saveDetails().catch((error) => {
+      console.error("Erro ao salvar detalhes da partida:", error);
+      window.alert("NÃ£o foi possÃ­vel salvar os detalhes da partida.");
+    });
+  };
+
   if (isSaving) return <Load />;
 
   return (
@@ -45,7 +52,7 @@ export const AddDetailsScreen = ({
         titleText={`${match.homeTeam} x ${match.awayTeam}`}
       />
       <Navbar
-        save={saveDetails}
+        save={handleSave}
         options={["", "Salvar", ""]}
         activeOption={1}
         onOptionClick={() => {}}

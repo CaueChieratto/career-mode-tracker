@@ -1,0 +1,138 @@
+--- before/src/pages/GroupCareerPage/services/ServiceCareerGroup/index.ts
++++ src/pages/GroupCareerPage/services/ServiceCareerGroup/index.ts
+@@ -27,6 +27,9 @@
+           try {
+             return await getCareerById(user.uid, id);
+           } catch (error) {
++            if (!(error instanceof Error) || !("code" in error) || error.code !== "career/not-found") {
++              throw error;
++            }
+             console.warn(
+               error,
+               `Carreira ${id} não encontrada no grupo ${groupId}`,
+--- before/src/common/utils/stripHeavyData.ts
++++ src/common/utils/stripHeavyData.ts
+@@ -1,12 +1,19 @@
+ import { ClubData } from "../interfaces/club/clubData";
+ 
+-export const stripHeavyData = (clubData: ClubData[]): ClubData[] => {
++export const stripHeavyData = (
++  clubData: ClubData[],
++  storedClubData: ClubData[] = [],
++): ClubData[] => {
+   return clubData.map((season) => {
++    // Only discard hydrated copies; retain the original embedded data unchanged.
++    // Without a stored snapshot, there is no evidence that removal is safe.
++    const stored = storedClubData.find((s) => s.id === season.id) ?? season;
+     // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     const { matches, players, ...cleanSeason } = season;
+     return {
+       ...cleanSeason,
+-      players: [],
++      players: stored.players || [],
++      ...(stored.matches?.length ? { matches: stored.matches } : {}),
+     } as ClubData;
+   });
+ };
+--- before/src/common/services/ServiceSeasons/index.ts
++++ src/common/services/ServiceSeasons/index.ts
+@@ -21,7 +21,10 @@
+     const user = auth.currentUser;
+     if (!user) throw new Error("Usuário não autenticado");
+ 
+-    const career = await getCareerById(user.uid, careerId);
++    let storedSeasons: ClubData[] = [];
++    const career = await getCareerById(user.uid, careerId, (seasons) => {
++      storedSeasons = seasons;
++    });
+     const existingNumbers = career.clubData.map((s) => s.seasonNumber);
+     let seasonNumber = 1;
+     while (existingNumbers.includes(seasonNumber)) {
+@@ -129,7 +132,7 @@
+ 
+     try {
+       await updateCareerFirestore(user.uid, careerId, {
+-        clubData: stripHeavyData(updatedClubData),
++        clubData: stripHeavyData(updatedClubData, storedSeasons),
+       });
+ 
+       for (const player of playersForNewSeason) {
+@@ -162,7 +165,10 @@
+     const user = auth.currentUser;
+     if (!user) throw new Error("Usuário não autenticado");
+ 
+-    const career = await getCareerById(user.uid, careerId);
++    let storedSeasons: ClubData[] = [];
++    const career = await getCareerById(user.uid, careerId, (seasons) => {
++      storedSeasons = seasons;
++    });
+     const updatedClubData = career.clubData.filter(
+       (season) => season.id !== seasonId,
+     );
+@@ -185,7 +191,7 @@
+ 
+     await deleteDoc(doc(db, seasonPath));
+     await updateCareerFirestore(user.uid, careerId, {
+-      clubData: stripHeavyData(updatedClubData),
++      clubData: stripHeavyData(updatedClubData, storedSeasons),
+     });
+   },
+ 
+@@ -197,13 +203,16 @@
+     const user = auth.currentUser;
+     if (!user) throw new Error("Usuário não autenticado");
+ 
+-    const career = await getCareerById(user.uid, careerId);
++    let storedSeasons: ClubData[] = [];
++    const career = await getCareerById(user.uid, careerId, (seasons) => {
++      storedSeasons = seasons;
++    });
+     const updatedClubData = career.clubData.map((season) =>
+       season.id === seasonId ? { ...season, leagues } : season,
+     );
+ 
+     await updateCareerFirestore(user.uid, careerId, {
+-      clubData: stripHeavyData(updatedClubData),
++      clubData: stripHeavyData(updatedClubData, storedSeasons),
+     });
+   },
+ 
+--- before/src/common/helpers/Getters/index.ts
++++ src/common/helpers/Getters/index.ts
+@@ -5,6 +5,7 @@
+ import { Career } from "../../interfaces/Career";
+ import { Match } from "../../interfaces/Match";
+ import { Players } from "../../interfaces/playersInfo/players";
++import { ClubData } from "../../interfaces/club/clubData";
+ 
+ export const getAllCareers = (
+   uid: string,
+@@ -76,11 +77,17 @@
+ export const getCareerById = async (
+   uid: string,
+   careerId: string,
++  onReadStoredSeasons?: (seasons: ClubData[]) => void,
+ ): Promise<Career> => {
+   const careerRef = doc(db, `users/${uid}/careers/${careerId}`);
+   const careerSnap = await getDoc(careerRef);
+ 
+-  if (!careerSnap.exists()) throw new Error("Carreira não encontrada");
++  if (!careerSnap.exists()) {
++    throw Object.assign(new Error("Carreira não encontrada"), {
++      code: careerSnap.metadata.fromCache || careerSnap.metadata.hasPendingWrites
++        ? "career/unavailable" : "career/not-found",
++    });
++  }
+ 
+   const rawData = careerSnap.data();
+   const careerData = {
+@@ -89,6 +96,9 @@
+       ? rawData.createdAt.toDate()
+       : new Date(rawData.createdAt),
+   } as Career;
++
++  // Preserve the persisted payload separately from the hydrated view for metadata writes.
++  onReadStoredSeasons?.(careerData.clubData || []);
+ 
+   if (careerData.clubData && careerData.clubData.length > 0) {
+     const updatedClubData = await Promise.all(

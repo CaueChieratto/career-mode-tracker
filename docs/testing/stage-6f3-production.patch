@@ -1,0 +1,123 @@
+diff --git a/src/pages/Match/services/ServiceLineup/index.ts b/src/pages/Match/services/ServiceLineup/index.ts
+index 236ee10..206f85c 100644
+--- a/src/pages/Match/services/ServiceLineup/index.ts
++++ b/src/pages/Match/services/ServiceLineup/index.ts
+@@ -1,8 +1,11 @@
+-import { doc, setDoc, deleteDoc } from "firebase/firestore";
++import { doc, runTransaction } from "firebase/firestore";
+ import { auth, db } from "../../../../common/services/Firebase";
+-import { updateCareerFirestore } from "../../../../common/helpers/Setters";
+ import { PlayerMatchStat } from "../../../../common/interfaces/PlayerMatchStat";
+ import { SavedLineup } from "../../../../common/interfaces/Lineup";
++import { Match } from "../../../../common/interfaces/Match";
++import { getLineupPlayerIds } from "../../components/LineupTab/helpers/getLineupPlayerIds";
++
++type LineupSlot = SavedLineup["lines"][number];
+ 
+ export const ServiceLineup = {
+   saveLineupToMatch: async (
+@@ -16,28 +19,89 @@ export const ServiceLineup = {
+     const user = auth.currentUser;
+     if (!user) throw new Error("Usuário não autenticado");
+ 
++    if (removedPlayerIds.length + 2 > 500) {
++      throw new Error(
++        "A atualização de escalação excede o limite de 500 escritas para commit atômico.",
++      );
++    }
++
+     const matchRef = doc(
+       db,
+       `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/matches`,
+       matchesId,
+     );
++    const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
++
++    await runTransaction(db, async (transaction) => {
++      const matchSnap = await transaction.get(matchRef);
++      const careerSnap = await transaction.get(careerRef);
++      if (!matchSnap.exists()) throw new Error("Partida não encontrada");
++      if (!careerSnap.exists()) throw new Error("Carreira não encontrada");
+ 
+-    if (removedPlayerIds.length > 0) {
+-      const deletePromises = removedPlayerIds.map((playerId) => {
++      const currentMatch = matchSnap.data() as Match;
++      const removedSet = new Set(removedPlayerIds);
++
++      for (const playerId of removedPlayerIds) {
+         const statRef = doc(matchRef, "playerStats", playerId);
+-        return deleteDoc(statRef);
+-      });
+-      await Promise.all(deletePromises);
+-    }
++        transaction.delete(statRef);
++      }
+ 
+-    await setDoc(
+-      matchRef,
+-      {
+-        lineup,
+-        playerStats,
+-      },
+-      { merge: true },
+-    );
+-    await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
++      const incomingActive = getLineupPlayerIds(lineup);
++
++      let allowedIds: Set<string>;
++      if (currentMatch.lineup) {
++        const currentActive = getLineupPlayerIds(currentMatch.lineup);
++        allowedIds = new Set<string>();
++
++        for (const id of incomingActive) {
++          if (removedSet.has(id)) continue;
++          if (currentActive.has(id)) {
++            allowedIds.add(id);
++          }
++        }
++      } else {
++        allowedIds = new Set(
++          Array.from(incomingActive).filter((id) => !removedSet.has(id)),
++        );
++      }
++
++      const nextLineup: SavedLineup = {
++        ...lineup,
++        goalkeeper:
++          lineup.goalkeeper?.playerId &&
++          !allowedIds.has(lineup.goalkeeper.playerId)
++            ? { ...lineup.goalkeeper, playerId: null, playerName: null }
++            : lineup.goalkeeper,
++        lines: lineup.lines
++          .map((slot) => {
++            if (!slot.playerId) return slot;
++            if (allowedIds.has(slot.playerId)) return slot;
++            return null;
++          })
++          .filter((slot): slot is LineupSlot => slot !== null),
++        bench: (lineup.bench || [])
++          .map((slot) => {
++            if (!slot.playerId) return slot;
++            if (allowedIds.has(slot.playerId)) return slot;
++            return null;
++          })
++          .filter((slot): slot is LineupSlot => slot !== null),
++      };
++
++      const nextPlayerStats = playerStats.filter(
++        (s) => !removedSet.has(s.playerId) && allowedIds.has(s.playerId),
++      );
++
++      transaction.set(
++        matchRef,
++        {
++          lineup: nextLineup,
++          playerStats: nextPlayerStats,
++        },
++        { merge: true },
++      );
++
++      transaction.update(careerRef, { updatedAt: Date.now() });
++    });
+   },
+ };

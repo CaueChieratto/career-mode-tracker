@@ -1,0 +1,39 @@
+--- a/src/common/services/ServiceSeasons/index.ts
++++ b/src/common/services/ServiceSeasons/index.ts
+@@ -8,6 +8,7 @@
+   deleteDoc,
+   doc,
+   getDocs,
++  getDocsFromServer,
+   setDoc,
+ } from "firebase/firestore";
+ import { v4 as uuidv4 } from "uuid";
+@@ -175,18 +176,16 @@
+ 
+     const seasonPath = `users/${user.uid}/careers/${careerId}/seasons/${seasonId}`;
+ 
+-    const playersSnapshot = await getDocs(
+-      collection(db, `${seasonPath}/players`),
+-    );
+-    for (const playerDoc of playersSnapshot.docs) {
+-      await deleteDoc(playerDoc.ref);
+-    }
+-
+-    const academyPlayersSnapshot = await getDocs(
+-      collection(db, `${seasonPath}/academyPlayers`),
+-    );
+-    for (const academyPlayerDoc of academyPlayersSnapshot.docs) {
+-      await deleteDoc(academyPlayerDoc.ref);
++    for (const name of ["players", "academyPlayers", "table", "academyTournaments"]) {
++      const snapshot = await getDocsFromServer(collection(db, `${seasonPath}/${name}`));
++      for (const child of snapshot.docs) await deleteDoc(child.ref);
++    }
++
++    const matches = await getDocsFromServer(collection(db, `${seasonPath}/matches`));
++    for (const match of matches.docs) {
++      const stats = await getDocsFromServer(collection(match.ref, "playerStats"));
++      for (const stat of stats.docs) await deleteDoc(stat.ref);
++      await deleteDoc(match.ref);
+     }
+ 
+     await deleteDoc(doc(db, seasonPath));

@@ -47,8 +47,3 @@
   color: var(--blackColor);
   letter-spacing: 0.01em;
 }
-
-.card_action {
-  width: 100%;
-  margin-top: auto;
-}

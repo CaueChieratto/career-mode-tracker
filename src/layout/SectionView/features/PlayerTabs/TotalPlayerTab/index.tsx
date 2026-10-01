@@ -10,7 +10,7 @@ import LeagueStatsRowTotal from "./components/LeagueStatsRowTotal";
 import { useTotalPlayerData } from "./hooks/useTotalPlayerData";
 import Styles from "./TotalPlayerTab.module.css";
 
-export type TotalPlayerTabProps = {
+type TotalPlayerTabProps = {
   player?: Players;
   career: Career;
   season?: ClubData;

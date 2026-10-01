@@ -6,7 +6,7 @@ export interface AcademyPlayers {
   name: string;
   nationality: string;
   age: number;
-  shirtNumber: number;
+  shirtNumber?: number;
   height: number;
   weight: number;
   sector: string;

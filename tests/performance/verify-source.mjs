@@ -1,0 +1,11 @@
+import {readFileSync,writeFileSync,readdirSync} from 'node:fs';
+import {resolve} from 'node:path';
+import {createHash} from 'node:crypto';
+const before=JSON.parse(readFileSync('.test-tools/performance/source-before.json'));
+const changed=Object.entries(before).filter(([file,hash])=>createHash('sha256').update(readFileSync(file)).digest('hex')!==hash).map(([file])=>file);
+const current=readdirSync('src',{recursive:true,withFileTypes:true}).filter(x=>x.isFile()).map(x=>resolve(x.parentPath,x.name));
+const added=current.filter(file=>!(file in before));
+const result={compared:Object.keys(before).length,changed,added,checkedAt:new Date().toISOString()};
+writeFileSync('docs/performance/source-integrity.json',JSON.stringify(result,null,2));
+console.log(result);
+if(changed.length||added.length)process.exitCode=1;

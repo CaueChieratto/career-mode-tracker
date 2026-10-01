@@ -48,12 +48,10 @@ const PlayerStats = ({
     const ok = await handleDeleteLeague(leagueName);
     if (ok) {
       const manualBase = player.manualStatsLeagues ?? player.statsLeagues;
-      onUpdatePlayer?.(
-        toRawPlayer({
-          ...player,
-          statsLeagues: manualBase.filter((l) => l.leagueName !== leagueName),
-        }),
-      );
+      onUpdatePlayer?.({
+        ...toRawPlayer(player),
+        statsLeagues: manualBase.filter((l) => l.leagueName !== leagueName),
+      });
     }
   };
 

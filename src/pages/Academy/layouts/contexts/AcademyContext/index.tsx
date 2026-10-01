@@ -18,6 +18,8 @@ export type AcademyContextData = {
   playersAcademy: AcademyPlayers[];
   allPlayersAcademy: AcademyPlayers[];
   tournamentsAcademy: AcademyTournaments[];
+  allTournamentsAcademy: AcademyTournaments[];
+  hasLoadedAllTournaments: boolean;
   activeCardIndex: number | null;
   selectedPlayer?: AcademyPlayers;
   selectedTournament?: AcademyTournaments;
@@ -54,6 +56,7 @@ export type AcademyContextData = {
   ) => Promise<void>;
   onDeleteTournament?: (tournamentId: string) => Promise<void>;
   refetchPlayers: (isSilentUpdate?: boolean) => void;
+  applyPromotedPlayer: (player: AcademyPlayers) => void;
   refetchTournaments?: (isSilentUpdate?: boolean) => void;
   playerClick: (id: string, forceOpen?: boolean) => void;
   back: () => void;

@@ -8,7 +8,7 @@ import { ClubHeaderInfo } from "./components/ClubHeaderInfo";
 import { useHeaderNavigation } from "./hooks/useHeaderNavigation";
 import Styles from "./HeaderSeason.module.css";
 
-export type HeaderSeasonProps = {
+type HeaderSeasonProps = {
   career: Career;
   careerId: string;
   season?: number;

@@ -40,7 +40,7 @@ export const ServiceCareer = {
     const user = auth.currentUser;
     if (!user) throw new Error("Usuário não autenticado.");
 
-    await deleteCareerFromFirestore(user.uid, careerId);
+    await deleteCareerFromFirestore(careerId);
     deleteCareerLocalStorage(careerId);
   },
 

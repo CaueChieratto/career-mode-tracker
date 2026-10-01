@@ -5,7 +5,7 @@ import { LeagueStats } from "../../../../common/interfaces/playersStats/leagueSt
 import { League } from "../../../../common/interfaces/League";
 import { Match } from "../../../../common/interfaces/Match";
 
-export const getUnifiedPlayerLeagueStats = (
+const getUnifiedPlayerLeagueStats = (
   player: Players,
   matches: Match[],
   seasonLeagues: League[],
@@ -102,6 +102,8 @@ type MaybeAugmentedPlayer = Players & { _isAugmented?: boolean };
 
 export const toRawPlayer = (player: Players): Players => {
   const clean = { ...player } as MaybeAugmentedPlayer;
+  // Augmentation stores the manual source separately from the displayed total.
+  clean.statsLeagues = player.manualStatsLeagues ?? player.statsLeagues ?? [];
   delete clean._isAugmented;
   delete clean.manualStatsLeagues;
   return clean;
@@ -121,7 +123,7 @@ export const augmentSeasonWithMatchStats = (
 
     return {
       ...player,
-      manualStatsLeagues: player.statsLeagues,
+      manualStatsLeagues: player.statsLeagues ?? [],
       statsLeagues: getUnifiedPlayerLeagueStats(
         player,
         season.matches || [],
@@ -158,13 +160,12 @@ export const getAggregatedPlayersForCareer = (career: Career): Players[] => {
 
   career.clubData.forEach((season) => {
     season.players.forEach((player) => {
-      const normalizedName = player.name.trim().toLowerCase();
-      const normalizedNation = player.nation.trim().toLowerCase();
-      const key = `${normalizedName}-${normalizedNation}`;
+      const key = player.id;
 
       if (!playerMap[key]) {
         playerMap[key] = {
           ...player,
+          ballonDor: 0,
           statsLeagues: [],
           _leagueMap: {},
         };

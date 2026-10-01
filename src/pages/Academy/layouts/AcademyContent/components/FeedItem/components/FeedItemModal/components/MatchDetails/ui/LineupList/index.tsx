@@ -10,12 +10,14 @@ import { StatsGroup } from "../../../../../../../../ui/PlayerItem/components/Sta
 import { PlayerStats } from "../../../../../../../../ui/PlayerItem/components/PlayerStats";
 import { Boot } from "../../../../../../../../../../../../ui/IconsSVG/Boot";
 import { useTheme } from "../../../../../../../../../../../../contexts/LightThemeContext";
+import { AcademyPlayers } from "../../../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
 
 type LineupListProps = {
   details: NonNullable<FeedEvent["details"]>;
+  allPlayersAcademy: AcademyPlayers[];
 };
 
-export const LineupList = ({ details }: LineupListProps) => {
+export const LineupList = ({ details, allPlayersAcademy }: LineupListProps) => {
   const { theme } = useTheme();
 
   const playersWithStats = (details.lineup || []).filter(
@@ -30,10 +32,13 @@ export const LineupList = ({ details }: LineupListProps) => {
         <div className={Styles.lineupList}>
           <strong>Destaques da Partida:</strong>
           {playersWithStats.map((player, i) => {
-            const goals = player.goals || 0;
-            const assists = player.assists || 0;
-            const defesas = player.defesas || 0;
+            const goals = player.goals ?? 0;
+            const assists = player.assists ?? 0;
+            const defesas = player.defesas ?? 0;
             const rating = player.rating !== null ? player.rating : 0;
+            const isGoalkeeper = allPlayersAcademy.find(
+              (academyPlayer) => academyPlayer.id === player.playerId,
+            )?.position === "GOL";
 
             const colorRating = UseRatingColor(rating);
 
@@ -49,7 +54,7 @@ export const LineupList = ({ details }: LineupListProps) => {
                     />
                   </PlayerStats>
 
-                  {defesas ? (
+                  {isGoalkeeper ? (
                     <PlayerStats icon={MdSportsHandball} stat={defesas} />
                   ) : (
                     <PlayerStats icon={GiSoccerBall} stat={goals} />

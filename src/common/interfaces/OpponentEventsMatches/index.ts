@@ -10,7 +10,7 @@ export type OpponentAssist = {
   goalReference: string;
 };
 
-export type OpponentCard = {
+type OpponentCard = {
   player: string;
   yellow: boolean;
   yellowMinute: string;
@@ -20,7 +20,7 @@ export type OpponentCard = {
   redMinute: string;
 };
 
-export type OpponentOwnGoal = {
+type OpponentOwnGoal = {
   player: string;
   minute: string;
 };

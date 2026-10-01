@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import classNames from "classnames";
 import Styles from "./CareersPage.module.css";
 import Button from "../../components/Button";
@@ -11,7 +13,7 @@ import { useSaveClick } from "../../common/hooks/UseSaveClick";
 import Load from "../../components/Load";
 import CareerCard from "./components/CareerCard";
 import { useCareers } from "../../common/hooks/Career/UseCareer";
-import { CareerCardButtons } from "./constants/CareerCardButtons";
+import { getCareerCardButtons } from "./constants/CareerCardButtons";
 import BottomMenu from "../../ui/BottomMenu";
 import { useDragAndDrop } from "./hooks/DragAndDrop/useDragAndDrop";
 import { DragGhost } from "./ui/DragGhost";
@@ -22,6 +24,8 @@ import { CareerPageContext } from "./contexts/CareerPageContext";
 import { auth } from "../../common/services/Firebase";
 
 const CareersPage = () => {
+  const navigate = useNavigate();
+  const buttons = useMemo(() => getCareerCardButtons(navigate), [navigate]);
   const { careers, loading } = useCareers();
 
   const currentUserId = auth.currentUser?.uid;
@@ -73,7 +77,7 @@ const CareersPage = () => {
     onOpenModal,
     setSelectedCareer,
     onDragStart: handleDragStart,
-    buttons: CareerCardButtons,
+    buttons,
     requestRemoval,
   };
 

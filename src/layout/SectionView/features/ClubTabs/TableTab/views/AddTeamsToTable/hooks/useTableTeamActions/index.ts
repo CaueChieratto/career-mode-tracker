@@ -2,12 +2,14 @@ import { useState, useCallback } from "react";
 import { ServiceTable } from "../../services/ServiceTable";
 import { useAddTeamsToTableContext } from "../../contexts/context";
 import { v4 as uuidv4 } from "uuid";
+import { resolveTableTeamStatValues } from "../../helpers/tableTeamFormStats";
 
 export function useTableTeamActions() {
   const {
     career,
     season,
     teamId,
+    teamToEdit,
     formValues,
     onClose: onSuccess,
   } = useAddTeamsToTableContext();
@@ -55,13 +57,19 @@ export function useTableTeamActions() {
         teamBadge = career.teamBadge || "";
       }
 
-      const played = Number(formValues.played || 0);
-      const won = Number(formValues.won || 0);
-      const drawn = Number(formValues.drawn || 0);
-      const lost = Number(formValues.lost || 0);
-      const goalsFor = Number(formValues.goalsFor || 0);
-      const goalsAgainst = Number(formValues.goalsAgainst || 0);
-      const calculatedPoints = won * 3 + drawn * 1;
+      const {
+        played,
+        won,
+        drawn,
+        lost,
+        goalsFor,
+        goalsAgainst,
+        points,
+        goalDiff,
+      } = resolveTableTeamStatValues(
+        formValues,
+        teamId ? teamToEdit : undefined,
+      );
 
       const mapFormToZone = (
         val?: string,
@@ -109,8 +117,8 @@ export function useTableTeamActions() {
         lost,
         goalsFor,
         goalsAgainst,
-        goalDiff: goalsFor - goalsAgainst,
-        points: calculatedPoints,
+        goalDiff,
+        points,
         customZone: mapFormToZone(formValues.customZone),
       };
 
@@ -142,7 +150,16 @@ export function useTableTeamActions() {
       alert("Ocorreu um erro ao salvar os dados. Tente novamente.");
       setIsSaving(false);
     }
-  }, [careerId, seasonId, teamId, formValues, season, career, onSuccess]);
+  }, [
+    careerId,
+    seasonId,
+    teamId,
+    teamToEdit,
+    formValues,
+    season,
+    career,
+    onSuccess,
+  ]);
 
   return { isSaving, saveTableTeam, deleteTableTeam };
 }

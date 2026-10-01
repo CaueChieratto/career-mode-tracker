@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { getTableTeamFormFields } from "../../constants/TableTeamFormFields";
 import { leaguesByContinent } from "../../../../../../../../../common/utils/league";
 import { useAddTeamsToTableContext } from "../../contexts/context";
+import { getTableTeamStatPlaceholders } from "../../helpers/tableTeamFormStats";
 
 interface UseTableTeamFormParams {
   addedTeamNames?: string[];
@@ -10,7 +11,8 @@ interface UseTableTeamFormParams {
 export function useTableTeamForm({
   addedTeamNames = [],
 }: UseTableTeamFormParams = {}) {
-  const { career, season, formValues, teamId } = useAddTeamsToTableContext();
+  const { career, season, formValues, teamId, teamToEdit } =
+    useAddTeamsToTableContext();
   const isEditing = !!teamId;
 
   const validLeagueNames = useMemo(() => {
@@ -95,8 +97,14 @@ export function useTableTeamForm({
   }, [formValues.teamName, validSeasonTeams, career]);
 
   const formFields = useMemo(
-    () => getTableTeamFormFields(teamOptions, hasSelectedTeam, isEditing),
-    [teamOptions, hasSelectedTeam, isEditing],
+    () =>
+      getTableTeamFormFields(
+        teamOptions,
+        hasSelectedTeam,
+        isEditing,
+        getTableTeamStatPlaceholders(teamToEdit),
+      ),
+    [teamOptions, hasSelectedTeam, isEditing, teamToEdit],
   );
 
   return { formFields };

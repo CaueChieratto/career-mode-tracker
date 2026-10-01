@@ -8,7 +8,7 @@ type StringOrNumberKeys<T> = {
   [K in keyof T]: T[K] extends string | number ? K : never;
 }[keyof T];
 
-export interface StatConfig<T> {
+interface StatConfig<T> {
   id: string;
   icon: IconType;
   dataKey: StringOrNumberKeys<T>;

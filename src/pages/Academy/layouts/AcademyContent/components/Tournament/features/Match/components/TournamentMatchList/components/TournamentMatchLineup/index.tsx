@@ -10,13 +10,16 @@ import { PlayerStats } from "../../../../../../../../ui/PlayerItem/components/Pl
 import { PlayerName } from "../../../../../../../../ui/PlayerItem/components/PlayerName";
 import { PlayerItem } from "../../../../../../../../ui/PlayerItem";
 import { StatsGroup } from "../../../../../../../../ui/PlayerItem/components/StatsGroup";
+import { AcademyPlayers } from "../../../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
 
 type TournamentMatchLineupProps = {
   lineup?: PlayerMatchesStats[];
+  allPlayersAcademy: AcademyPlayers[];
 };
 
 export const TournamentMatchLineup = ({
   lineup,
+  allPlayersAcademy,
 }: TournamentMatchLineupProps) => {
   const { theme } = useTheme();
   if (!lineup || lineup.length === 0) return null;
@@ -31,9 +34,12 @@ export const TournamentMatchLineup = ({
           const rating = player.rating !== null ? player.rating : 0;
           const ratingColor = UseRatingColor(rating);
 
-          const goals = player.goals || 0;
-          const assists = player.assists || 0;
-          const defesas = player.defesas || 0;
+          const goals = player.goals ?? 0;
+          const assists = player.assists ?? 0;
+          const defesas = player.defesas ?? 0;
+          const isGoalkeeper = allPlayersAcademy.find(
+            (academyPlayer) => academyPlayer.id === player.playerId,
+          )?.position === "GOL";
 
           return (
             <PlayerItem key={player.playerId}>
@@ -44,7 +50,7 @@ export const TournamentMatchLineup = ({
                   <RatingBackground colorRating={ratingColor} rating={rating} />
                 </PlayerStats>
 
-                {defesas ? (
+                {isGoalkeeper ? (
                   <PlayerStats icon={MdSportsHandball} stat={defesas} />
                 ) : (
                   <PlayerStats icon={GiSoccerBall} stat={goals} />

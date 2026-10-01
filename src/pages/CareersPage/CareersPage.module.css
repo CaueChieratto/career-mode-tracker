@@ -25,20 +25,6 @@
   gap: 32px;
 }
 
-.bottonMenu {
-  position: fixed;
-  bottom: 15px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 5px;
-  z-index: 9999999;
-  border-radius: 100%;
-  border: 1px solid black;
-  display: flex;
-  justify-content: center;
-  background-color: var(--card-background);
-}
-
 .toastError {
   position: fixed;
   bottom: 80px;

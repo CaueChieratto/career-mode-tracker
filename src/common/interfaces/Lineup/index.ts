@@ -1,4 +1,4 @@
-export type SavedLineupSlot = {
+type SavedLineupSlot = {
   slotId: string;
   playerId: string | null;
   playerName: string | null;

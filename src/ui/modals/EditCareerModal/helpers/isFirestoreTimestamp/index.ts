@@ -1,4 +1,4 @@
-export interface FirestoreTimestamp {
+interface FirestoreTimestamp {
   toDate: () => Date;
 }
 

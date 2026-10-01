@@ -1,0 +1,76 @@
+--- a/src/common/services/ServiceSeasons/index.ts
++++ b/src/common/services/ServiceSeasons/index.ts
+@@ -9,7 +9,7 @@
+   doc,
+   getDocs,
+   getDocsFromServer,
+-  setDoc,
++  writeBatch,
+ } from "firebase/firestore";
+ import { v4 as uuidv4 } from "uuid";
+ import { stripHeavyData } from "../../utils/stripHeavyData";
+@@ -25,7 +25,7 @@
+     let storedSeasons: ClubData[] = [];
+     const career = await getCareerById(user.uid, careerId, (seasons) => {
+       storedSeasons = seasons;
+-    });
++    }, true);
+     const existingNumbers = career.clubData.map((s) => s.seasonNumber);
+     let seasonNumber = 1;
+     while (existingNumbers.includes(seasonNumber)) {
+@@ -132,9 +132,11 @@
+     const updatedClubData = [...career.clubData, newSeason];
+ 
+     try {
+-      await updateCareerFirestore(user.uid, careerId, {
+-        clubData: stripHeavyData(updatedClubData, storedSeasons),
+-      });
++      // One metadata update plus every copy must fit in a single atomic commit.
++      if (1 + playersForNewSeason.length + academyPlayersToCopy.length > 500) {
++        throw new Error("A temporada excede o limite de 500 escritas para criação atômica.");
++      }
++      const batch = writeBatch(db);
+ 
+       for (const player of playersForNewSeason) {
+         const playerRef = doc(
+@@ -142,7 +144,7 @@
+           `users/${user.uid}/careers/${careerId}/seasons/${newSeasonId}/players`,
+           player.id,
+         );
+-        await setDoc(playerRef, player);
++        batch.set(playerRef, player);
+       }
+ 
+       for (const academyPlayer of academyPlayersToCopy) {
+@@ -151,8 +153,12 @@
+           `users/${user.uid}/careers/${careerId}/seasons/${newSeasonId}/academyPlayers`,
+           academyPlayer.id,
+         );
+-        await setDoc(academyPlayerRef, academyPlayer);
++        batch.set(academyPlayerRef, academyPlayer);
+       }
++      batch.update(doc(db, `users/${user.uid}/careers/${careerId}`), {
++        clubData: stripHeavyData(updatedClubData, storedSeasons),
++      });
++      await batch.commit();
+     } catch (error) {
+       console.error(
+         `[addSeason] ERRO ao tentar criar e salvar a temporada:`,
+--- a/src/common/helpers/Getters/index.ts
++++ b/src/common/helpers/Getters/index.ts
+@@ -78,6 +78,7 @@
+   uid: string,
+   careerId: string,
+   onReadStoredSeasons?: (seasons: ClubData[]) => void,
++  failOnHydrationError = false,
+ ): Promise<Career> => {
+   const careerRef = doc(db, `users/${uid}/careers/${careerId}`);
+   const careerSnap = await getDoc(careerRef);
+@@ -135,6 +136,7 @@
+             players: combinedPlayers,
+           };
+         } catch (error) {
++          if (failOnHydrationError) throw error;
+           console.error("Erro: ", error);
+           return {
+             ...season,

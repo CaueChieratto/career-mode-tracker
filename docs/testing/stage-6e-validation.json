@@ -1,0 +1,519 @@
+{
+  "stage": "6E",
+  "date": "2026-09-24",
+  "status": "complete",
+  "fixedBugs": [
+    "B02",
+    "B05"
+  ],
+  "blockedBugs": [
+    "B12",
+    "B15"
+  ],
+  "pendingAdditionalCoverage": [
+    "B16"
+  ],
+  "testsBefore": {
+    "unitPassed": 155,
+    "unitTodo": 2,
+    "integrationPassed": 155,
+    "integrationTodo": 4,
+    "passed": 310,
+    "todo": 6,
+    "files": 23
+  },
+  "testsAfter": {
+    "unitPassed": 162,
+    "unitTodo": 0,
+    "integrationPassed": 175,
+    "integrationTodo": 3,
+    "passed": 337,
+    "todo": 3,
+    "files": 26
+  },
+  "todoByBugAfter": {
+    "B12": 1,
+    "B15": 1,
+    "B16": 1
+  },
+  "coverageBefore": {
+    "lines": {
+      "total": 47293,
+      "covered": 2824,
+      "skipped": 0,
+      "pct": 5.97
+    },
+    "statements": {
+      "total": 47293,
+      "covered": 2824,
+      "skipped": 0,
+      "pct": 5.97
+    },
+    "functions": {
+      "total": 792,
+      "covered": 71,
+      "skipped": 0,
+      "pct": 8.96
+    },
+    "branches": {
+      "total": 1476,
+      "covered": 668,
+      "skipped": 0,
+      "pct": 45.25
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "guardTests": {
+    "passed": 15,
+    "countedSeparately": true
+  },
+  "productionDiff": {
+    "production": [
+      {
+        "path": "src/common/helpers/Getters/index.ts",
+        "added": 12,
+        "removed": 21
+      },
+      {
+        "path": "src/common/helpers/mergeModernAndLegacy.ts",
+        "added": 9,
+        "removed": 0
+      },
+      {
+        "path": "src/common/services/ServicePlayers/PlayersGroupService.ts",
+        "added": 19,
+        "removed": 29
+      },
+      {
+        "path": "src/layout/SectionView/features/ClubTabs/StatsTab_Club/components/PlayerStatsList/components/PlayerStats/index.tsx",
+        "added": 4,
+        "removed": 6
+      },
+      {
+        "path": "src/layout/SectionView/features/ClubTabs/StatsTab_Club/views/AddSeason_Player/screens/AddSeason_PlayerScreen/index.tsx",
+        "added": 5,
+        "removed": 4
+      },
+      {
+        "path": "src/layout/SectionView/helpers/mergeMatchStats/index.ts",
+        "added": 4,
+        "removed": 4
+      }
+    ],
+    "added": 53,
+    "removed": 64,
+    "changedExistingFiles": [
+      "src/test/sources.test.ts",
+      "src/test/statistics.test.ts",
+      "src/layout/SectionView/helpers/mergeMatchStats/index.ts",
+      "src/layout/SectionView/features/ClubTabs/StatsTab_Club/views/AddSeason_Player/screens/AddSeason_PlayerScreen/index.tsx",
+      "src/layout/SectionView/features/ClubTabs/StatsTab_Club/components/PlayerStatsList/components/PlayerStats/index.tsx",
+      "src/common/services/ServicePlayers/PlayersGroupService.ts",
+      "src/common/helpers/Getters/index.ts",
+      "tests/integration/firestoreBoundary.ts",
+      "tests/integration/matches.test.ts"
+    ],
+    "newSourceFiles": [
+      "src/test/rawPlayerEditing.test.tsx",
+      "src/common/helpers/mergeModernAndLegacy.ts"
+    ],
+    "snapshotFiles": 1002,
+    "performanceArtifactCount": 32,
+    "changedPerformanceArtifacts": []
+  },
+  "unchangedScopeFiles": [
+    "package.json",
+    "package-lock.json",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "vitest.integration.config.ts",
+    "vitest.all.config.ts",
+    "src/common/services/ServiceSeasons/index.ts",
+    "src/common/utils/stripHeavyData.ts",
+    "src/common/services/ServicePlayers/PlayersCrudService.ts",
+    "src/common/services/ServicePlayers/PlayersStatsService.ts",
+    "src/common/services/ServicePlayers/helpers/statsHelpers/index.ts",
+    "tests/integration/network-guard.cjs",
+    "tests/integration/protected-user-guard.cjs",
+    "tests/integration/firestore.test.rules"
+  ],
+  "firebase": {
+    "realAccess": false,
+    "projectId": "demo-career-tracker-integration",
+    "firestoreHost": "127.0.0.1:8089",
+    "authHost": "127.0.0.1:9098",
+    "explicitEmulatorFlag": true,
+    "productionEnvLocalLoaded": false,
+    "externalTestNetworkBlocked": true,
+    "protectedUidGuardActive": true,
+    "protectedUidSentToSdk": false,
+    "fixtureResetScoped": true
+  },
+  "rulesChanged": false,
+  "dependenciesChanged": false,
+  "benchmarksRerun": false,
+  "migrationExecuted": false,
+  "newFunctionalRegressionsObserved": false,
+  "evidence": {
+    "stage": "6E",
+    "status": "complete",
+    "snapshot": ".test-tools/stage-6e/before.json",
+    "B02": {
+      "red": {
+        "tests": 6,
+        "passed": 1,
+        "failed": 5,
+        "mixedGoals": {
+          "expected": 5,
+          "received": 7
+        },
+        "matchOnlyGoals": {
+          "expected": 2,
+          "received": 4
+        }
+      },
+      "greenBeforeB05": {
+        "unitPassed": 29,
+        "integrationPassed": 7,
+        "roundtripCycles": 3
+      },
+      "productionPreservedOnResume": true
+    },
+    "B05": {
+      "redAfterQueryBoundarySupport": {
+        "tests": 10,
+        "passed": 4,
+        "failed": 6,
+        "listLostLegacyOnly": true,
+        "groupKeptStaleStatusContractsStats": true,
+        "careerMergedHomonymsGoals": 11,
+        "twoSeasonGoals": {
+          "expected": 5,
+          "received": 18
+        }
+      },
+      "initialGreen": {
+        "tests": 10,
+        "passed": 10
+      },
+      "expandedGreen": {
+        "tests": 12,
+        "passed": 12
+      },
+      "precedence": "modern by ID, legacy fallback for missing IDs"
+    },
+    "combined": {
+      "passed": true,
+      "cycles": 3,
+      "displayedGames": 4,
+      "displayedGoals": 6,
+      "persistedManualGames": 2,
+      "persistedManualGoals": 3,
+      "embeddedSnapshotUnchanged": true
+    },
+    "focused": {
+      "unitPassed": 63,
+      "B13UnitPassed": 15,
+      "integrationPassed": 59,
+      "integrationTodo": 1,
+      "additionalSourcesPassed": 12,
+      "additionalB13IntegrationPassed": 32,
+      "additionalB13IntegrationTodo": 1
+    },
+    "guardTestsPassed": 15,
+    "approvalInterruption": {
+      "command": "npm run test:integration -- tests/integration/sources-overlap.test.ts",
+      "executed": false,
+      "toolReason": "Automatic approval review could not complete due to usage limit",
+      "resolvedOnResume": true
+    },
+    "testHarnessCorrections": [
+      "Scoped ordinary query support while retaining protected UID and collection-group guards",
+      "React test uses createElement so runtime and noUnusedLocals agree"
+    ],
+    "finalValidation": [
+      {
+        "command": "npm run typecheck",
+        "exitCode": 0
+      },
+      {
+        "command": "npm run typecheck:tests",
+        "exitCode": 0
+      },
+      {
+        "command": "npm run lint",
+        "exitCode": 0
+      },
+      {
+        "command": "npm run test:run",
+        "exitCode": 0
+      },
+      {
+        "command": "npm run test:integration",
+        "exitCode": 0
+      },
+      {
+        "command": "npm run test:coverage:all",
+        "exitCode": 0
+      },
+      {
+        "command": "npm run build -- --config .test-tools/stage-6e/vite.build.config.mjs",
+        "exitCode": 0
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0
+      }
+    ],
+    "finalUnit": {
+      "passed": 162,
+      "todo": 0,
+      "files": 13
+    },
+    "finalIntegration": {
+      "passed": 175,
+      "todo": 3,
+      "files": 13
+    },
+    "coverageTests": {
+      "passed": 337,
+      "todo": 3,
+      "files": 26
+    }
+  },
+  "finalValidation": [
+    {
+      "command": "npm run typecheck",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run typecheck:tests",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run lint",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test:run",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test:integration",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test:coverage:all",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build -- --config .test-tools/stage-6e/vite.build.config.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "coverageAfter": {
+    "lines": {
+      "total": 47139,
+      "covered": 3287,
+      "skipped": 0,
+      "pct": 6.97
+    },
+    "statements": {
+      "total": 47139,
+      "covered": 3287,
+      "skipped": 0,
+      "pct": 6.97
+    },
+    "functions": {
+      "total": 803,
+      "covered": 85,
+      "skipped": 0,
+      "pct": 10.58
+    },
+    "branches": {
+      "total": 1532,
+      "covered": 719,
+      "skipped": 0,
+      "pct": 46.93
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "build": {
+    "isolatedConfig": ".test-tools/stage-6e/vite.build.config.mjs",
+    "javascriptKB": 5223.22,
+    "javascriptGzipKB": 1681.5,
+    "cssKB": 143.23,
+    "cssGzipKB": 28.1,
+    "existingLargeChunkWarning": true
+  },
+  "precedence": {
+    "modernAuthoritativeById": true,
+    "legacyFallbackByMissingId": true,
+    "emptyModernValuesAuthoritative": true,
+    "homonymsPreservedByDistinctId": true,
+    "sameIdAcrossSeasons": true,
+    "combinedRoundtripPassed": true,
+    "roundtripCycles": 3
+  },
+  "newStageStarted": false,
+  "performanceArtifacts": {
+    "tests/performance/action.mjs": {
+      "before": "497af5c790070ae2922aabd9df2827c274f193580585449a778ab8c25e40b4da",
+      "after": "497af5c790070ae2922aabd9df2827c274f193580585449a778ab8c25e40b4da"
+    },
+    "tests/performance/advanced.mjs": {
+      "before": "13441796364553c720b3dba64fee4efb643562cb288a7c15b527459d403302ea",
+      "after": "13441796364553c720b3dba64fee4efb643562cb288a7c15b527459d403302ea"
+    },
+    "tests/performance/browser-init.js": {
+      "before": "1838298d601b0f9e17d230c1a90840de124a1ae7bcf8b08bdee223a1afcc95fe",
+      "after": "1838298d601b0f9e17d230c1a90840de124a1ae7bcf8b08bdee223a1afcc95fe"
+    },
+    "tests/performance/browser.mjs": {
+      "before": "35728c7fb5d134e39a6723460d299e1d88c477ade4391327430b27635c094a46",
+      "after": "35728c7fb5d134e39a6723460d299e1d88c477ade4391327430b27635c094a46"
+    },
+    "tests/performance/build.mjs": {
+      "before": "941e678cc1d13b6f255d03c234bf44869486be9c3548e0fc033e96a7c97e62b3",
+      "after": "941e678cc1d13b6f255d03c234bf44869486be9c3548e0fc033e96a7c97e62b3"
+    },
+    "tests/performance/compare.mjs": {
+      "before": "4babc7004f47e7888fea3865294273d944b1a8dd49b225356e7e4915a2d2ef07",
+      "after": "4babc7004f47e7888fea3865294273d944b1a8dd49b225356e7e4915a2d2ef07"
+    },
+    "tests/performance/firebase-client.js": {
+      "before": "57412f4076fdc3bf4fdd00ea6e893fb33fd713b7026556076d788eabef0bcd85",
+      "after": "57412f4076fdc3bf4fdd00ea6e893fb33fd713b7026556076d788eabef0bcd85"
+    },
+    "tests/performance/inspect.mjs": {
+      "before": "9f832e360afc5dd389edb8be9b2da1edb7b29c8bd921e5b70c61150bb12374ab",
+      "after": "9f832e360afc5dd389edb8be9b2da1edb7b29c8bd921e5b70c61150bb12374ab"
+    },
+    "tests/performance/journeys.mjs": {
+      "before": "dd634ca5441536dd36b14fae26b9c7df93a31ce16dfdc026e7d48d42ff6926e9",
+      "after": "dd634ca5441536dd36b14fae26b9c7df93a31ce16dfdc026e7d48d42ff6926e9"
+    },
+    "tests/performance/large-targets.mjs": {
+      "before": "07841af0b5e513af46e7023aecc9705a597d70759faf5134c0a7ce5e5e33c6a0",
+      "after": "07841af0b5e513af46e7023aecc9705a597d70759faf5134c0a7ce5e5e33c6a0"
+    },
+    "tests/performance/measure.mjs": {
+      "before": "764bf7ed0ed7ce4ca1e18d68d6ed00bf1b96c4e9d0c3d69dc64c2fa80c767018",
+      "after": "764bf7ed0ed7ce4ca1e18d68d6ed00bf1b96c4e9d0c3d69dc64c2fa80c767018"
+    },
+    "tests/performance/network-guard.cjs": {
+      "before": "09256a7dc02c92623c0148faecba29532b45a5006c330b06526dfec97576d32d",
+      "after": "09256a7dc02c92623c0148faecba29532b45a5006c330b06526dfec97576d32d"
+    },
+    "tests/performance/pilot.mjs": {
+      "before": "8297b08583051ca8a9565aab1ebdc9051b0f399811c0506c33f52ea8b0e16d35",
+      "after": "8297b08583051ca8a9565aab1ebdc9051b0f399811c0506c33f52ea8b0e16d35"
+    },
+    "tests/performance/README.md": {
+      "before": "e0738f0b0cedd2e25cf5dd3ded80da6810e2a302a0fa59a7231070529d2265bd",
+      "after": "e0738f0b0cedd2e25cf5dd3ded80da6810e2a302a0fa59a7231070529d2265bd"
+    },
+    "tests/performance/report.mjs": {
+      "before": "fb70a5ff7a9ce1673a3b03c11f9df77d229740fa96cc475ca7e5e91ea6457df2",
+      "after": "fb70a5ff7a9ce1673a3b03c11f9df77d229740fa96cc475ca7e5e91ea6457df2"
+    },
+    "tests/performance/reseed.mjs": {
+      "before": "fbe7dc7c3a9313045c97d4a3fd0d3950615d53588ecc9b725b13d25882ffdf0f",
+      "after": "fbe7dc7c3a9313045c97d4a3fd0d3950615d53588ecc9b725b13d25882ffdf0f"
+    },
+    "tests/performance/run-all.mjs": {
+      "before": "11686aa15e60a2085918534ab1c1bef3ee735b17f03b9d0535111cd2ef25a7b8",
+      "after": "11686aa15e60a2085918534ab1c1bef3ee735b17f03b9d0535111cd2ef25a7b8"
+    },
+    "tests/performance/run.mjs": {
+      "before": "1c71fa7b543eaf8b4122dc12a712b2c67181499296194c823ce5c21dbe738261",
+      "after": "1c71fa7b543eaf8b4122dc12a712b2c67181499296194c823ce5c21dbe738261"
+    },
+    "tests/performance/sdk-adapter.js": {
+      "before": "b0c673c9d0a0f7d310f79cdd13cf1f979bad993886e4266675d74d7c321a7fac",
+      "after": "b0c673c9d0a0f7d310f79cdd13cf1f979bad993886e4266675d74d7c321a7fac"
+    },
+    "tests/performance/seed.mjs": {
+      "before": "ba2e3c04c8e19c2e06a017c849db4cf1dff5a23e3847477d8da4f0f3fa3b81e5",
+      "after": "ba2e3c04c8e19c2e06a017c849db4cf1dff5a23e3847477d8da4f0f3fa3b81e5"
+    },
+    "tests/performance/service.mjs": {
+      "before": "2966efb1c0415602169f1287f6e9313a81108c2e95769bfe78a067b91812ae5a",
+      "after": "2966efb1c0415602169f1287f6e9313a81108c2e95769bfe78a067b91812ae5a"
+    },
+    "tests/performance/summarize.mjs": {
+      "before": "f46cda9fabf0f382e86beae97316c925652195ad662bef594acb755aeb10ca02",
+      "after": "f46cda9fabf0f382e86beae97316c925652195ad662bef594acb755aeb10ca02"
+    },
+    "tests/performance/trace.mjs": {
+      "before": "c5844a94fe6c45d64d930004251ee39dd006edc9855be457fce3b70eded21db8",
+      "after": "c5844a94fe6c45d64d930004251ee39dd006edc9855be457fce3b70eded21db8"
+    },
+    "tests/performance/validate.mjs": {
+      "before": "df5b562eb699e67c71d83131ac0e391f7225c8b6e06d08576d152fb74872d494",
+      "after": "df5b562eb699e67c71d83131ac0e391f7225c8b6e06d08576d152fb74872d494"
+    },
+    "tests/performance/verify-source.mjs": {
+      "before": "337b31eac624f3d91afce50900996773a1d275b8fc47483850fc09b2eb248594",
+      "after": "337b31eac624f3d91afce50900996773a1d275b8fc47483850fc09b2eb248594"
+    },
+    "tests/performance-tools/package-lock.json": {
+      "before": "66afbf0c04c83984473de8cadebd2e70ebee230513f68616a29d1c5dac5c13b4",
+      "after": "66afbf0c04c83984473de8cadebd2e70ebee230513f68616a29d1c5dac5c13b4"
+    },
+    "tests/performance-tools/package.json": {
+      "before": "701000ffc6bfb34c16bc01b2f0f8d4a966d0e18307764c5f720ec73f4ed70f61",
+      "after": "701000ffc6bfb34c16bc01b2f0f8d4a966d0e18307764c5f720ec73f4ed70f61"
+    },
+    "docs/performance/baseline-report.md": {
+      "before": "a63bab8148c7e2ced06d418e2fef3c8b05be470823f72772042cab12c108ad66",
+      "after": "a63bab8148c7e2ced06d418e2fef3c8b05be470823f72772042cab12c108ad66"
+    },
+    "docs/performance/measurements.json": {
+      "before": "a7df78de4872909286e9e3b25784030752ba64c17aa3ae69efce380cde4a9acb",
+      "after": "a7df78de4872909286e9e3b25784030752ba64c17aa3ae69efce380cde4a9acb"
+    },
+    "docs/performance/methodology.md": {
+      "before": "80ea3f80a77b0726667d97ccc736330de536c3572b2bfc9a16a4192df0013908",
+      "after": "80ea3f80a77b0726667d97ccc736330de536c3572b2bfc9a16a4192df0013908"
+    },
+    "docs/performance/source-integrity.json": {
+      "before": "4c3ab3fe2e22adfa91aeab92293f9acd01675915415c51a6aaf90536e9940577",
+      "after": "4c3ab3fe2e22adfa91aeab92293f9acd01675915415c51a6aaf90536e9940577"
+    },
+    "docs/performance/validation.json": {
+      "before": "80d6ad897ef1038025b12b9f8d33560b0b35c19c423f99c493b32660dd2292ea",
+      "after": "80d6ad897ef1038025b12b9f8d33560b0b35c19c423f99c493b32660dd2292ea"
+    }
+  },
+  "stageFileHashes": {
+    "src/common/helpers/Getters/index.ts": "28573dc3c0a7793631140726cf838e8a02868f6cc0ac0bde4277d158d2731e9c",
+    "src/common/helpers/mergeModernAndLegacy.ts": "26a894cc3c5807a1f2c50da135ed3db685127c646c0da155c2498235a0f5c389",
+    "src/common/services/ServicePlayers/PlayersGroupService.ts": "236ad93afd8d21d6e909a64451f694a11dae7e072034d172f1611d18bc074c5b",
+    "src/layout/SectionView/features/ClubTabs/StatsTab_Club/components/PlayerStatsList/components/PlayerStats/index.tsx": "6cdb23d89b77d5094f0aee755bfde4f433f37554d346829c2ef46b0db390332e",
+    "src/layout/SectionView/features/ClubTabs/StatsTab_Club/views/AddSeason_Player/screens/AddSeason_PlayerScreen/index.tsx": "6353ec824b80c0b8a9e86aad024682db640075123725e46c6603efa465995b33",
+    "src/layout/SectionView/helpers/mergeMatchStats/index.ts": "cb03983c8125dae04daff79139d8beb785d1bfabe94b94262106dede8d85dee5",
+    "src/test/rawPlayerEditing.test.tsx": "285e22bb010523a99dc7409654f3c2dbfc99799d05bc5b8c650bbba6450e502f",
+    "src/test/sources.test.ts": "50c2854894b4be4f66e2300a1869596f0f980748a1e4a01e56210d51e19d8987",
+    "src/test/statistics.test.ts": "6b074f69927f324b9ffb9826c8a6c70c59b17d9f642bccc4d54a787181801ae8",
+    "tests/integration/firestoreBoundary.ts": "3daac19c63780668b2e6e20000af2a345dac162747897e314d23fa653cf9b164",
+    "tests/integration/matches.test.ts": "9f16b19fc899c9d69402b2c474f1bc0802759115c2bd1cac7df9968782277b6e",
+    "tests/integration/sources-overlap.test.ts": "0d9c510fe0e3f8be6f9bbb2e9db24c19a4d68c11b246bb7fb7d07e844563d37b",
+    "tests/integration/statistics-roundtrip.test.ts": "5a841ded6baf27a787188351eeff0c80ed2565a1468a812708d24f244e8c4a4a"
+  },
+  "productionPatchSha256": "4c56d3a23d73101c0b1fc3228bf73726115a9159f4d7da31ddeea24b09765782"
+}

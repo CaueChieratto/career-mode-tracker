@@ -1,0 +1,12 @@
+import { spawn } from 'node:child_process';
+import { readdirSync, mkdirSync } from 'node:fs';
+import path from 'node:path';
+const root=process.cwd();
+const env={...process.env,GCLOUD_PROJECT:'demo-career-tracker-integration',GOOGLE_CLOUD_PROJECT:'demo-career-tracker-integration',FIRESTORE_EMULATOR_HOST:'127.0.0.1:8089',FIREBASE_AUTH_EMULATOR_HOST:'127.0.0.1:9098',FIREBASE_EMULATORS_PATH:path.join(root,'.test-tools/emulators'),XDG_CONFIG_HOME:path.join(root,'.test-tools/config'),CI:'true',FIREBASE_CLI_DISABLE_UPDATE_CHECK:'true',PERF_HOLD:process.argv.includes('--hold')?'1':'0'};
+for(const key of ['FIREBASE_TOKEN','GOOGLE_APPLICATION_CREDENTIALS','GOOGLE_OAUTH_ACCESS_TOKEN','NODE_OPTIONS','DEBUG'])delete env[key];
+const bin=path.join(root,'.test-tools/java',readdirSync('.test-tools/java').find(x=>x.includes('jre')),'bin');
+env.PATH=bin+path.delimiter+(env.PATH||env.Path||'');delete env.Path;
+env.NODE_OPTIONS=`--require "${path.join(root,'tests/performance/network-guard.cjs').replaceAll('\\','/')}"`;
+mkdirSync(env.XDG_CONFIG_HOME,{recursive:true});
+const child=spawn(process.execPath,['tests/emulator-tools/node_modules/firebase-tools/lib/bin/firebase.js','emulators:exec','--only','firestore,auth','--project',env.GCLOUD_PROJECT,'--config','firebase.test.json','node tests/performance/service.mjs'],{cwd:root,env,stdio:'inherit'});
+child.on('exit',code=>{process.exitCode=code??1;});

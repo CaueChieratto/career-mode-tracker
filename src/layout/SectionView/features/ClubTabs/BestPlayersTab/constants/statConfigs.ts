@@ -1,6 +1,6 @@
 import { AggregatedPlayerStats } from "../../../../../../common/interfaces/AggregatedPlayerStats/AggregatedPlayerStats";
 
-export type StatConfig = {
+type StatConfig = {
   title: string;
   key: keyof AggregatedPlayerStats;
   isRating?: boolean;

@@ -58,13 +58,6 @@
   opacity: 0.65;
 }
 
-.arrow {
-  position: relative;
-  z-index: 2;
-  font-size: 22px;
-  color: var(--club-color);
-}
-
 .backCard {
   background: linear-gradient(
     315deg,
@@ -77,8 +70,4 @@
   background: transparent;
   border: 2px solid var(--club-color);
   color: var(--club-color);
-}
-
-.backCard .arrow {
-  transform: rotate(180deg);
 }

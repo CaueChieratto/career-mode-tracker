@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Career } from "../../../../common/interfaces/Career";
 import { ColorsService } from "../../../../common/services/ColorsService";
 import { ServiceSeasons } from "../../../../common/services/ServiceSeasons";
@@ -12,6 +12,7 @@ export const useAddSeasons = () => {
   const { loading: loadingCareers, careers } = useCareers();
 
   const [loading, setLoading] = useState(false);
+  const submitLockRef = useRef(false);
 
   const career = careers.find((c) => c.id === careerId);
 
@@ -20,13 +21,16 @@ export const useAddSeasons = () => {
   );
 
   const handleAddSeason = async (career: Career) => {
+    if (submitLockRef.current) return;
+    submitLockRef.current = true;
     try {
       setLoading(true);
-      await ServiceSeasons.addSeason(career.id);
+      await ServiceSeasons.addSeason(career);
     } catch (error) {
       console.error("Erro ao adicionar temporada:", error);
       alert("Ocorreu um erro ao adicionar a temporada.");
     } finally {
+      submitLockRef.current = false;
       setLoading(false);
     }
   };

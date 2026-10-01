@@ -12,7 +12,7 @@ import { GenericDetails } from "./components/GenericDetails";
 import { useAcademyContext } from "../../../../../contexts/AcademyContext/hooks/useAcademyContext";
 import { OverflowText } from "../../../../../../../../components/OverflowText";
 
-export type FeedItemModalProps = {
+type FeedItemModalProps = {
   eventId: string | number;
   title: string;
   subtitle: string;
@@ -57,6 +57,7 @@ export const FeedItemModal = ({
           clubName={clubName}
           allCareers={allCareers}
           teamBadge={teamBadge}
+          allPlayersAcademy={allPlayersAcademy}
         />
       );
     }

@@ -163,7 +163,10 @@ export const SeasonConfigs = ({
           {canProceed && (
             <Button
               className={Styles.button}
-              onClick={onNavigate}
+              onClick={() => {
+                document.body.classList.remove("modal-open");
+                onNavigate();
+              }}
               style={{
                 backgroundColor: clubColor,
                 border: `1px solid ${darkClubColor}`,

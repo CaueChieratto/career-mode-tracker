@@ -10,6 +10,7 @@ import { ServiceTable } from "../../services/ServiceTable";
 import { useAddTeamsToTableContext } from "../../contexts/context";
 import Form from "../../../../../../../../../components/Form";
 import { TableRowData } from "../../../../../../../../../common/interfaces/Table";
+import { getEmptyTableTeamStatFormValues } from "../../helpers/tableTeamFormStats";
 
 export const AddTeamsToTableScreen = () => {
   const formRef = useRef<HTMLFormElement>(null);
@@ -74,12 +75,7 @@ export const AddTeamsToTableScreen = () => {
 
       setFormValues({
         teamName: t.name,
-        played: String(t.played),
-        won: String(t.won),
-        drawn: String(t.drawn),
-        lost: String(t.lost),
-        goalsFor: String(t.goalsFor),
-        goalsAgainst: String(t.goalsAgainst),
+        ...getEmptyTableTeamStatFormValues(),
         customZone: mapZoneToForm(t.customZone),
       });
     }

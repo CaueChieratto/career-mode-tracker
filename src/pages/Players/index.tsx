@@ -6,6 +6,8 @@ import BottomMenu from "../../ui/BottomMenu";
 import SectionView from "../../layout/SectionView";
 import { usePlayerPageData } from "./hooks/usePlayerPageData";
 
+import { PlayerGroupStatsProvider } from "./contexts/PlayerGroupStatsContext";
+
 const Player = () => {
   const {
     loading,
@@ -38,7 +40,7 @@ const Player = () => {
       : `${totalSeasons} ${seasonLabel} no clube`;
 
   return (
-    <>
+    <PlayerGroupStatsProvider career={spoofedCareer!} isGeralPage={isNotSeason}>
       <SectionView
         isPlayer
         notSeason
@@ -52,7 +54,7 @@ const Player = () => {
       />
 
       {activeModal === ModalType.NONE && <BottomMenu />}
-    </>
+    </PlayerGroupStatsProvider>
   );
 };
 

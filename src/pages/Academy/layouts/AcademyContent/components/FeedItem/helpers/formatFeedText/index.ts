@@ -1,6 +1,6 @@
 import { toSingular } from "../toSingular";
 
-export interface FormattedFeedText {
+interface FormattedFeedText {
   professional: string;
   social: string;
 }

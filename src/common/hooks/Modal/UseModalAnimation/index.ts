@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { lockBodyScroll } from "../../../utils/bodyScrollLock";
 
 export const useModalAnimation = (
   isOpen: boolean,
@@ -12,28 +13,44 @@ export const useModalAnimation = (
   const startY = useRef<number | null>(null);
   const currentTranslateY = useRef(0);
   const dragging = useRef(false);
+  const unlockScrollRef = useRef<(() => void) | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const unlockScroll = useCallback(() => {
+    unlockScrollRef.current?.();
+    unlockScrollRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
       lastScrollRef.current = window.scrollY;
-      document.body.classList.add("modal-open");
+      unlockScrollRef.current ??= lockBodyScroll();
 
       setVisible(true);
       setTranslateY(0);
       currentTranslateY.current = 0;
       setClosing(false);
     }
-  }, [isOpen]);
+
+    return () => {
+      unlockScroll();
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, [isOpen, unlockScroll]);
 
   const close = () => {
     window.scrollTo({ top: lastScrollRef.current });
-    document.body.classList.remove("modal-open");
+    unlockScroll();
 
     setClosing(true);
 
-    setTimeout(() => {
+    closeTimerRef.current = setTimeout(() => {
       setVisible(false);
       if (onCloseCallback) onCloseCallback();
+      closeTimerRef.current = null;
     }, 300);
   };
 

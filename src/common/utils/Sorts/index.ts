@@ -1,7 +1,4 @@
-import {
-  LeagueLevels,
-  leagueLevelsInSelect,
-} from "../../constants/LeagueLevels";
+import { LeagueLevels } from "../../constants/LeagueLevels";
 import { Career } from "../../interfaces/Career";
 import { ClubData } from "../../interfaces/club/clubData";
 import { Trophy } from "../../interfaces/club/trophy";
@@ -62,14 +59,6 @@ export const sortLeaguesByLevel = (leagues: LeagueStats[]) => {
   return [...leagues].sort((a, b) => {
     const levelA = LeagueLevels[a.leagueName] ?? 999;
     const levelB = LeagueLevels[b.leagueName] ?? 999;
-    return levelA - levelB;
-  });
-};
-
-export const sortLeaguesForSelect = (leagueNames: string[]) => {
-  return [...leagueNames].sort((a, b) => {
-    const levelA = leagueLevelsInSelect[a] ?? 999;
-    const levelB = leagueLevelsInSelect[b] ?? 999;
     return levelA - levelB;
   });
 };

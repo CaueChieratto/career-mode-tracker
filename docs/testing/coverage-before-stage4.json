@@ -1,0 +1,661 @@
+{
+  "total": {
+    "lines": {
+      "total": 47646,
+      "covered": 1885,
+      "skipped": 0,
+      "pct": 3.95
+    },
+    "statements": {
+      "total": 47646,
+      "covered": 1885,
+      "skipped": 0,
+      "pct": 3.95
+    },
+    "functions": {
+      "total": 760,
+      "covered": 44,
+      "skipped": 0,
+      "pct": 5.78
+    },
+    "branches": {
+      "total": 1119,
+      "covered": 350,
+      "skipped": 0,
+      "pct": 31.27
+    },
+    "branchesTrue": {
+      "total": 0,
+      "covered": 0,
+      "skipped": 0,
+      "pct": 100
+    }
+  },
+  "files": 725,
+  "modules": {
+    "src/common/helpers/Deleters/index.ts": {
+      "lines": {
+        "total": 85,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 85,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "src/common/helpers/Getters/index.ts": {
+      "lines": {
+        "total": 118,
+        "covered": 116,
+        "skipped": 0,
+        "pct": 98.3
+      },
+      "functions": {
+        "total": 2,
+        "covered": 2,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 118,
+        "covered": 116,
+        "skipped": 0,
+        "pct": 98.3
+      },
+      "branches": {
+        "total": 38,
+        "covered": 28,
+        "skipped": 0,
+        "pct": 73.68
+      }
+    },
+    "src/common/services/ServicePlayers/PlayersCrudService.ts": {
+      "lines": {
+        "total": 122,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 122,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "src/common/services/ServicePlayers/helpers/contractHelpers/index.ts": {
+      "lines": {
+        "total": 164,
+        "covered": 151,
+        "skipped": 0,
+        "pct": 92.07
+      },
+      "functions": {
+        "total": 4,
+        "covered": 4,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 164,
+        "covered": 151,
+        "skipped": 0,
+        "pct": 92.07
+      },
+      "branches": {
+        "total": 44,
+        "covered": 32,
+        "skipped": 0,
+        "pct": 72.72
+      }
+    },
+    "src/common/services/ServicePlayers/helpers/statsHelpers/index.ts": {
+      "lines": {
+        "total": 51,
+        "covered": 51,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 51,
+        "covered": 51,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 10,
+        "covered": 9,
+        "skipped": 0,
+        "pct": 90
+      }
+    },
+    "src/common/services/ServiceSeasons/index.ts": {
+      "lines": {
+        "total": 183,
+        "covered": 153,
+        "skipped": 0,
+        "pct": 83.6
+      },
+      "functions": {
+        "total": 5,
+        "covered": 2,
+        "skipped": 0,
+        "pct": 40
+      },
+      "statements": {
+        "total": 183,
+        "covered": 153,
+        "skipped": 0,
+        "pct": 83.6
+      },
+      "branches": {
+        "total": 41,
+        "covered": 34,
+        "skipped": 0,
+        "pct": 82.92
+      }
+    },
+    "src/common/utils/stripHeavyData.ts": {
+      "lines": {
+        "total": 9,
+        "covered": 9,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 9,
+        "covered": 9,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 2,
+        "covered": 2,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches/index.ts": {
+      "lines": {
+        "total": 293,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 293,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/validators/validateMatchForm/index.ts": {
+      "lines": {
+        "total": 19,
+        "covered": 19,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 19,
+        "covered": 19,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 7,
+        "covered": 7,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "src/layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable/index.ts": {
+      "lines": {
+        "total": 96,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 96,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "src/layout/SectionView/helpers/mergeMatchStats/index.ts": {
+      "lines": {
+        "total": 191,
+        "covered": 191,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 5,
+        "covered": 5,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 191,
+        "covered": 191,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 62,
+        "covered": 49,
+        "skipped": 0,
+        "pct": 79.03
+      }
+    },
+    "src/pages/Academy/layouts/AcademyContent/services/AcademyService/index.ts": {
+      "lines": {
+        "total": 203,
+        "covered": 60,
+        "skipped": 0,
+        "pct": 29.55
+      },
+      "functions": {
+        "total": 10,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 10
+      },
+      "statements": {
+        "total": 203,
+        "covered": 60,
+        "skipped": 0,
+        "pct": 29.55
+      },
+      "branches": {
+        "total": 5,
+        "covered": 3,
+        "skipped": 0,
+        "pct": 60
+      }
+    },
+    "src/pages/Academy/layouts/AcademyContent/services/AcademyService/helpers/buildPlayerAcademyTournaments/index.ts": {
+      "lines": {
+        "total": 49,
+        "covered": 47,
+        "skipped": 0,
+        "pct": 95.91
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 49,
+        "covered": 47,
+        "skipped": 0,
+        "pct": 95.91
+      },
+      "branches": {
+        "total": 12,
+        "covered": 7,
+        "skipped": 0,
+        "pct": 58.33
+      }
+    },
+    "src/pages/Academy/layouts/AcademyContent/services/AcademyService/helpers/buildPromotedPlayer/index.ts": {
+      "lines": {
+        "total": 59,
+        "covered": 59,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 59,
+        "covered": 59,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 2,
+        "covered": 2,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "src/pages/GroupCareerPage/services/ServiceCareerGroup/index.ts": {
+      "lines": {
+        "total": 52,
+        "covered": 49,
+        "skipped": 0,
+        "pct": 94.23
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 52,
+        "covered": 49,
+        "skipped": 0,
+        "pct": 94.23
+      },
+      "branches": {
+        "total": 16,
+        "covered": 14,
+        "skipped": 0,
+        "pct": 87.5
+      }
+    },
+    "src/pages/Match/components/LineupTab/helpers/buildLineupStatsUpdate/index.ts": {
+      "lines": {
+        "total": 18,
+        "covered": 18,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 18,
+        "covered": 18,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 5,
+        "covered": 5,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "src/pages/Match/components/LineupTab/hooks/useLineupPersistence/index.ts": {
+      "lines": {
+        "total": 53,
+        "covered": 51,
+        "skipped": 0,
+        "pct": 96.22
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 53,
+        "covered": 51,
+        "skipped": 0,
+        "pct": 96.22
+      },
+      "branches": {
+        "total": 7,
+        "covered": 5,
+        "skipped": 0,
+        "pct": 71.42
+      }
+    },
+    "src/pages/Match/components/LineupTab/hooks/useSaveLineup/index.ts": {
+      "lines": {
+        "total": 30,
+        "covered": 30,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 30,
+        "covered": 30,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 4,
+        "covered": 3,
+        "skipped": 0,
+        "pct": 75
+      }
+    },
+    "src/pages/Match/components/LineupTab/views/AddMatchStatsPlayer/helpers/calculateSubstitutionMinutes/index.ts": {
+      "lines": {
+        "total": 95,
+        "covered": 93,
+        "skipped": 0,
+        "pct": 97.89
+      },
+      "functions": {
+        "total": 3,
+        "covered": 3,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 95,
+        "covered": 93,
+        "skipped": 0,
+        "pct": 97.89
+      },
+      "branches": {
+        "total": 45,
+        "covered": 40,
+        "skipped": 0,
+        "pct": 88.88
+      }
+    },
+    "src/pages/Match/components/LineupTab/views/AddMatchStatsPlayer/services/savePlayerMatchStats/index.ts": {
+      "lines": {
+        "total": 103,
+        "covered": 103,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 4,
+        "covered": 4,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 103,
+        "covered": 103,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 21,
+        "covered": 20,
+        "skipped": 0,
+        "pct": 95.23
+      }
+    },
+    "src/pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/useAddDetails.ts": {
+      "lines": {
+        "total": 258,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 258,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    },
+    "src/pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/helpers/buildMatchPayload/index.ts": {
+      "lines": {
+        "total": 59,
+        "covered": 59,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 59,
+        "covered": 59,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 15,
+        "covered": 14,
+        "skipped": 0,
+        "pct": 93.33
+      }
+    },
+    "src/pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/helpers/calculateTableStats/index.ts": {
+      "lines": {
+        "total": 46,
+        "covered": 46,
+        "skipped": 0,
+        "pct": 100
+      },
+      "functions": {
+        "total": 2,
+        "covered": 2,
+        "skipped": 0,
+        "pct": 100
+      },
+      "statements": {
+        "total": 46,
+        "covered": 46,
+        "skipped": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 22,
+        "covered": 22,
+        "skipped": 0,
+        "pct": 100
+      }
+    },
+    "src/pages/Match/services/ServiceLineup/index.ts": {
+      "lines": {
+        "total": 43,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 43,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 1,
+        "covered": 0,
+        "skipped": 0,
+        "pct": 0
+      }
+    }
+  }
+}

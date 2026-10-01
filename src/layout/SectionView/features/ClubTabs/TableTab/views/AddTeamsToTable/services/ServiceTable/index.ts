@@ -1,3 +1,4 @@
+import { reconcileMatch } from "./reconcileMatch";
 import {
   collection,
   doc,
@@ -14,6 +15,7 @@ type NewTableTeamData = Omit<TableTeamData, "id"> & {
 };
 
 export const ServiceTable = {
+  reconcileMatch,
   getTableBySeason: async (
     careerId: string,
     seasonId: string,

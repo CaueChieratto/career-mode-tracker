@@ -18,38 +18,3 @@
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 12px;
 }
-
-.titlesIconWrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background-color: rgba(212, 175, 55, 0.1);
-  border-radius: 50%;
-}
-
-.titlesIcon {
-  font-size: 24px;
-  color: var(--club-color, #d4af37);
-}
-
-.titlesInfo {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.titlesValue {
-  font-size: 28px;
-  font-weight: 900;
-  color: var(--blackColor);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.titlesLabel {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-tertiary);
-}

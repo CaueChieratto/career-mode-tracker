@@ -66,6 +66,7 @@ export const useSeasonView = (isGeralPage: boolean, isPlayer?: boolean) => {
   return {
     loading,
     career,
+    careers,
     season: seasonData,
     tabsConfig,
     isModalOpen,

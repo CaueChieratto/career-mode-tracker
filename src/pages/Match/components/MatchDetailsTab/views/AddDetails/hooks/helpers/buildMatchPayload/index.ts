@@ -3,7 +3,7 @@ import { buildOpponentEvents } from "../../../helpers/buildOpponentEvents";
 import { calculateMatchResult } from "../../../helpers/calculateMatchResult";
 import { MatchWithOpponentEvents } from "../../../../../../../../../common/interfaces/OpponentEventsMatches";
 
-export interface MatchPayloadResult {
+interface MatchPayloadResult {
   updatedMatch: MatchWithOpponentEvents;
   userResult: "V" | "E" | "D" | "?";
 }

@@ -3,18 +3,11 @@ import { useForm } from "../../../../../../../common/hooks/UseForm";
 import { formatRating } from "../../../../../../../common/utils/FormatRating";
 import { Field } from "../../../../../../../components/FormSection";
 import { ServiceMatches } from "../../../../../../../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
-import { ServiceTable } from "../../../../../../../layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable";
-import { TableTeamData } from "../../../../../../../common/interfaces/TableTeamData";
 import { buildFormFields } from "../helpers/buildFormFields";
 import { buildInitialFormValues } from "./helpers/buildInitialFormValues";
 import { buildMatchPayload } from "./helpers/buildMatchPayload";
-import {
-  getUpdatedTableTeamData,
-  getNewTableTeamData,
-} from "./helpers/calculateTableStats";
 import { resolveCardConflicts } from "./helpers/resolveCardConflicts";
 import { Match } from "../../../../../../../common/interfaces/Match";
-import { leaguesByContinent } from "../../../../../../../common/utils/league";
 import { Career } from "../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../common/interfaces/club/clubData";
 
@@ -80,110 +73,24 @@ export const useAddDetails = ({
     [handleBooleanChange],
   );
 
-  const syncTeamStats = useCallback(
-    async (
-      teamName: string,
-      goalsFor: number,
-      goalsAgainst: number,
-      result: "V" | "E" | "D" | "?",
-      currentTable: TableTeamData[],
-    ) => {
-      if (!career || !season) return;
-      const teamInTable = currentTable.find(
-        (t) => t.name.trim().toLowerCase() === teamName.trim().toLowerCase(),
-      );
-      if (teamInTable) {
-        const updatedData = getUpdatedTableTeamData(
-          teamInTable,
-          goalsFor,
-          goalsAgainst,
-          result,
-        );
-        await ServiceTable.updateTeamInTable(
-          career.id,
-          season.id,
-          teamInTable.id,
-          updatedData,
-        );
-      } else {
-        const existingTeamInfo = season?.teams?.find(
-          (t) => t.name === teamName,
-        );
-        const badge =
-          existingTeamInfo?.badge ||
-          (teamName === career.clubName ? career.teamBadge || "" : "");
-        const newTeamData = getNewTableTeamData(
-          teamName,
-          goalsFor,
-          goalsAgainst,
-          result,
-          badge,
-        );
-        await ServiceTable.addTeamToTable(career.id, season.id, newTeamData);
-      }
-    },
-    [career, season],
-  );
-
   const saveDetails = useCallback(async () => {
     if (!career || !season || !match) return;
     setIsSaving(true);
     try {
       const isUserHome = match.homeTeam === career.clubName;
-      const { updatedMatch, userResult } = buildMatchPayload(
+      const { updatedMatch } = buildMatchPayload(
         match,
         formValues,
         booleanValues,
         isUserHome,
       );
-      await ServiceMatches.updateMatchInSeason(
-        career.id,
-        season.id,
+      await ServiceMatches.updateMatchDetailsInSeason(
+        career,
+        season,
+        match,
         updatedMatch as Match,
+        !booleanValues.hasPenalties,
       );
-      const matchLeagueName = match.league.trim().toLowerCase();
-      const foundLeagueInDb = season.leagues?.find(
-        (l) => l.name.trim().toLowerCase() === matchLeagueName,
-      );
-      let isLeagueMatch = foundLeagueInDb?.league === true;
-      if (!isLeagueMatch) {
-        const allStaticLeagues = Object.values(leaguesByContinent).flatMap(
-          (continent) => Object.values(continent).flat(),
-        );
-        const foundStaticLeague = allStaticLeagues.find(
-          (l) => l.name.trim().toLowerCase() === matchLeagueName,
-        );
-        isLeagueMatch = foundStaticLeague?.league === true;
-      }
-      if (isLeagueMatch && match.status !== "FINISHED") {
-        const currentTable = await ServiceTable.getTableBySeason(
-          career.id,
-          season.id,
-        );
-        const opponentName = isUserHome ? match.awayTeam : match.homeTeam;
-        const opponentResult =
-          userResult === "V" ? "D" : userResult === "D" ? "V" : "E";
-        const homeScoreNum = Number(formValues.homeScore) || 0;
-        const awayScoreNum = Number(formValues.awayScore) || 0;
-        const userScoreNum = isUserHome ? homeScoreNum : awayScoreNum;
-        const opponentScoreNum = isUserHome ? awayScoreNum : homeScoreNum;
-        await Promise.all([
-          syncTeamStats(
-            career.clubName,
-            userScoreNum,
-            opponentScoreNum,
-            userResult,
-            currentTable,
-          ),
-          syncTeamStats(
-            opponentName,
-            opponentScoreNum,
-            userScoreNum,
-            opponentResult,
-            currentTable,
-          ),
-        ]);
-      }
       onClose();
       onSaved?.(updatedMatch as Match);
     } finally {
@@ -196,7 +103,6 @@ export const useAddDetails = ({
     career,
     season,
     onClose,
-    syncTeamStats,
     onSaved,
   ]);
 

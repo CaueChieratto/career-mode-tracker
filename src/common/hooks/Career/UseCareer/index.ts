@@ -9,21 +9,33 @@ export const useCareers = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let unsubscribeCareers: (() => void) | undefined;
+
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (unsubscribeCareers) {
+        unsubscribeCareers();
+        unsubscribeCareers = undefined;
+      }
+
       if (user) {
         setLoading(true);
-        const unsubscribeCareers = ServiceCareer.getAll((data) => {
+        unsubscribeCareers = ServiceCareer.getAll((data) => {
           setCareers(data);
           setLoading(false);
         });
-        return () => unsubscribeCareers && unsubscribeCareers();
       } else {
         setCareers([]);
         setLoading(false);
       }
     });
 
-    return () => unsubscribeAuth();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeCareers) {
+        unsubscribeCareers();
+        unsubscribeCareers = undefined;
+      }
+    };
   }, []);
 
   return { careers, loading };

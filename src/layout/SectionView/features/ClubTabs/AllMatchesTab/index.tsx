@@ -8,7 +8,8 @@ import NoStatsMessage from "../../../../../components/NoStatsMessage";
 import { ButtonsSwitch } from "../../../../../components/ButtonsSwitch";
 import { MatchCard } from "./components/MatchCard";
 import { MatchStatus } from "../../../../../common/interfaces/MatchStatus";
-import { MONTH_OPTIONS } from "./constants/MONTH_OPTIONS";
+import { MONTH_OPTIONS, MONTH_TO_NUM } from "./constants/MONTH_OPTIONS";
+import { getSeasonDateRange } from "../../../../../common/utils/GetSeasonDateRange";
 import { getMatchSeason, processMatches } from "./helpers/processMatches";
 import { SectionScreen } from "../../../config/screens";
 import { MatchesContext } from "./contexts/MatchesContext";
@@ -33,6 +34,24 @@ export const AllMatchesTab = ({
   const isGeralUrl = location.pathname.includes("/Geral");
   const isGeralPage = isGeralUrl || !!player;
   const storageKeySuffix = isGeralUrl ? "geral" : season.id;
+
+  const monthOptions = useMemo(() => {
+    const { startDate } = getSeasonDateRange(
+      season.seasonNumber,
+      career.createdAt,
+      career.nation,
+    );
+    const months = MONTH_OPTIONS.slice(1);
+    const startIndex = months.findIndex(
+      (month) => MONTH_TO_NUM[month] === startDate.getMonth() + 1,
+    );
+
+    return [
+      MONTH_OPTIONS[0],
+      ...months.slice(startIndex),
+      ...months.slice(0, startIndex),
+    ];
+  }, [season.seasonNumber, career.createdAt, career.nation]);
 
   const [activeTab, setActiveTab] = useState<MatchStatus | string>(() => {
     return (
@@ -107,7 +126,7 @@ export const AllMatchesTab = ({
         <ButtonsSwitch
           isMatches
           isGeralPage={isGeralPage}
-          selectOptions={MONTH_OPTIONS}
+          selectOptions={monthOptions}
           selectValue={selectedMonth}
           onSelectChange={setSelectedMonth}
           activeTab={activeTab}

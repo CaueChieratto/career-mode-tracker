@@ -5,17 +5,6 @@
   margin-bottom: 20px;
 }
 
-.circular_value {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--blackColor, #000000);
-  min-width: 50px;
-}
-
-.circular_value:last-child {
-  text-align: right;
-}
-
 .circular_label {
   font-size: 13px;
   font-weight: 500;

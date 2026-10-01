@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { lockBodyScroll } from "../../../../../../../../../common/utils/bodyScrollLock";
 
 type UseSlotDragProps = {
   slotId: string;
@@ -19,6 +20,12 @@ export const useSlotDrag = ({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const startPosRef = useRef({ x: 0, y: 0 });
   const wasDraggedRef = useRef(false);
+  const unlockScrollRef = useRef<(() => void) | null>(null);
+
+  const unlockScroll = useCallback(() => {
+    unlockScrollRef.current?.();
+    unlockScrollRef.current = null;
+  }, []);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -45,7 +52,7 @@ export const useSlotDrag = ({
         setIsDragging(true);
         setDragPos({ x: e.clientX, y: e.clientY });
         if (navigator.vibrate) navigator.vibrate(50);
-        document.body.style.overflow = "hidden";
+        unlockScrollRef.current ??= lockBodyScroll();
       }, 100);
     },
     [disabled],
@@ -71,7 +78,7 @@ export const useSlotDrag = ({
     const handleGlobalUp = (e: PointerEvent) => {
       setIsDragging(false);
       wasDraggedRef.current = true;
-      document.body.style.overflow = "";
+      unlockScroll();
 
       const elUnder = document.elementFromPoint(e.clientX, e.clientY);
       const targetSlot = elUnder?.closest("[data-slot-id]");
@@ -96,7 +103,15 @@ export const useSlotDrag = ({
       window.removeEventListener("pointerup", handleGlobalUp);
       window.removeEventListener("pointercancel", handleGlobalUp);
     };
-  }, [isDragging, slotId, onSwap]);
+  }, [isDragging, slotId, onSwap, unlockScroll]);
+
+  useEffect(
+    () => () => {
+      clearTimer();
+      unlockScroll();
+    },
+    [clearTimer, unlockScroll],
+  );
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {

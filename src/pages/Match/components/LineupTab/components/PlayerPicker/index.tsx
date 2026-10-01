@@ -5,17 +5,20 @@ import Styles from "./PlayerPicker.module.css";
 type PlayerPickerProps = {
   players: Players[];
   assignedIds: Set<string>;
+  activeSlotId: string;
   onSelect: (player: Players) => void;
 };
 
 export const PlayerPicker = ({
   players,
   assignedIds,
+  activeSlotId,
   onSelect,
 }: PlayerPickerProps) => {
   const { search, setSearch, searchRef, availablePlayers } = usePlayerSearch(
     players,
     assignedIds,
+    activeSlotId,
   );
 
   return (

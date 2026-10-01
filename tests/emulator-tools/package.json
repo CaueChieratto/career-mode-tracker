@@ -1,0 +1,6 @@
+{
+  "name": "career-tracker-emulator-tools",
+  "private": true,
+  "version": "1.0.0",
+  "devDependencies": { "firebase-tools": "14.12.0" }
+}

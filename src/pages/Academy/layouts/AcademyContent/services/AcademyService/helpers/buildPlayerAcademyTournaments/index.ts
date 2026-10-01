@@ -31,7 +31,7 @@ export const buildPlayerAcademyTournaments = (
             if (pStat.cleanSheets) cleanStats.cleanSheets = pStat.cleanSheets;
           }
 
-          return {
+          const playerMatch = {
             id: m.id,
             date: m.date,
             opponentTeam: m.opponentTeam,
@@ -47,6 +47,10 @@ export const buildPlayerAcademyTournaments = (
               : {}),
             lineup: [cleanStats as PlayerMatchesStats],
           };
+          for (const field of ["status", "result", "userGoals", "opponentGoals"] as const) {
+            if (playerMatch[field] === undefined) delete playerMatch[field];
+          }
+          return playerMatch;
         }),
       });
     }

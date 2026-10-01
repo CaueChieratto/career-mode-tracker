@@ -4,6 +4,7 @@ import { useManageMatch } from "./hooks/useManageMatch";
 import { ScoreRow } from "./components/ScoreRow";
 import { LineupSection } from "./components/LineupSection";
 import { StatsCard } from "./components/StatsCard";
+import { useScrollToStatsCard } from "./hooks/useScrollToStatsCard";
 import Styles from "./ManageMatchView.module.css";
 
 type ManageMatchViewProps = {
@@ -38,6 +39,7 @@ export const ManageMatchView = ({ match, onBack }: ManageMatchViewProps) => {
     playersAcademy,
     allPlayersAcademy,
   } = useManageMatch(match, onBack);
+  const statsCardRef = useScrollToStatsCard(selectedPlayerIdForStats);
 
   return (
     <div className={Styles.container}>
@@ -65,17 +67,19 @@ export const ManageMatchView = ({ match, onBack }: ManageMatchViewProps) => {
         handleRemovePlayer={handleRemovePlayer}
       />
       {selectedPlayerIdForStats && selectedStats && (
-        <StatsCard
-          selectedStats={selectedStats}
-          selectedPlayerIdForStats={selectedPlayerIdForStats}
-          handleStatChange={handleStatChange}
-          handleSavePlayerStats={handleSavePlayerStats}
-          isSavingStats={isSavingStats}
-          playerPosition={
-            playersAcademy.find((p) => p.id === selectedPlayerIdForStats)
-              ?.position
-          }
-        />
+        <div ref={statsCardRef}>
+          <StatsCard
+            selectedStats={selectedStats}
+            selectedPlayerIdForStats={selectedPlayerIdForStats}
+            handleStatChange={handleStatChange}
+            handleSavePlayerStats={handleSavePlayerStats}
+            isSavingStats={isSavingStats}
+            playerPosition={
+              playersAcademy.find((p) => p.id === selectedPlayerIdForStats)
+                ?.position
+            }
+          />
+        </div>
       )}
       <Button
         className={Styles.saveBtn}

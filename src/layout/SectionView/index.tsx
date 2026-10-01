@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import type { Swiper as SwiperInstance } from "swiper";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ContainerButton from "../../components/ContainerButton";
@@ -15,6 +16,35 @@ const SectionView = (props: SectionViewProps) => {
   const { section, navigation, tabs, modal, updatePlayer } =
     useSectionView(props);
 
+  const contextKey = `${section.career.id}-${section.season.id}-${section.player?.id ?? ""}-${notSeason ? "geral" : "season"}`;
+  const activeTitle = tabsConfig[tabs.activeIndex]?.title;
+
+  const [visitedState, setVisitedState] = useState<{
+    contextKey: string;
+    visited: Record<string, boolean>;
+  }>(() => ({
+    contextKey,
+    visited: activeTitle ? { [activeTitle]: true } : {},
+  }));
+
+  let currentVisited = visitedState.visited;
+  if (visitedState.contextKey !== contextKey) {
+    currentVisited = activeTitle ? { [activeTitle]: true } : {};
+    setVisitedState({
+      contextKey,
+      visited: currentVisited,
+    });
+  }
+
+  useEffect(() => {
+    if (activeTitle && !currentVisited[activeTitle]) {
+      setVisitedState((prev) => ({
+        ...prev,
+        visited: { ...prev.visited, [activeTitle]: true },
+      }));
+    }
+  }, [activeTitle, currentVisited]);
+
   const ActionButton = tabs.actionButton;
 
   if (navigation.screen) {
@@ -28,7 +58,7 @@ const SectionView = (props: SectionViewProps) => {
     );
   }
 
-  return (
+  const sectionContent = (
     <SeasonThemeProvider careerId={section.career.id} career={section.career}>
       <HeaderSeason
         careerId={section.career.id}
@@ -58,27 +88,37 @@ const SectionView = (props: SectionViewProps) => {
         }}
         onSlideChange={tabs.handleSlideChange}
       >
-        {tabsConfig.map(({ title: tabTitle, component: TabComponent }) => (
-          <SwiperSlide key={tabTitle}>
-            <div
-              className={
-                notSeason ? Styles.containerNotSeason : Styles.container
-              }
-            >
-              <TabComponent
-                season={section.season}
-                career={section.career}
-                onOpenTransfers={onOpenTransfers}
-                isPlayer={isPlayer}
-                player={section.player}
-                onAddBadge={modal.openAddBadge}
-                notSeason={notSeason}
-                onOpenScreen={navigation.open}
-                onUpdatePlayer={updatePlayer}
-              />
-            </div>
-          </SwiperSlide>
-        ))}
+        {tabsConfig.map(
+          ({ title: tabTitle, component: TabComponent }, index) => {
+            const isVisited =
+              !!currentVisited[tabTitle] || tabs.activeIndex === index;
+
+            return (
+              <SwiperSlide key={tabTitle}>
+                <div
+                  className={
+                    notSeason ? Styles.containerNotSeason : Styles.container
+                  }
+                >
+                  {isVisited ? (
+                    <TabComponent
+                      season={section.season}
+                      career={section.career}
+                      onOpenTransfers={onOpenTransfers}
+                      isPlayer={isPlayer}
+                      player={section.player}
+                      onAddBadge={modal.openAddBadge}
+                      notSeason={notSeason}
+                      onOpenScreen={navigation.open}
+                      onUpdatePlayer={updatePlayer}
+                      isActive={tabs.activeIndex === index}
+                    />
+                  ) : null}
+                </div>
+              </SwiperSlide>
+            );
+          },
+        )}
       </Swiper>
 
       <SectionModal
@@ -88,6 +128,8 @@ const SectionView = (props: SectionViewProps) => {
       />
     </SeasonThemeProvider>
   );
+
+  return sectionContent;
 };
 
 export default SectionView;

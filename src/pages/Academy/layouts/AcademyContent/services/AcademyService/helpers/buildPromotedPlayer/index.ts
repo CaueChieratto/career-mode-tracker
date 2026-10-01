@@ -59,7 +59,7 @@ export const buildPromotedPlayer = (
     statsLeagues: [],
     ballonDor: 0,
     isAcademy: true,
-    academyNickname: academyNickname,
+    ...(academyNickname !== undefined ? { academyNickname } : {}),
     academyData: compactAcademyData as AcademyPlayers,
     academyHistory: academyPlayer.evolutionHistory,
     academyTournaments,

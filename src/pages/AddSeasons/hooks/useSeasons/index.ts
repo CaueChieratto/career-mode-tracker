@@ -1,12 +1,17 @@
 import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { ServiceSeasons } from "../../../../common/services/ServiceSeasons";
 
 export const useSeasons = (careerId: string) => {
+  const navigate = useNavigate();
+
   const handleNavigateToSeason = useCallback(
     (seasonId: string) => {
-      window.location.href = `/Career/${careerId}/Season/${seasonId}`;
+      document.body.classList.remove("modal-open");
+      window.scrollTo(0, 0);
+      navigate(`/Career/${careerId}/Season/${seasonId}`);
     },
-    [careerId],
+    [careerId, navigate],
   );
 
   const handleDeleteSeason = useCallback(
@@ -27,9 +32,14 @@ export const useSeasons = (careerId: string) => {
     [careerId],
   );
 
-  const handleNavigateToGeral = useCallback((careerId: string) => {
-    window.location.href = `/Career/${careerId}/Geral`;
-  }, []);
+  const handleNavigateToGeral = useCallback(
+    (careerId: string) => {
+      document.body.classList.remove("modal-open");
+      window.scrollTo(0, 0);
+      navigate(`/Career/${careerId}/Geral`);
+    },
+    [navigate],
+  );
 
   return {
     handleNavigateToSeason,

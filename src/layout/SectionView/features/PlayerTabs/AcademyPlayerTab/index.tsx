@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { FaChartLine, FaTrophy } from "react-icons/fa";
-import Flag from "react-world-flags";
+import LazyFlag from "../../../../../components/LazyFlag";
 import { useClubColors } from "../../../../../common/hooks/Colors/UseClubColors";
 import { Career } from "../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../common/interfaces/club/clubData";
@@ -21,7 +21,7 @@ import { buildMockAcademyContext } from "./helpers/buildMockAcademyContext";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../../../../common/services/Firebase";
 
-export type AcademyPlayerTabProps = {
+type AcademyPlayerTabProps = {
   player?: Players;
   career: Career;
   season?: ClubData;
@@ -155,7 +155,7 @@ const AcademyPlayerTab: React.FC<AcademyPlayerTabProps> = ({
         <FocusedCard
           iconNode={
             countryCode ? (
-              <Flag code={countryCode} className={Styles.flag} />
+              <LazyFlag code={countryCode} className={Styles.flag} />
             ) : (
               <span> </span>
             )

@@ -2,7 +2,7 @@ import { Players } from "../playersInfo/players";
 import { Match } from "../Match";
 import { getAggregatedPlayersForCareer } from "../../../layout/SectionView/helpers/mergeMatchStats";
 
-export type BaseCareer = Parameters<typeof getAggregatedPlayersForCareer>[0];
+type BaseCareer = Parameters<typeof getAggregatedPlayersForCareer>[0];
 
 export interface PlayerStatsDisplay {
   age: string;

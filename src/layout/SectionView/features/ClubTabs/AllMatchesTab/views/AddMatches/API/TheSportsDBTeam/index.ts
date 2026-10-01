@@ -1,4 +1,4 @@
-export interface TheSportsDBTeam {
+interface TheSportsDBTeam {
   idTeam: string;
   strTeam: string;
   strTeamShort: string | null;
@@ -9,7 +9,7 @@ export interface TheSportsDBTeam {
   [key: string]: unknown;
 }
 
-export interface FootballDataTeam {
+interface FootballDataTeam {
   id: number;
   name: string;
   shortName?: string | null;
@@ -29,7 +29,7 @@ if (!API_TOKEN) {
   throw new Error("VITE_FOOTBALL_DATA_API_TOKEN não definido no .env");
 }
 
-export function normalizeText(text: string): string {
+function normalizeText(text: string): string {
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")

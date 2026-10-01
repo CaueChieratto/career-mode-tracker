@@ -70,12 +70,15 @@ export const AcademyProvider = ({
     playersAcademy: rawPlayers,
     allPlayersAcademy,
     setPlayersAcademy,
+    applyPromotedPlayer,
     isLoading,
     refetchPlayers,
   } = useAcademyPlayers(career, seasonId, isGeral);
 
   const {
     tournamentsAcademy: rawTournaments,
+    allTournamentsAcademy,
+    hasLoadedAllTournaments,
     setTournamentsAcademy,
     refetchTournaments,
   } = useAcademyTournaments(career, seasonId, isGeral);
@@ -213,6 +216,8 @@ export const AcademyProvider = ({
         playersAcademy,
         allPlayersAcademy,
         tournamentsAcademy,
+        allTournamentsAcademy,
+        hasLoadedAllTournaments,
         isLoading,
         isAddingPlayer,
         isAddingTournament,
@@ -241,6 +246,7 @@ export const AcademyProvider = ({
         onDeleteTournament: deleteTournament,
         refetchTournaments,
         refetchPlayers,
+        applyPromotedPlayer,
         playerClick: handlePlayerClick,
         back: backWrapper,
       }}

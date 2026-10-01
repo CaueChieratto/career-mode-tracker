@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["vitest/globals", "node", "vite/client"],
+    "noEmit": true
+  },
+  "include": [
+    "src/vite-env.d.ts",
+    "src/test",
+    "tests/integration",
+    "vitest.config.ts",
+    "vitest.integration.config.ts",
+    "vitest.all.config.ts"
+  ],
+  "exclude": []
+}

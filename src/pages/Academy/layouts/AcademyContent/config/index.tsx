@@ -24,7 +24,7 @@ import {
   TOURNAMENT_SORT_OPTIONS,
 } from "../constants/Sorts";
 
-export type configProps = {
+type configProps = {
   career: Career;
   playersAcademy: AcademyPlayers[];
   allPlayersAcademy: AcademyPlayers[];

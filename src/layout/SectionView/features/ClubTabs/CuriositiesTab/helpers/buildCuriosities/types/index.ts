@@ -3,11 +3,6 @@ export interface HighlightItem {
   value: string;
 }
 
-export interface RankingItem {
-  label: string;
-  count: number;
-}
-
 export interface TimelineEvent {
   minute: number;
   isMine: boolean;

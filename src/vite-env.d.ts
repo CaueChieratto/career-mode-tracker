@@ -12,8 +12,26 @@ interface ImportMetaEnv {
   readonly VITE_CLOUDINARY_CLOUD_NAME: string;
   readonly VITE_CLOUDINARY_UPLOAD_PRESET: string;
   readonly VITE_SPECIAL_USER_ID: string;
+  readonly VITE_USE_FIREBASE_EMULATOR?: string;
+  readonly VITE_ALLOW_REAL_MANUAL_DELETE?: string;
 }
 
 interface ImportMeta {
   readonly env: ImportMetaEnv;
+}
+
+declare module "react-world-flags" {
+  import { FC, CSSProperties } from "react";
+
+  export interface FlagProps {
+    code: string;
+    className?: string;
+    style?: CSSProperties;
+    title?: string;
+    alt?: string;
+  }
+
+  const Flag: FC<FlagProps>;
+
+  export default Flag;
 }

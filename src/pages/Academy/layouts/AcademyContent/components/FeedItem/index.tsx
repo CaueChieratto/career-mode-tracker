@@ -8,7 +8,7 @@ import { FeedItemModal } from "./components/FeedItemModal";
 import { useModal } from "./hooks/useModal";
 import { FeedEvent } from "./types/FeedEvent";
 
-export type FeedItemProps = {
+type FeedItemProps = {
   id: string | number;
   type: string;
   title: string;

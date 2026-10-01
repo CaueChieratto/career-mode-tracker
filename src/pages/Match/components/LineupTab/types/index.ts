@@ -4,7 +4,7 @@ import type { Match } from "../../../../../common/interfaces/Match";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
 import type { MatchScreen } from "../../../config/screens";
 
-export type LineupSaveHandler = () => Promise<void> | void;
+type LineupSaveHandler = () => Promise<void> | void;
 
 export type RegisterLineupSave = (saveHandler: LineupSaveHandler) => void;
 

@@ -67,11 +67,12 @@ export default function AddSeason_PlayerScreen({
     }
 
     if (targetPlayer) {
-      pendingPlayerRef.current = toRawPlayer({
-        ...targetPlayer,
+      const rawPlayer = toRawPlayer(targetPlayer);
+      pendingPlayerRef.current = {
+        ...rawPlayer,
         ballonDor,
-        statsLeagues: statsLeagues ?? targetPlayer.statsLeagues,
-      });
+        statsLeagues: statsLeagues ?? rawPlayer.statsLeagues,
+      };
     }
 
     handleStatsSave(formData);

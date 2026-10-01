@@ -1,4 +1,4 @@
-export interface EvolutionHistoryItem {
+interface EvolutionHistoryItem {
   id?: string;
   changedAttribute: string;
   date: string;

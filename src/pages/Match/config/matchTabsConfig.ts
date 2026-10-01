@@ -7,7 +7,7 @@ import { MatchStatsTab } from "../components/MatchStatsTab";
 import { MatchDetailsTab } from "../components/MatchDetailsTab";
 import { MatchScreen } from "./screens";
 
-export type MatchTabConfig = {
+type MatchTabConfig = {
   title: string;
   component: React.FC<{
     match: Match;

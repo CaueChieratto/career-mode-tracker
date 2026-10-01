@@ -1,8 +1,3 @@
-import {
-  QueryDocumentSnapshot,
-  DocumentData,
-  Timestamp,
-} from "firebase/firestore";
 import { Career } from "../../interfaces/Career";
 import { Players } from "../../interfaces/playersInfo/players";
 import { formatDisplayValue, parseValue } from "../../utils/FormatValue";
@@ -11,40 +6,6 @@ import { Positions } from "../../types/Positions";
 import { brasilDatePlaceholderShort, parseBrasilDate } from "../../utils/Date";
 import { ClubData } from "../../interfaces/club/clubData";
 import { getSeasonDateRange } from "../../utils/GetSeasonDateRange";
-
-export const mapDocToCareer = (
-  doc: QueryDocumentSnapshot<DocumentData>,
-): Career => {
-  const data = doc.data();
-
-  if (data.clubData && Array.isArray(data.clubData)) {
-    data.clubData.forEach((season: ClubData) => {
-      if (season.players && Array.isArray(season.players)) {
-        season.players.forEach((player: Players) => {
-          if (player.contract && Array.isArray(player.contract)) {
-            player.contract.forEach((contract: Contract) => {
-              if (contract.dataArrival instanceof Timestamp) {
-                contract.dataArrival = contract.dataArrival.toDate();
-              }
-              if (contract.dataExit instanceof Timestamp) {
-                contract.dataExit = contract.dataExit.toDate();
-              }
-            });
-          }
-        });
-      }
-    });
-  }
-
-  return {
-    id: doc.id,
-    ...data,
-    createdAt:
-      data.createdAt instanceof Timestamp
-        ? data.createdAt.toDate()
-        : data.createdAt,
-  } as Career;
-};
 
 export const mapPlayerToFormValues = (
   player: Players,

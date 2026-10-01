@@ -1,4 +1,4 @@
-export interface CardConflictResult {
+interface CardConflictResult {
   updates: { key: string; value: boolean }[];
 }
 

@@ -5,7 +5,7 @@ export interface RankingItem {
   count: number;
 }
 
-export interface HighlightItem {
+interface HighlightItem {
   label: string;
   value: string;
 }
@@ -35,14 +35,4 @@ export interface CuriositiesRankings {
 export interface CuriositiesData {
   highlights: HighlightItem[];
   rankings: CuriositiesRankings | null;
-}
-
-export interface OpponentGoal {
-  player?: string;
-  minute?: string | number;
-}
-
-export interface OpponentAssist {
-  player?: string;
-  goalReference?: string;
 }

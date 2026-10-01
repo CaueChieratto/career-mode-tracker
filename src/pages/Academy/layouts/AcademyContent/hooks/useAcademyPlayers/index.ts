@@ -93,11 +93,23 @@ export const useAcademyPlayers = (
     fetchPlayers();
   }, [fetchPlayers]);
 
+  const applyPromotedPlayer = useCallback((promoted: AcademyPlayers) => {
+    setAllPlayersAcademy((current) =>
+      current.map((player) =>
+        player.id === promoted.id ? promoted : player,
+      ),
+    );
+    setPlayersAcademy((current) =>
+      current.filter((player) => player.id !== promoted.id),
+    );
+  }, []);
+
   return {
     playersAcademy,
     allPlayersAcademy,
     isLoading,
     setPlayersAcademy,
+    applyPromotedPlayer,
     refetchPlayers: fetchPlayers,
   };
 };

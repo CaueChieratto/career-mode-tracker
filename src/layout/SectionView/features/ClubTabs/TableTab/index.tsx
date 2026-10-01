@@ -24,9 +24,15 @@ type TableTabProps = {
   season: ClubData;
   career: Career & { clubData?: ClubData[] };
   onOpenScreen?: (screen: SectionScreen) => void;
+  isActive?: boolean;
 };
 
-export const TableTab = ({ season, career, onOpenScreen }: TableTabProps) => {
+export const TableTab = ({
+  season,
+  career,
+  onOpenScreen,
+  isActive = true,
+}: TableTabProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isGeralPage = location.pathname.includes("/Geral");
@@ -60,6 +66,7 @@ export const TableTab = ({ season, career, onOpenScreen }: TableTabProps) => {
   const { tableData, isFirstDivision } = useTableData(
     career,
     selectedSeasonData,
+    isActive,
   );
 
   const columns = buildTableColumns(activeMode);
