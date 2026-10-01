@@ -1,6 +1,8 @@
 import { expect, it } from "vitest";
 import { AcademyService } from "../../src/pages/Academy/layouts/AcademyContent/services/AcademyService";
 import type { AcademyTournaments } from "../../src/pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
+import type { AcademyMatches } from "../../src/pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import { getSuggestedLineup } from "../../src/pages/Academy/layouts/AcademyContent/components/Tournament/features/Match/components/ManageMatchView/helpers/getSuggestedLineup";
 import {
   academyPlayer,
   career,
@@ -284,4 +286,82 @@ it("origem inválida falha antes de qualquer write", async () => {
       ["setDoc", "updateDoc", "deleteDoc"].includes(call.operation),
     ),
   ).toEqual([]);
+});
+
+it("salvar escalação reaproveitada afeta somente o torneio destino e preserva outro torneio e outra temporada", async () => {
+  await seedPromotion();
+  const t1 = tournament();
+  const m1 = t1.matches[0];
+  const m2: AcademyMatches = {
+    id: "am2",
+    date: "05/08/2024",
+    opponentTeam: "Rival 2",
+    userGoals: 0,
+    opponentGoals: 0,
+    lineup: [],
+    result: "SCHEDULED",
+  };
+  t1.matches = [m1, m2];
+
+  const otherTournament: AcademyTournaments = {
+    id: "t_other",
+    name: "Outro Torneio",
+    date: "10/08/2024",
+    totalMatches: 1,
+    isChampion: false,
+    tournamentResult: "Em andamento",
+    matches: [
+      {
+        id: "om1",
+        date: "10/08/2024",
+        opponentTeam: "Rival X",
+        userGoals: 0,
+        opponentGoals: 0,
+        lineup: [],
+        result: "SCHEDULED",
+      },
+    ],
+  };
+
+  const oldSeasonTournament: AcademyTournaments = {
+    id: "t_old",
+    name: "Torneio Antigo",
+    date: "01/01/2023",
+    totalMatches: 1,
+    isChampion: true,
+    tournamentResult: "Campeão",
+    matches: [],
+  };
+
+  await put(`${seasonPath("s1")}/academyTournaments/t1`, t1);
+  await put(`${seasonPath("s1")}/academyTournaments/t_other`, otherTournament);
+  await put(`${seasonPath("old-season")}/academyTournaments/t_old`, oldSeasonTournament);
+
+  // Suggested lineup from t1 applied to m2
+  const playerA1 = academyPlayer();
+  const suggested = getSuggestedLineup(t1.matches, m2, [playerA1]);
+  expect(suggested).toHaveLength(1);
+
+  const updatedT1: AcademyTournaments = {
+    ...t1,
+    matches: [
+      m1,
+      {
+        ...m2,
+        lineup: suggested,
+      },
+    ],
+  };
+
+  await AcademyService.updateTournamentAcademy("c1", "s1", updatedT1);
+
+  // Verify only t1 was modified
+  const persistedT1 = (await read(`${seasonPath("s1")}/academyTournaments/t1`)) as AcademyTournaments;
+  expect(persistedT1.matches[1].lineup).toEqual(suggested);
+
+  const persistedOther = (await read(`${seasonPath("s1")}/academyTournaments/t_other`)) as AcademyTournaments;
+  expect(persistedOther).toEqual(otherTournament);
+
+  const persistedOld = (await read(`${seasonPath("old-season")}/academyTournaments/t_old`)) as AcademyTournaments;
+  expect(persistedOld).toEqual(oldSeasonTournament);
 });

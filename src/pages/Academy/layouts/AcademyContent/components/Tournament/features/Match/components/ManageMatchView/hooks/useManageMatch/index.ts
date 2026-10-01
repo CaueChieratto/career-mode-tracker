@@ -4,6 +4,7 @@ import { AcademyMatches } from "../../../../../../../../interfaces/AcademyTourna
 import { PlayerMatchesStats } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
 import { getAvailablePlayers } from "../../helpers/getAvailablePlayers";
 import { buildUpdatedMatch } from "../../helpers/buildUpdatedMatch";
+import { getSuggestedLineup } from "../../helpers/getSuggestedLineup";
 
 export const useManageMatch = (match: AcademyMatches, onBack: () => void) => {
   const {
@@ -28,9 +29,14 @@ export const useManageMatch = (match: AcademyMatches, onBack: () => void) => {
     match.result === "SCHEDULED" ? "" : (match.opponentPenalties ?? ""),
   );
 
-  const [lineupStats, setLineupStats] = useState<PlayerMatchesStats[]>(
-    match.lineup || [],
-  );
+  const [lineupStats, setLineupStats] = useState<PlayerMatchesStats[]>(() => {
+    if (match.lineup && match.lineup.length > 0) return match.lineup;
+    return getSuggestedLineup(
+      selectedTournament?.matches || [],
+      match,
+      allPlayersAcademy,
+    );
+  });
   const [selectedSearchValue, setSelectedSearchValue] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingStats, setIsSavingStats] = useState(false);
