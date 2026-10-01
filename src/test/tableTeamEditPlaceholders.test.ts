@@ -184,7 +184,8 @@ describe("campos numericos da edicao da tabela", () => {
     const { result } = renderHook(() => useTableTeamActions());
     await act(async () => result.current.saveTableTeam());
 
-    const payload = mocks.updateTeamInTable.mock.calls.at(-1)?.[3];
+    const calls = mocks.updateTeamInTable.mock.calls;
+    const payload = calls[calls.length - 1]?.[3];
     expect(payload).toMatchObject({
       name: existingTeam.name,
       played: 38,

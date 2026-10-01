@@ -46,6 +46,24 @@ const januaryToDecember = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'J
 const julyToJune = [...januaryToDecember.slice(6), ...januaryToDecember.slice(0, 6)];
 const options = () => Array.from(screen.getByRole<HTMLSelectElement>('combobox').options, option => option.value);
 
+const createAddMatchesContextMock = (
+  overrides: Partial<ReturnType<typeof useAddMatchesContext>> = {},
+): ReturnType<typeof useAddMatchesContext> => ({
+  career: career(),
+  season: season(),
+  formValues: {},
+  booleanValues: {},
+  onClose: vi.fn(),
+  setFormValues: vi.fn(),
+  handleInputChange: vi.fn(),
+  handleKeyDown: vi.fn(),
+  handleKeyUp: vi.fn(),
+  handleBooleanChange: vi.fn(),
+  handleSigningChange: vi.fn(),
+  handleCaptainChange: vi.fn(),
+  ...overrides,
+});
+
 beforeEach(() => {
   localStorage.clear();
   route.pathname = '/Career/c1/Season/s1';
@@ -121,10 +139,13 @@ describe('ordem dos meses conforme o calendario existente', () => {
     const data = season({ teams: [{ name: 'Rival', badge: 'rival.png' }] });
     const club = career({ nation });
     const onClose = vi.fn();
-    vi.mocked(useAddMatchesContext).mockReturnValue({
-      career: club, season: data, formValues: { date: '15', league: 'Liga', opponentTeam: 'Rival' },
-      booleanValues: { isHomeMatch: true }, onClose,
-    } as ReturnType<typeof useAddMatchesContext>);
+    vi.mocked(useAddMatchesContext).mockReturnValue(createAddMatchesContextMock({
+      career: club,
+      season: data,
+      formValues: { date: '15', league: 'Liga', opponentTeam: 'Rival' },
+      booleanValues: { isHomeMatch: true },
+      onClose,
+    }));
     render(<AllMatchesTab career={club} season={data} />);
     const { result } = renderHook(() => useMatchActions());
     for (const [index, label] of januaryToDecember.entries()) {
