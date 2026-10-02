@@ -15,6 +15,7 @@ import {
 } from "firebase/firestore";
 import { stripHeavyData } from "../../utils/stripHeavyData";
 import { getSeasonDateRange } from "../../utils/GetSeasonDateRange";
+import { withFirestoreRetry } from "../../utils/firestoreRetry";
 import { AcademyData } from "../../interfaces/AcademyData";
 import { AcademyPlayers } from "../../../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
 
@@ -153,7 +154,7 @@ export const ServiceSeasons = {
     });
 
     try {
-      await batch.commit();
+      await withFirestoreRetry(() => batch.commit());
     } catch (error) {
       console.error(
         `[addSeason] ERRO ao tentar criar e salvar a temporada:`,

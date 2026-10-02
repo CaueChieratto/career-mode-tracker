@@ -8,6 +8,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { auth, db, functions } from "../../services/Firebase";
+import { shouldConnectEmulator } from "../../services/Firebase/emulatorGuard";
 import { Career } from "../../interfaces/Career";
 import { Trophy } from "../../interfaces/club/trophy";
 
@@ -144,7 +145,7 @@ export const deleteCareerClientTree = async (
 export const deleteCareerFromFirestore = async (
   careerId: string,
 ): Promise<void> => {
-  const isEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true";
+  const isEmulator = shouldConnectEmulator();
 
   if (isEmulator) {
     const deleteCareerRecursive = httpsCallable(

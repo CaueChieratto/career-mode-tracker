@@ -23,6 +23,7 @@ import { buildEvolutionHistory } from "./helpers/buildEvolutionHistory";
 import { buildPlayerAcademyTournaments } from "./helpers/buildPlayerAcademyTournaments";
 import { buildPromotedPlayer } from "./helpers/buildPromotedPlayer";
 import { buildReleasedAcademyPlayerUpdate } from "./helpers/buildReleasedAcademyPlayerUpdate";
+import { withFirestoreRetry } from "../../../../../../common/utils/firestoreRetry";
 
 export const AcademyService = {
   async getPlayersAcademy(
@@ -259,7 +260,7 @@ export const AcademyService = {
     batch.update(careerRef, {
       updatedAt: Math.max(Date.now(), (career.updatedAt || 0) + 1),
     });
-    await batch.commit();
+    await withFirestoreRetry(() => batch.commit());
 
     return { academyPlayer: promotedAcademyPlayer, professional };
   },

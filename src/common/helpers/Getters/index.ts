@@ -22,6 +22,17 @@ const getAcademyPlayersBySeason = async (
   return snapshot.docs.map((academyDoc) => academyDoc.data() as AcademyPlayers);
 };
 
+interface CachedCareerEntry {
+  updatedAt: number | string;
+  career: Career;
+}
+
+const listCareersCache = new Map<string, CachedCareerEntry>();
+
+export const clearGettersCache = (): void => {
+  listCareersCache.clear();
+};
+
 export const getAllCareers = (
   uid: string,
   callback: (careers: Career[]) => void,
@@ -41,65 +52,86 @@ export const getAllCareers = (
 
     const fullyLoadedCareers = await Promise.all(
       careersData.map(async (career) => {
-        if (career.clubData && career.clubData.length > 0) {
-          const updatedClubData = await Promise.all(
-            career.clubData.map(async (season) => {
-              try {
-                const [
-                  subcollectionMatches,
-                  subcollectionPlayers,
-                  table,
-                  academyPlayers,
-                ] =
-                  await Promise.all([
-                    ServiceMatches.getMatchesBySeason(career.id, season.id),
-                    ServicePlayers.getPlayersBySeason(career.id, season.id),
-                    ServiceTable.getTableBySeason(career.id, season.id),
-                    getAcademyPlayersBySeason(
-                      uid,
-                      career.id,
-                      season.id,
-                    ).catch((error) => {
-                      console.error(
-                        "Erro ao carregar jogadores da base: ",
-                        error,
-                      );
-                      return undefined;
-                    }),
-                  ]);
-
-                const oldMatches = season.matches || [];
-
-                const combinedMatches = mergeModernAndLegacy(
-                  subcollectionMatches, oldMatches, (m) => m.matchesId,
-                );
-
-                const oldPlayers = season.players || [];
-
-                const combinedPlayers = mergeModernAndLegacy(
-                  subcollectionPlayers, oldPlayers, (p) => p.id,
-                );
-
-                return {
-                  ...season,
-                  matches: combinedMatches,
-                  players: combinedPlayers,
-                  table: table as unknown as ClubData["table"],
-                  ...(academyPlayers !== undefined ? { academyPlayers } : {}),
-                };
-              } catch (error) {
-                console.error("Erro: ", error);
-                return {
-                  ...season,
-                  matches: season.matches || [],
-                  players: season.players || [],
-                };
-              }
-            }),
-          );
-          return { ...career, clubData: updatedClubData };
+        if (!career.clubData || career.clubData.length === 0) {
+          return career;
         }
-        return career;
+
+        // Se a carreira possui updatedAt persistido e idêntico ao cache,
+        // reaproveita os dados hidratados para evitar avalanche de queries
+        // de subcoleções em carreiras inalteradas a cada disparo de snapshot.
+        if (career.updatedAt) {
+          const cached = listCareersCache.get(career.id);
+          if (cached && cached.updatedAt === career.updatedAt) {
+            return cached.career;
+          }
+        }
+
+        const updatedClubData = await Promise.all(
+          career.clubData.map(async (season) => {
+            try {
+              const [
+                subcollectionMatches,
+                subcollectionPlayers,
+                table,
+                academyPlayers,
+              ] = await Promise.all([
+                ServiceMatches.getMatchesBySeason(career.id, season.id),
+                ServicePlayers.getPlayersBySeason(career.id, season.id),
+                ServiceTable.getTableBySeason(career.id, season.id),
+                getAcademyPlayersBySeason(
+                  uid,
+                  career.id,
+                  season.id,
+                ).catch((error) => {
+                  console.error(
+                    "Erro ao carregar jogadores da base: ",
+                    error,
+                  );
+                  return undefined;
+                }),
+              ]);
+
+              const oldMatches = season.matches || [];
+
+              const combinedMatches = mergeModernAndLegacy(
+                subcollectionMatches,
+                oldMatches,
+                (m) => m.matchesId,
+              );
+
+              const oldPlayers = season.players || [];
+
+              const combinedPlayers = mergeModernAndLegacy(
+                subcollectionPlayers,
+                oldPlayers,
+                (p) => p.id,
+              );
+
+              return {
+                ...season,
+                matches: combinedMatches,
+                players: combinedPlayers,
+                table: table as unknown as ClubData["table"],
+                ...(academyPlayers !== undefined ? { academyPlayers } : {}),
+              };
+            } catch (error) {
+              console.error("Erro: ", error);
+              return {
+                ...season,
+                matches: season.matches || [],
+                players: season.players || [],
+              };
+            }
+          }),
+        );
+        const hydratedCareer: Career = { ...career, clubData: updatedClubData };
+        if (career.updatedAt) {
+          listCareersCache.set(career.id, {
+            updatedAt: career.updatedAt,
+            career: hydratedCareer,
+          });
+        }
+        return hydratedCareer;
       }),
     );
 
@@ -118,8 +150,10 @@ export const getCareerById = async (
 
   if (!careerSnap.exists()) {
     throw Object.assign(new Error("Carreira não encontrada"), {
-      code: careerSnap.metadata.fromCache || careerSnap.metadata.hasPendingWrites
-        ? "career/unavailable" : "career/not-found",
+      code:
+        careerSnap.metadata.fromCache || careerSnap.metadata.hasPendingWrites
+          ? "career/unavailable"
+          : "career/not-found",
     });
   }
 
@@ -147,12 +181,16 @@ export const getCareerById = async (
 
           const oldMatches = season.matches || [];
           const combinedMatches = mergeModernAndLegacy(
-            subcollectionMatches, oldMatches, (m) => m.matchesId,
+            subcollectionMatches,
+            oldMatches,
+            (m) => m.matchesId,
           );
 
           const oldPlayers = season.players || [];
           const combinedPlayers = mergeModernAndLegacy(
-            subcollectionPlayers, oldPlayers, (p) => p.id,
+            subcollectionPlayers,
+            oldPlayers,
+            (p) => p.id,
           );
 
           return {

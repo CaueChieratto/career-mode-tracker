@@ -19,9 +19,10 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const functions = getFunctions(app);
 
-const useEmulator = import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true";
+export { isLocalhostEnvironment, shouldConnectEmulator } from "./emulatorGuard";
+import { shouldConnectEmulator } from "./emulatorGuard";
 
-if (useEmulator) {
+if (shouldConnectEmulator()) {
   try {
     connectAuthEmulator(auth, "http://127.0.0.1:9098", {
       disableWarnings: true,
