@@ -12,7 +12,7 @@ const makeMatch = (date: string, status: "FINISHED" | "SCHEDULED" = "FINISHED"):
   league: "Liga",
   homeTeam: "Time A",
   awayTeam: "Time B",
-  result: "1 - 0",
+  result: "V",
   status,
 });
 

@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   formatTournamentText,
   formatTournamentHeaderName,
   formatPlayerLine,
-  copyToClipboard,
 } from "../pages/Academy/layouts/AcademyContent/components/Tournament/views/TournamentWorkspace/helpers/formatTournamentText";
 import { AcademyTournaments } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
 import { Career } from "../common/interfaces/Career";
@@ -34,11 +33,11 @@ const createMockPlayer = (
     position,
     age: 17,
     overall: 65,
-    potential: 80,
+    potential: "80-88",
     status: "academy",
     evolutionHistory: [],
     shirtNumber: 10,
-  }) as AcademyPlayers;
+  }) as unknown as AcademyPlayers;
 
 describe("formatTournamentHeaderName", () => {
   it("converte padrão 'Copa ... - Nª Edição' para 'Nª edição da Copa ...'", () => {

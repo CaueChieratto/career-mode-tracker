@@ -5,7 +5,7 @@ import { AcademyTournaments } from "../pages/Academy/layouts/AcademyContent/inte
 import { Career } from "../common/interfaces/Career";
 
 describe("buildPlayerCopyText", () => {
-  const mockPlayer: AcademyPlayers = {
+  const mockPlayer = {
     id: "p1",
     name: "Jamie Ibarra",
     position: "PD",
@@ -14,11 +14,11 @@ describe("buildPlayerCopyText", () => {
     height: 173,
     weight: 69,
     overall: 67,
-    potential: 85,
+    potential: "85-94",
     status: "academy",
     evolutionHistory: [],
     shirtNumber: 7,
-  };
+  } as unknown as AcademyPlayers;
 
   const mockCareer: Career = {
     id: "c1",
@@ -41,8 +41,6 @@ describe("buildPlayerCopyText", () => {
     // 20 Jogos, 23 G/A, 14 Gols, 9 Assistências, 6.97, Campeão 3 vezes de Copa Jorge Griffa.
     const tournaments: AcademyTournaments[] = [];
 
-    // Create 3 champion tournaments with matches summing to 20 matches, 14 goals, 9 assists, rating ~6.97
-    // Total rating needed: 20 * 6.97 = 139.4. e.g. 14 matches with 7.0 and 6 matches with 6.9 => 14*7 + 6*6.9 = 98 + 41.4 = 139.4 / 20 = 6.97
     let matchCount = 0;
     for (let t = 1; t <= 3; t++) {
       const matches = [];
@@ -91,7 +89,7 @@ describe("buildPlayerCopyText", () => {
   });
 
   it("formata corretamente para goleiro (defesas e assistências sem G/A)", () => {
-    const gkPlayer: AcademyPlayers = {
+    const gkPlayer = {
       id: "gk1",
       name: "Christian Nelson",
       position: "GOL",
@@ -100,11 +98,11 @@ describe("buildPlayerCopyText", () => {
       height: 188,
       weight: 80,
       overall: 65,
-      potential: 82,
+      potential: "82-88",
       status: "academy",
       evolutionHistory: [],
       shirtNumber: 1,
-    };
+    } as unknown as AcademyPlayers;
 
     const tournaments: AcademyTournaments[] = [
       {
@@ -146,7 +144,7 @@ describe("buildPlayerCopyText", () => {
   });
 
   it("lida corretamente com singular e plural de jogos, gols, assistências e títulos", () => {
-    const singlePlayer: AcademyPlayers = {
+    const singlePlayer = {
       id: "p2",
       name: "Lucas Blanco",
       position: "ATA",
@@ -155,11 +153,11 @@ describe("buildPlayerCopyText", () => {
       height: 180,
       weight: 75,
       overall: 70,
-      potential: 85,
+      potential: "85-91",
       status: "academy",
       evolutionHistory: [],
       shirtNumber: 9,
-    };
+    } as unknown as AcademyPlayers;
 
     const tournaments: AcademyTournaments[] = [
       {
@@ -201,7 +199,7 @@ describe("buildPlayerCopyText", () => {
   });
 
   it("lida com jogador sem partidas disputadas", () => {
-    const unusedPlayer: AcademyPlayers = {
+    const unusedPlayer = {
       id: "p3",
       name: "Novo Jogador",
       position: "MC",
@@ -210,11 +208,11 @@ describe("buildPlayerCopyText", () => {
       height: 170,
       weight: 65,
       overall: 60,
-      potential: 80,
+      potential: "80-86",
       status: "academy",
       evolutionHistory: [],
       shirtNumber: 8,
-    };
+    } as unknown as AcademyPlayers;
 
     const result = buildPlayerCopyText(unusedPlayer, [], mockCareer);
     expect(result).toBe(
@@ -228,7 +226,7 @@ describe("buildPlayerCopyText", () => {
       id: 999 as unknown as string,
       name: "Simón Ruiz",
       position: "MD",
-    };
+    } as unknown as AcademyPlayers;
 
     const tournaments: AcademyTournaments[] = [
       {

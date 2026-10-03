@@ -4,6 +4,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/re
 import { TournamentWorkspace } from "../pages/Academy/layouts/AcademyContent/components/Tournament/views/TournamentWorkspace";
 import { useAcademyContext } from "../pages/Academy/layouts/contexts/AcademyContext/hooks/useAcademyContext";
 import { AcademyTournaments } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyPlayers } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
 import { Career } from "../common/interfaces/Career";
 
 afterEach(cleanup);
@@ -69,11 +70,11 @@ describe("TournamentWorkspace — Copiar Torneio", () => {
           position: "ATA",
           age: 17,
           overall: 65,
-          potential: 80,
+          potential: "80-88",
           status: "academy",
           evolutionHistory: [],
           shirtNumber: 10,
-        },
+        } as unknown as AcademyPlayers,
       ],
     });
   });
@@ -100,8 +101,7 @@ describe("TournamentWorkspace — Copiar Torneio", () => {
         writeText: writeTextMock,
       },
     });
-    // @ts-expect-error test override
-    window.isSecureContext = true;
+    (window as unknown as { isSecureContext: boolean }).isSecureContext = true;
 
     render(<TournamentWorkspace selectedTournament={mockTournament} />);
 

@@ -22,7 +22,7 @@ vi.mock(
   }),
 );
 
-const mockPlayer: AcademyPlayers = {
+const mockPlayer = {
   id: "p1",
   name: "Jamie Ibarra",
   position: "PD",
@@ -31,11 +31,11 @@ const mockPlayer: AcademyPlayers = {
   height: 173,
   weight: 69,
   overall: 67,
-  potential: 85,
+  potential: "85-94",
   status: "academy",
   evolutionHistory: [],
   shirtNumber: 7,
-};
+} as unknown as AcademyPlayers;
 
 const mockCareer: Career = {
   id: "c1",
@@ -122,8 +122,7 @@ describe("PlayerWorkspace — Copiar jogador", () => {
         writeText: writeTextMock,
       },
     });
-    // @ts-expect-error test override
-    window.isSecureContext = true;
+    (window as unknown as { isSecureContext: boolean }).isSecureContext = true;
 
     render(<PlayerWorkspace selectedPlayer={mockPlayer} />);
 
