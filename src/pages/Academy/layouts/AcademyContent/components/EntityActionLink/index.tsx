@@ -3,7 +3,9 @@ import Styles from "./EntityActionLink.module.css";
 export type EntityAction = {
   id: string;
   label: string;
+  subtitle?: string;
   icon?: React.ReactNode;
+  onClick?: () => void;
 };
 
 type EntityActionLinkProps = {
@@ -55,13 +57,21 @@ export const EntityActionLink = ({
       {actions.map((action) => (
         <div
           key={action.id}
-          onClick={() => setActiveComponent(action.id)}
+          onClick={() => {
+            if (action.onClick) {
+              action.onClick();
+            } else {
+              setActiveComponent(action.id);
+            }
+          }}
           className={Styles.actionCard}
         >
           <div className={Styles.iconContainer}>{action.icon}</div>
           <div className={Styles.content}>
             <span className={Styles.title}>{action.label}</span>
-            <span className={Styles.subtitle}>Toque para abrir</span>
+            <span className={Styles.subtitle}>
+              {action.subtitle || "Toque para abrir"}
+            </span>
           </div>
         </div>
       ))}

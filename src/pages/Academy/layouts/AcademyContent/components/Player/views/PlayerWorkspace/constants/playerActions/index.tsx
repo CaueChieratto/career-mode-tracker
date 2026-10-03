@@ -1,5 +1,6 @@
 import {
   FaChartLine,
+  FaCopy,
   FaStickyNote,
   FaTrophy,
   FaUserEdit,
@@ -29,5 +30,11 @@ export const getPlayerActions = (
     id: "performance",
     label: "Acompanhar Desempenho",
     icon: <FaTrophy />,
+  },
+  {
+    id: "copy-player",
+    label: "Copiar jogador",
+    subtitle: "Toque para copiar",
+    icon: <FaCopy />,
   },
 ];

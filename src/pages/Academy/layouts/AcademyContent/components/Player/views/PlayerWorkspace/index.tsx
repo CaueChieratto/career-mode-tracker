@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { FaChartLine, FaTrophy, FaUserEdit } from "react-icons/fa";
 import LazyFlag from "../../../../../../../../components/LazyFlag";
 import { FIFA_COUNTRY_CODES } from "../../../../../../../../common/constants/FIFA_COUNTRY_CODES";
@@ -10,15 +11,31 @@ import { EntityWorkspace } from "../../../EntityWorkspace";
 import { PlayerPerformance } from "../../components/PlayerPerformance";
 import { getPlayerActions } from "./constants/playerActions";
 import { useAcademyContext } from "../../../../../contexts/AcademyContext/hooks/useAcademyContext";
+import { buildPlayerCopyText } from "./helpers/buildPlayerCopyText";
+import { Copy } from "../../../../../../../../common/utils/Copy";
 
 interface PlayerWorkspaceProps {
   selectedPlayer?: AcademyPlayers;
 }
 
 export const PlayerWorkspace = ({ selectedPlayer }: PlayerWorkspaceProps) => {
-  const { isGeral } = useAcademyContext();
+  const { isGeral, career, tournamentsAcademy, allTournamentsAcademy } =
+    useAcademyContext();
+  const [copyFeedback, setCopyFeedback] = useState(false);
 
   if (!selectedPlayer) return null;
+
+  const handleCopyPlayer = async () => {
+    if (!selectedPlayer) return;
+    const tournaments =
+      isGeral && allTournamentsAcademy && allTournamentsAcademy.length > 0
+        ? allTournamentsAcademy
+        : tournamentsAcademy;
+    const formatted = buildPlayerCopyText(selectedPlayer, tournaments, career);
+    await Copy(formatted, "Jogador copiado com sucesso!");
+    setCopyFeedback(true);
+    setTimeout(() => setCopyFeedback(false), 2500);
+  };
 
   const hasAnnotations =
     !!selectedPlayer.annotations &&
@@ -27,7 +44,18 @@ export const PlayerWorkspace = ({ selectedPlayer }: PlayerWorkspaceProps) => {
 
   const isReadOnlyNote = false;
 
-  let playerActions = getPlayerActions(hasAnnotations, isReadOnlyNote);
+  let playerActions = getPlayerActions(hasAnnotations, isReadOnlyNote).map(
+    (action) => {
+      if (action.id === "copy-player") {
+        return {
+          ...action,
+          subtitle: copyFeedback ? "Copiado com sucesso!" : "Toque para copiar",
+          onClick: handleCopyPlayer,
+        };
+      }
+      return action;
+    },
+  );
 
   if (isGeral) {
     playerActions = playerActions.filter(

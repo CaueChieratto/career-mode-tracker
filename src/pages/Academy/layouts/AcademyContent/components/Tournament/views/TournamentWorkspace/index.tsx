@@ -11,6 +11,9 @@ import { TournamentMatchList } from "../../features/Match/components/TournamentM
 import { CreateAcademyMatchForm } from "../../features/Match/containers/CreateAcademyMatchForm";
 import { useAcademyContext } from "../../../../../contexts/AcademyContext/hooks/useAcademyContext";
 
+import { buildTournamentCopyText } from "./helpers/buildTournamentCopyText";
+import { Copy } from "../../../../../../../../common/utils/Copy";
+
 interface TournamentWorkspaceProps {
   selectedTournament?: AcademyTournaments;
 }
@@ -38,7 +41,8 @@ const MatchStateWatcher = ({
 export const TournamentWorkspace = ({
   selectedTournament,
 }: TournamentWorkspaceProps) => {
-  const { isGeral } = useAcademyContext();
+  const { isGeral, career, allPlayersAcademy } = useAcademyContext();
+  const [copyFeedback, setCopyFeedback] = useState(false);
   const [editingMatch, setEditingMatch] = useState<
     AcademyMatches | undefined
   >();
@@ -48,15 +52,39 @@ export const TournamentWorkspace = ({
 
   if (!selectedTournament) return null;
 
-  let availableActions = tournamentActions.filter(
-    (action) =>
-      action.id !== "view-matches" ||
-      (selectedTournament.matches && selectedTournament.matches.length >= 1),
-  );
+  const handleCopyTournament = async () => {
+    if (!selectedTournament) return;
+    const formatted = buildTournamentCopyText(
+      selectedTournament,
+      career,
+      allPlayersAcademy,
+    );
+    await Copy(formatted, "Torneio copiado com sucesso!");
+    setCopyFeedback(true);
+    setTimeout(() => setCopyFeedback(false), 2500);
+  };
+
+  let availableActions = tournamentActions
+    .map((action) => {
+      if (action.id === "copy-tournament") {
+        return {
+          ...action,
+          subtitle: copyFeedback ? "Copiado com sucesso!" : "Toque para copiar",
+          onClick: handleCopyTournament,
+        };
+      }
+      return action;
+    })
+    .filter(
+      (action) =>
+        action.id !== "view-matches" ||
+        (selectedTournament.matches && selectedTournament.matches.length >= 1),
+    );
 
   if (isGeral) {
     availableActions = availableActions.filter(
-      (action) => action.id === "view-matches",
+      (action) =>
+        action.id === "view-matches" || action.id === "copy-tournament",
     );
   }
 
