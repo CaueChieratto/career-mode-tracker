@@ -13,6 +13,7 @@ if (!statSync(noEnvDirectory).isFile()) throw new Error('TEST_ENV_ISOLATION_FAIL
 export function resolveTestFirebaseId(source: string, importer?: string): string | undefined {
   if (source === 'firebase/firestore') return path.resolve(root, 'src/test/mocks/firestore.ts');
   if (source === 'firebase/auth') return path.resolve(root, 'src/test/mocks/auth.ts');
+  if (source === 'firebase/functions') return path.resolve(root, 'src/test/mocks/functions.ts');
   if (/^(?:firebase|@firebase)(?:\/|$)/.test(source)) throw new Error(`REAL_FIREBASE_BLOCKED: ${source}`);
   if (importer && (source.startsWith('.') || path.isAbsolute(source))) {
     const resolved = path.resolve(path.dirname(importer.split('?')[0]), source);

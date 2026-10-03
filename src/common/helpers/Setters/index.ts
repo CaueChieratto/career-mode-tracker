@@ -2,6 +2,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { Career } from "../../interfaces/Career";
 import { db } from "../../services/Firebase";
 import { Trophy } from "../../interfaces/club/trophy";
+import { withFirestoreRetry } from "../../utils/firestoreRetry";
 
 export const updateCareerFirestore = async (
   userId: string,
@@ -10,11 +11,12 @@ export const updateCareerFirestore = async (
 ) => {
   if (Object.keys(updates).length === 0) return;
 
-  if (Object.keys(updates).length === 0) {
-    throw new Error("Nenhuma atualização fornecida");
-  }
   const careerRef = doc(db, `users/${userId}/careers/${careerId}`);
-  await updateDoc(careerRef, updates);
+  const payload: Partial<Career> = {
+    ...updates,
+    updatedAt: updates.updatedAt ?? Date.now(),
+  };
+  await withFirestoreRetry(() => updateDoc(careerRef, payload));
 };
 
 export const updateCareerTrophies = async (
@@ -23,5 +25,11 @@ export const updateCareerTrophies = async (
   trophies: Trophy[],
 ) => {
   const careerRef = doc(db, `users/${userId}/careers/${careerId}`);
-  await updateDoc(careerRef, { trophies });
+  await withFirestoreRetry(() =>
+    updateDoc(careerRef, {
+      trophies,
+      updatedAt: Date.now(),
+    }),
+  );
 };
+

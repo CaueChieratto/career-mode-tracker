@@ -39,21 +39,24 @@ export const GroupCareerPage = () => {
     return () => unsubscribe();
   }, [groupId, stateSave]);
 
-  const { loading, seasonsByCareer, groupCareer } = useGroupSeasonView(
-    save ?? {
-      id: "",
-      managerName: "",
-      careers: [],
-      careerIds: [],
-      createdAt: new Date(),
-    },
-  );
+  const { loading, groupPlayers, seasonsByCareer, groupCareer } =
+    useGroupSeasonView(
+      save ?? {
+        id: "",
+        managerName: "",
+        careers: [],
+        careerIds: [],
+        createdAt: new Date(),
+      },
+    );
 
   if (fetching || (save && loading)) return <Load />;
   if (!save || !groupCareer) return <NotFoundDisplay />;
 
   return (
-    <GroupCareerContext.Provider value={{ save, seasonsByCareer }}>
+    <GroupCareerContext.Provider
+      value={{ save, seasonsByCareer, groupPlayers }}
+    >
       <SectionView
         notSeason
         title={save.managerName}

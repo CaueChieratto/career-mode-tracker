@@ -56,10 +56,15 @@ export const SeasonConfigs = ({
     clubColor,
     darkClubColor,
     canProceed,
-  } = useSeasonConfigs({ career, setSelectedCareer });
+  } = useSeasonConfigs({ career, season, setSelectedCareer });
 
   const updatedSeason =
-    career.clubData.find((s) => s.id === season.id) || season;
+    career.clubData.find((s) => s.id === (season?.id || currentSeasonId)) || season;
+
+  const seasonForTrophies: ClubData = {
+    ...updatedSeason,
+    leagues: selectedLeagues,
+  };
 
   const { isSaving: isSavingAcademy, handleSaveAcademy } = useAcademyConfigs({
     career,
@@ -193,7 +198,7 @@ export const SeasonConfigs = ({
       {view === "add" && (
         <div className={Styles.container_add_trophies}>
           <AddTrophies
-            season={updatedSeason}
+            season={seasonForTrophies}
             careerId={career.id}
             setView={() => setView("menu")}
             selectedCareer={career}

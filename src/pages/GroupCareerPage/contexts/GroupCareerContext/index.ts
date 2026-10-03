@@ -1,10 +1,12 @@
 import { createContext, useContext } from "react";
 import { CareerGroup } from "../../../../common/interfaces/CareerGroup";
+import { Players } from "../../../../common/interfaces/playersInfo/players";
 import { SeasonByCareer } from "../../hooks/useGroupSeasonView";
 
 type GroupCareerContextType = {
   save: CareerGroup;
   seasonsByCareer: SeasonByCareer[];
+  groupPlayers?: Players[];
 };
 
 export const GroupCareerContext = createContext<

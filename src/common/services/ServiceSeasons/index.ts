@@ -10,6 +10,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocsFromServer,
   writeBatch,
 } from "firebase/firestore";
@@ -215,16 +216,18 @@ export const ServiceSeasons = {
     const user = auth.currentUser;
     if (!user) throw new Error("Usuário não autenticado");
 
-    let storedSeasons: ClubData[] = [];
-    const career = await getCareerById(user.uid, careerId, (seasons) => {
-      storedSeasons = seasons;
-    });
-    const updatedClubData = career.clubData.map((season) =>
+    const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+    const careerSnap = await getDoc(careerRef);
+    if (!careerSnap.exists()) throw new Error("Carreira não encontrada");
+
+    const rawData = careerSnap.data() as Career;
+    const storedClubData = (rawData?.clubData || []) as ClubData[];
+    const updatedClubData = storedClubData.map((season) =>
       season.id === seasonId ? { ...season, leagues } : season,
     );
 
     await updateCareerFirestore(user.uid, careerId, {
-      clubData: stripHeavyData(updatedClubData, storedSeasons),
+      clubData: updatedClubData,
     });
   },
 

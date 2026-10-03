@@ -39,7 +39,7 @@ const SeasonList = ({ clubData, careerId, career }: SeasonListProps) => {
         <SeasonCard
           key={season.id}
           season={season}
-          onClick={() => openModal(ModalType.SEASON_CONFIGS, undefined, season)}
+          onClick={() => openModal(ModalType.SEASON_CONFIGS, career, season)}
           onDelete={() => handleDeleteSeason(season.id, season.seasonNumber)}
         />
       ))}
@@ -47,19 +47,19 @@ const SeasonList = ({ clubData, careerId, career }: SeasonListProps) => {
       {activeModal !== ModalType.NONE && (
         <ModalManager
           activeModal={activeModal}
-          selectedCareer={selectedCareer}
+          selectedCareer={selectedCareer?.id ? selectedCareer : career}
           setSelectedCareer={setSelectedCareer}
           selectedSeason={selectedSeason}
           onClose={closeModal}
           onNavigateSeason={handleNavigateToSeason}
-          career={career}
+          career={selectedCareer?.id ? selectedCareer : career}
         />
       )}
 
       <div
         className={Styles.card}
         onClick={() =>
-          openModal(ModalType.SEASON_CONFIGS, undefined, {
+          openModal(ModalType.SEASON_CONFIGS, career, {
             id: "geral",
             seasonNumber: 0,
           } as unknown as ClubData)

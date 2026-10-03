@@ -3,7 +3,15 @@ import { ClubData } from "../../../../../../common/interfaces/club/clubData";
 import { Career } from "../../../../../../common/interfaces/Career";
 import { PlayerStatsAccumulator } from "../../../../../../common/interfaces/PlayerStatsAccumulator/PlayerStatsAccumulator";
 import { AggregatedPlayerStats } from "../../../../../../common/interfaces/AggregatedPlayerStats/AggregatedPlayerStats";
-import { augmentSeasonWithMatchStats } from "../../../../helpers/mergeMatchStats";
+import {
+  augmentSeasonWithMatchStats,
+  areLeagueStatsIdentical,
+} from "../../../../helpers/mergeMatchStats";
+import {
+  getPlayerIdentityKey,
+  matchPlayerStatToPlayer,
+} from "../../../../../../common/utils/playerIdentity";
+import { LeagueStats } from "../../../../../../common/interfaces/playersStats/leagueStats";
 
 export const useBestPlayersStats = (
   season: ClubData,
@@ -19,7 +27,8 @@ export const useBestPlayersStats = (
     if (!isGeralPage) return;
 
     const localData = (career.clubData || []).map((s) => ({
-      clubName: career.clubName,
+      clubName:
+        (s as unknown as { clubName?: string }).clubName || career.clubName,
       season: s,
     }));
     setCareerSeasonsData(localData);
@@ -37,15 +46,17 @@ export const useBestPlayersStats = (
     );
 
     const playerStatsMap = new Map<string, PlayerStatsAccumulator>();
+    const prevSeasonStatsMap = new Map<string, LeagueStats[]>();
 
     seasonsToProcess.forEach(({ season: s }) => {
       s.players.forEach((p) => {
-        const normalizedName = p.name.trim().toLowerCase();
-        const normalizedNation = p.nation.trim().toLowerCase();
-
-        const key = isGeralPage
-          ? `${normalizedName}-${normalizedNation}`
-          : p.id;
+        const key = getPlayerIdentityKey(p, career.id);
+        const currentStats = p.statsLeagues || [];
+        const prevStats = prevSeasonStatsMap.get(key);
+        const isClone =
+          prevStats !== undefined &&
+          areLeagueStatsIdentical(prevStats, currentStats);
+        prevSeasonStatsMap.set(key, currentStats);
 
         let baseGames = 0,
           baseRatingSum = 0,
@@ -53,13 +64,15 @@ export const useBestPlayersStats = (
           baseAssists = 0,
           baseMinutes = 0;
 
-        (p.statsLeagues || []).forEach((l) => {
-          baseGames += l.stats.games || 0;
-          baseRatingSum += (l.stats.rating || 0) * (l.stats.games || 0);
-          baseGoals += l.stats.goals || 0;
-          baseAssists += l.stats.assists || 0;
-          baseMinutes += l.stats.minutesPlayed || 0;
-        });
+        if (!isClone) {
+          currentStats.forEach((l) => {
+            baseGames += l.stats.games || 0;
+            baseRatingSum += (l.stats.rating || 0) * (l.stats.games || 0);
+            baseGoals += l.stats.goals || 0;
+            baseAssists += l.stats.assists || 0;
+            baseMinutes += l.stats.minutesPlayed || 0;
+          });
+        }
 
         if (!playerStatsMap.has(key)) {
           playerStatsMap.set(key, {
@@ -114,14 +127,13 @@ export const useBestPlayersStats = (
         if (match.status !== "FINISHED") return;
 
         match.playerStats?.forEach((pStat) => {
-          const seasonPlayer = s.players.find((p) => p.id === pStat.playerId);
+          const seasonPlayer = matchPlayerStatToPlayer(
+            pStat.playerId,
+            s.players,
+          );
           if (!seasonPlayer) return;
 
-          const normalizedName = seasonPlayer.name.trim().toLowerCase();
-          const normalizedNation = seasonPlayer.nation.trim().toLowerCase();
-          const key = isGeralPage
-            ? `${normalizedName}-${normalizedNation}`
-            : pStat.playerId;
+          const key = getPlayerIdentityKey(seasonPlayer);
 
           const acc = playerStatsMap.get(key);
           if (!acc) return;

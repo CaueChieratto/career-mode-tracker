@@ -12,13 +12,16 @@ export const useSeasonsPlayerTab = (
   career: Career,
   player?: Players,
   isNotSeason?: boolean,
+  isFromGroup?: boolean,
 ) => {
   const [expand, setExpand] = useState<Record<string, boolean>>({});
   const [allSeasonsData, setAllSeasonsData] = useState<SeasonCareerData[]>([]);
-  const [isLoadingSeasons, setIsLoadingSeasons] = useState(!!isNotSeason);
+  const [isLoadingSeasons, setIsLoadingSeasons] = useState(
+    Boolean(isNotSeason && isFromGroup && career?.groupId),
+  );
 
   useEffect(() => {
-    if (isNotSeason && career?.groupId) {
+    if (isNotSeason && isFromGroup && career?.groupId) {
       setIsLoadingSeasons(true);
       PlayersGroupService.getGroupSeasonsData(career.groupId, career.createdAt)
         .then((data) => {
@@ -34,7 +37,7 @@ export const useSeasonsPlayerTab = (
       setAllSeasonsData(career.clubData.map((s) => ({ season: s, career })));
       setIsLoadingSeasons(false);
     }
-  }, [isNotSeason, career]);
+  }, [isNotSeason, isFromGroup, career]);
 
   const toggleExpand = (seasonId: string) => {
     setExpand((prev) => ({

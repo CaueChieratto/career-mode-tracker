@@ -1,5 +1,6 @@
 import { Players } from "../../../../interfaces/playersInfo/players";
 import { LeagueStats } from "../../../../interfaces/playersStats/leagueStats";
+import { areLeagueStatsIdentical } from "../../../../../layout/SectionView/helpers/mergeMatchStats";
 
 export const aggregatePlayerStats = (
   playerHistoryMap: Map<string, Players[]>,
@@ -13,10 +14,20 @@ export const aggregatePlayerStats = (
 
     const leagueStatsMap = new Map<string, LeagueStats>();
     let totalBallonDor = 0;
+    let prevStats: LeagueStats[] | null = null;
 
     history.forEach((seasonPlayer) => {
+      const currentStats = seasonPlayer.statsLeagues || [];
+      const isClone =
+        prevStats !== null && areLeagueStatsIdentical(prevStats, currentStats);
+      prevStats = currentStats;
+
+      if (isClone) {
+        return;
+      }
+
       totalBallonDor += seasonPlayer.ballonDor || 0;
-      seasonPlayer.statsLeagues?.forEach((leagueStat) => {
+      currentStats.forEach((leagueStat) => {
         const existingLeague = leagueStatsMap.get(leagueStat.leagueName);
         if (existingLeague) {
           const oldTotalRating =

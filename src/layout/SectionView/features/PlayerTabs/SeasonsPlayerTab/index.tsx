@@ -22,15 +22,19 @@ const SeasonsPlayerTab = ({
   season,
 }: SeasonsPlayerTabProps) => {
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isFromGroup =
+    searchParams.get("fromGroup") === "true" ||
+    location.pathname.includes("/CareerGroup");
   const isNotSeason = location.pathname.includes("/Geral");
 
   const { groupPlayers, isLoadingGroup } = useGroupAggregatedPlayers(
     career,
-    isNotSeason,
+    isNotSeason && isFromGroup,
   );
 
   const player = useMemo(() => {
-    if (!isNotSeason || !propPlayer) return propPlayer;
+    if (!isNotSeason || !isFromGroup || !propPlayer) return propPlayer;
     const normalizedName = propPlayer.name.trim().toLowerCase();
     const normalizedNation = propPlayer.nation.trim().toLowerCase();
 
@@ -41,7 +45,7 @@ const SeasonsPlayerTab = ({
           p.nation.trim().toLowerCase() === normalizedNation,
       ) || propPlayer
     );
-  }, [isNotSeason, propPlayer, groupPlayers]);
+  }, [isNotSeason, isFromGroup, propPlayer, groupPlayers]);
 
   const {
     expand,
@@ -50,7 +54,7 @@ const SeasonsPlayerTab = ({
     getSeasonString,
     getTrophiesWonInSeason,
     isLoadingSeasons,
-  } = useSeasonsPlayerTab(career, player, isNotSeason);
+  } = useSeasonsPlayerTab(career, player, isNotSeason, isFromGroup);
 
   let renderableSeasons = useRenderableSeasons(seasonsPlayerPlayed, player);
 
@@ -66,12 +70,8 @@ const SeasonsPlayerTab = ({
     return ids.size;
   }, [career]);
 
-  if (isLoadingGroup) {
+  if (isLoadingGroup || isLoadingSeasons) {
     return <PlayerSeasonSkeleton count={uniqueSeasonsCount} />;
-  }
-
-  if (isLoadingSeasons) {
-    return null;
   }
 
   if (renderableSeasons.length === 0) {
@@ -97,7 +97,7 @@ const SeasonsPlayerTab = ({
 
         return (
           <PlayerSeason
-            key={renderableSeason.season.id}
+            key={`${renderableSeason.career.id}-${renderableSeason.season.id}`}
             season={renderableSeason.season}
             player={player}
             seasonString={seasonString}

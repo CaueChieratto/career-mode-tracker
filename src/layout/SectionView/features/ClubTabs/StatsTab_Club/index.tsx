@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { ClubData } from "../../../../../common/interfaces/club/clubData";
 import NoStatsMessage from "../../../../../components/NoStatsMessage";
@@ -16,6 +16,7 @@ import { useAggregatedPlayers } from "../../../../../common/hooks/Players/UseAgg
 import { augmentSeasonWithMatchStats } from "../../../helpers/mergeMatchStats";
 import { SectionScreen } from "../../../config/screens";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
+import { GroupCareerContext } from "../../../../../pages/GroupCareerPage/contexts/GroupCareerContext";
 
 type StatsTab_ClubProps = {
   season: ClubData;
@@ -32,6 +33,8 @@ export const StatsTab_Club = ({
 }: StatsTab_ClubProps) => {
   const location = useLocation();
   const isGeralPage = location.pathname.includes("/Geral");
+  const isGroup = location.pathname.includes("/CareerGroup");
+  const groupContext = useContext(GroupCareerContext);
   const storageKeySuffix = isGeralPage ? "geral" : season.id;
   const { sortOption, setSortOption, isReversed } =
     usePersistedSortOption(storageKeySuffix);
@@ -39,10 +42,13 @@ export const StatsTab_Club = ({
   const careerAggregatedPlayers = useAggregatedPlayers(career);
 
   const playersToDisplay = useMemo(() => {
+    if (isGroup && groupContext?.groupPlayers && groupContext.groupPlayers.length > 0) {
+      return groupContext.groupPlayers;
+    }
     return isGeralPage
       ? careerAggregatedPlayers
       : augmentSeasonWithMatchStats(season, career.clubName).players;
-  }, [isGeralPage, careerAggregatedPlayers, season, career.clubName]);
+  }, [isGroup, groupContext?.groupPlayers, isGeralPage, careerAggregatedPlayers, season, career.clubName]);
 
   const playersWithStats = useSortedPlayersWithStats(playersToDisplay);
 

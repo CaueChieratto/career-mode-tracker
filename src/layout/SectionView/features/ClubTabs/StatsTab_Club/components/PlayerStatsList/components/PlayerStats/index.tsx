@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import Card from "../../../../../../../../../ui/Card";
 import Styles from "./PlayerStats.module.css";
 import StatisticsTable_Title from "../../../../../../../../../components/Statistics/StatisticsTable_Title";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useContext } from "react";
 import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { usePlayerSeasonStats } from "../../../../../../../../../common/hooks/Players/UsePlayerSeasonStats";
@@ -12,6 +12,11 @@ import { sortLeaguesByLevel } from "../../../../../../../../../common/utils/Sort
 import CalculatedStatistics from "../../../../../../../../../components/Statistics/CalculatedStatistics";
 import Load from "../../../../../../../../../components/Load";
 import { toRawPlayer } from "../../../../../../../helpers/mergeMatchStats";
+import { GroupCareerContext } from "../../../../../../../../../pages/GroupCareerPage/contexts/GroupCareerContext";
+import {
+  isSamePlayerId,
+  getPlayerIdentityKey,
+} from "../../../../../../../../../common/utils/playerIdentity";
 
 type PlayerStatsProps = {
   player: Players;
@@ -35,6 +40,7 @@ const PlayerStats = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { careerId } = useParams<{ careerId: string; groupId: string }>();
+  const groupContext = useContext(GroupCareerContext);
   const leagueFormRef = useRef(null);
 
   const { handleDeleteLeague, isDeletingLeague } = usePlayerSeasonStats({
@@ -62,19 +68,43 @@ const PlayerStats = ({
 
   const navigatePlayer = () => {
     const isGroup = location.pathname.includes("/CareerGroup");
-    const targetCareerId = careerId || career.id;
+    let targetCareerId = careerId || career.id;
+    let targetPlayerId = player.id;
 
     if (location.pathname.includes("/Geral")) {
       if (isGroup) {
         const groupMatch = location.pathname.match(/\/CareerGroup\/([^/]+)/);
-        if (groupMatch) {
+        const resolvedGroupId = groupMatch ? groupMatch[1] : "";
+
+        if (groupContext?.seasonsByCareer) {
+          const targetKey = getPlayerIdentityKey(player);
+          const isMatch = (p: Players) =>
+            p.id === player.id ||
+            isSamePlayerId(p, player) ||
+            (Boolean(targetKey) && getPlayerIdentityKey(p) === targetKey);
+
+          const matchingEntries = groupContext.seasonsByCareer.filter((entry) =>
+            entry.season.players?.some(isMatch),
+          );
+
+          if (matchingEntries.length > 0) {
+            const latestEntry = matchingEntries[matchingEntries.length - 1];
+            targetCareerId = latestEntry.career.id;
+            const playerInSeason = latestEntry.season.players.find(isMatch);
+            if (playerInSeason?.id) {
+              targetPlayerId = playerInSeason.id;
+            }
+          }
+        }
+
+        if (resolvedGroupId) {
           navigate(
-            `/Career/${targetCareerId}/Geral/Player/${player.id}?fromGroup=true&groupId=${groupMatch[1]}`,
+            `/Career/${targetCareerId}/Geral/Player/${targetPlayerId}?fromGroup=true&groupId=${resolvedGroupId}`,
           );
           return;
         }
       }
-      navigate(`/Career/${targetCareerId}/Geral/Player/${player.id}`);
+      navigate(`/Career/${targetCareerId}/Geral/Player/${targetPlayerId}`);
       return;
     }
 

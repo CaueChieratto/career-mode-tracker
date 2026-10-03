@@ -30,6 +30,12 @@ export const isLocalhostEnvironment = (customHostname?: string): boolean => {
   );
 };
 
+let hasWarnedRemoteEmulator = false;
+
+export const resetEmulatorGuardState = (): void => {
+  hasWarnedRemoteEmulator = false;
+};
+
 export const shouldConnectEmulator = (
   envFlag = import.meta.env.VITE_USE_FIREBASE_EMULATOR,
   customHostname?: string,
@@ -46,14 +52,18 @@ export const shouldConnectEmulator = (
     typeof window !== "undefined" || customHostname !== undefined;
 
   if (isBrowserOrExplicitHost && !isLocal) {
-    const currentHost =
-      customHostname ??
-      (typeof window !== "undefined" ? window.location.hostname : "remote");
-    console.warn(
-      `[Firebase] Conexão com o emulador bloqueada: aplicação rodando no host remoto (${currentHost}). Utilizando Firebase de produção.`,
-    );
+    if (!hasWarnedRemoteEmulator) {
+      hasWarnedRemoteEmulator = true;
+      const currentHost =
+        customHostname ??
+        (typeof window !== "undefined" ? window.location.hostname : "remote");
+      console.warn(
+        `[Firebase] Conexão com o emulador bloqueada: aplicação rodando no host remoto (${currentHost}). Utilizando Firebase de produção.`,
+      );
+    }
     return false;
   }
 
   return true;
 };
+

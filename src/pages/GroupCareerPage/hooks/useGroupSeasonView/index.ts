@@ -4,6 +4,7 @@ import { CareerGroup } from "../../../../common/interfaces/CareerGroup";
 import { ClubData } from "../../../../common/interfaces/club/clubData";
 import { PlayersGroupService } from "../../../../common/services/ServicePlayers/PlayersGroupService";
 import { auth } from "../../../../common/services/Firebase";
+import { getValidDate } from "../../helper/getValidDate";
 
 export type SeasonByCareer = {
   clubName: string;
@@ -22,7 +23,8 @@ export const useGroupSeasonView = (save: CareerGroup) => {
     () =>
       [...save.careers].sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          getValidDate(b.createdAt).getTime() -
+          getValidDate(a.createdAt).getTime(),
       )[0],
     [save.careers],
   );
@@ -35,14 +37,8 @@ export const useGroupSeasonView = (save: CareerGroup) => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         Promise.all([
-          PlayersGroupService.getAggregatedGroupStats(
-            save.id,
-            latestCareer.createdAt,
-          ),
-          PlayersGroupService.getGroupSeasonsData(
-            save.id,
-            latestCareer.createdAt,
-          ),
+          PlayersGroupService.getAggregatedGroupStats(save.id),
+          PlayersGroupService.getGroupSeasonsData(save.id),
         ])
           .then(([players, seasons]) => {
             if (!active) return;
@@ -72,7 +68,10 @@ export const useGroupSeasonView = (save: CareerGroup) => {
       ...latestCareer,
       id: latestCareer.id,
       clubName: save.managerName,
-      clubData: seasonsByCareer.map((s) => s.season),
+      clubData: seasonsByCareer.map((s) => ({
+        ...s.season,
+        clubName: s.clubName,
+      })),
     };
   }, [latestCareer, seasonsByCareer, save]);
 

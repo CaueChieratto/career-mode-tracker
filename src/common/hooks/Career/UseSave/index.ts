@@ -70,13 +70,11 @@ export function useSave({
     let updatedTrophies = selectedCareer?.trophies || [];
 
     try {
-      for (const trophy of selectedTrophies) {
-        updatedTrophies = await ServiceCareer.saveClubTrophie(
-          careerId,
-          trophy,
-          seasons,
-        );
-      }
+      updatedTrophies = await ServiceCareer.saveClubTrophies(
+        careerId,
+        selectedTrophies,
+        seasons,
+      );
 
       if (selectedCareer && setSelectedCareer) {
         setSelectedCareer({

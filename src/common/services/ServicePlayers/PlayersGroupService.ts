@@ -9,24 +9,27 @@ import { augmentSeasonWithMatchStats } from "../../../layout/SectionView/helpers
 import { requireAuth } from "./helpers/authHelpers";
 import { parseFirestoreDate } from "./helpers/dateHelpers";
 import { aggregatePlayerStats } from "./helpers/statsHelpers";
+import { getPlayerIdentityKey } from "../../utils/playerIdentity";
 
 const fetchCareerSeasonsData = async (
   userUid: string,
   groupId: string,
-  maxDate: Date | string,
+  maxDate?: Date | string,
 ) => {
   const careersRef = collection(db, `users/${userUid}/careers`);
   const q = query(careersRef, where("groupId", "==", groupId));
   const snapshot = await getDocs(q);
 
-  const currentCareerDate = new Date(maxDate);
+  const currentCareerDate = maxDate
+    ? parseFirestoreDate(maxDate) || new Date(maxDate)
+    : null;
   const careersData: { careerData: Career; seasons: ClubData[] }[] = [];
 
   for (const docSnap of snapshot.docs) {
     const careerData = { ...docSnap.data(), id: docSnap.id } as Career;
     const careerDate = parseFirestoreDate(careerData.createdAt) || new Date(0);
 
-    if (careerDate <= currentCareerDate) {
+    if (!currentCareerDate || careerDate <= currentCareerDate) {
       const clubData = careerData.clubData || [];
       const enrichedSeasons: ClubData[] = [];
 
@@ -58,13 +61,20 @@ const fetchCareerSeasonsData = async (
     }
   }
 
+  // Ordena carreiras cronologicamente para que o estado mais recente fique por último
+  careersData.sort(
+    (a, b) =>
+      (parseFirestoreDate(a.careerData.createdAt)?.getTime() || 0) -
+      (parseFirestoreDate(b.careerData.createdAt)?.getTime() || 0),
+  );
+
   return careersData;
 };
 
 export const PlayersGroupService = {
   getAggregatedGroupStats: async (
     groupId: string,
-    maxDate: Date | string,
+    maxDate?: Date | string,
   ): Promise<Players[]> => {
     const user = requireAuth();
     const careersData = await fetchCareerSeasonsData(
@@ -80,7 +90,7 @@ export const PlayersGroupService = {
           careerData.clubName,
         );
         augmentedSeason.players.forEach((p) => {
-          const uniqueKey = p.id;
+          const uniqueKey = getPlayerIdentityKey(p, careerData.id);
           const history = playerHistoryMap.get(uniqueKey) || [];
           playerHistoryMap.set(uniqueKey, [...history, p]);
         });
@@ -91,7 +101,7 @@ export const PlayersGroupService = {
 
   getGroupSeasonsData: async (
     groupId: string,
-    maxDate: Date | string,
+    maxDate?: Date | string,
   ): Promise<{ clubName: string; season: ClubData; career: Career }[]> => {
     const user = requireAuth();
     const careersData = await fetchCareerSeasonsData(
@@ -137,7 +147,7 @@ export const PlayersGroupService = {
 
       for (const season of seasons) {
         season.players.forEach((player) => {
-          const uniqueKey = player.id;
+          const uniqueKey = getPlayerIdentityKey(player, careerData.id);
           const history = playerHistoryMap.get(uniqueKey) || [];
           playerHistoryMap.set(uniqueKey, [...history, player]);
         });

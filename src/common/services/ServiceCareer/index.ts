@@ -1,4 +1,4 @@
-import { collection, doc, setDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, getDoc, setDoc, writeBatch } from "firebase/firestore";
 import { Career } from "../../interfaces/Career";
 import { auth, db } from "../Firebase";
 import { Trophy } from "../../interfaces/club/trophy";
@@ -7,7 +7,7 @@ import {
   deleteCareerLocalStorage,
   deleteSeasonFromTrophies,
 } from "../../helpers/Deleters";
-import { getAllCareers, getCareerById } from "../../helpers/Getters";
+import { getAllCareers } from "../../helpers/Getters";
 import { buildCareerUpdates } from "../../helpers/Builders";
 import {
   updateCareerFirestore,
@@ -79,11 +79,41 @@ export const ServiceCareer = {
     const user = auth.currentUser;
     if (!user) throw new Error("Usuário não autenticado");
 
-    const career = await getCareerById(user.uid, careerId);
+    const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+    const careerSnap = await getDoc(careerRef);
+    if (!careerSnap.exists()) throw new Error("Carreira não encontrada");
+
+    const career = { id: careerSnap.id, ...careerSnap.data() } as Career;
     const updatedTrophies = mergeTrophies(career, leagueName, seasons);
     await updateCareerTrophies(user.uid, careerId, updatedTrophies);
 
     return updatedTrophies;
+  },
+
+  saveClubTrophies: async (
+    careerId: string,
+    leagueNames: string[],
+    seasons: string[],
+  ): Promise<Trophy[]> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Usuário não autenticado");
+
+    const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+    const careerSnap = await getDoc(careerRef);
+    if (!careerSnap.exists()) throw new Error("Carreira não encontrada");
+
+    const career = { id: careerSnap.id, ...careerSnap.data() } as Career;
+    let currentTrophies = career.trophies || [];
+    for (const leagueName of leagueNames) {
+      currentTrophies = mergeTrophies(
+        { ...career, trophies: currentTrophies },
+        leagueName,
+        seasons,
+      );
+    }
+    await updateCareerTrophies(user.uid, careerId, currentTrophies);
+
+    return currentTrophies;
   },
 
   removeSeason: async (
@@ -94,8 +124,11 @@ export const ServiceCareer = {
     const user = auth.currentUser;
     if (!user) throw new Error("Usuário não autenticado");
 
-    const career = await getCareerById(user.uid, careerId);
+    const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+    const careerSnap = await getDoc(careerRef);
+    if (!careerSnap.exists()) throw new Error("Carreira não encontrada");
 
+    const career = { id: careerSnap.id, ...careerSnap.data() } as Career;
     const updatedTrophies = deleteSeasonFromTrophies(
       career,
       leagueName,

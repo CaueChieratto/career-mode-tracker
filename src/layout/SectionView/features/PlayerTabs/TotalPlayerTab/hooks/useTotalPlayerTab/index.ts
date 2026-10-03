@@ -12,12 +12,15 @@ export const useTotalPlayerTab = (
   career: Career,
   player?: Players,
   isNotSeason?: boolean,
+  isFromGroup?: boolean,
 ) => {
   const [allSeasonsData, setAllSeasonsData] = useState<SeasonCareerData[]>([]);
-  const [isLoading, setIsLoading] = useState(!!isNotSeason);
+  const [isLoading, setIsLoading] = useState(
+    Boolean(isNotSeason && isFromGroup && career?.groupId),
+  );
 
   useEffect(() => {
-    if (isNotSeason && career?.groupId) {
+    if (isNotSeason && isFromGroup && career?.groupId) {
       setIsLoading(true);
       PlayersGroupService.getGroupSeasonsData(career.groupId, career.createdAt)
         .then((data) => {
@@ -33,7 +36,7 @@ export const useTotalPlayerTab = (
       setAllSeasonsData(career.clubData.map((s) => ({ season: s, career })));
       setIsLoading(false);
     }
-  }, [isNotSeason, career]);
+  }, [isNotSeason, isFromGroup, career]);
 
   const { allTrophiesWon, seasonsCount } = useMemo(() => {
     if (!player || allSeasonsData.length === 0)

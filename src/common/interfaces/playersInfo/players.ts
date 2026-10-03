@@ -31,4 +31,5 @@ export interface Players {
   academyHistory?: AcademyPlayersHistory[];
   academyTournaments?: AcademyTournaments[];
   academyNickname?: string;
+  playedWithUs?: string;
 }

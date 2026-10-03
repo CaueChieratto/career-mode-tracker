@@ -26,22 +26,27 @@ export const useTotalPlayerData = ({
   season,
 }: UseTotalPlayerDataArgs) => {
   const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const isFromGroup =
+    searchParams.get("fromGroup") === "true" ||
+    location.pathname.includes("/CareerGroup");
   const isNotSeason = location.pathname.includes("/Geral");
 
   const { groupPlayers, isLoadingGroup } = useGroupAggregatedPlayers(
     career,
-    isNotSeason,
+    isNotSeason && isFromGroup,
   );
 
   const player = useMemo(() => {
-    if (!isNotSeason || !propPlayer) return propPlayer;
+    if (!isNotSeason || !isFromGroup || !propPlayer) return propPlayer;
     return findPlayerInList(groupPlayers, propPlayer) || propPlayer;
-  }, [isNotSeason, propPlayer, groupPlayers]);
+  }, [isNotSeason, isFromGroup, propPlayer, groupPlayers]);
 
   const { allTrophiesWon, seasonsCount } = useTotalPlayerTab(
     career,
     player,
     isNotSeason,
+    isFromGroup,
   );
 
   const [expand, setExpand] = useState<Record<string, boolean>>({});
@@ -86,6 +91,30 @@ export const useTotalPlayerData = ({
 
   const filteredAcademyTournaments = useMemo(() => {
     if (!playerForTotalCalc?.academyTournaments) return [];
+
+    // Se NÃO for no contexto de grupo (carreira individual):
+    // Só exibe torneios da base se o jogador pertenceu à base DESTA carreira específica
+    if (!isFromGroup) {
+      const normalizedName = playerForTotalCalc.name?.trim().toLowerCase();
+      const wasInThisCareerAcademy =
+        career.clubData?.some((s) =>
+          s.academyPlayers?.some(
+            (ap) => ap.name?.trim().toLowerCase() === normalizedName,
+          ),
+        ) ||
+        career.clubData?.some((s) =>
+          s.players?.some(
+            (p) =>
+              p.name?.trim().toLowerCase() === normalizedName &&
+              p.contract?.some((c) => c.fromClub === "Base"),
+          ),
+        );
+
+      if (!wasInThisCareerAcademy) {
+        return [];
+      }
+    }
+
     if (isNotSeason || !season) return playerForTotalCalc.academyTournaments;
 
     const careerStartYear = new Date(career.createdAt).getFullYear();
@@ -94,7 +123,7 @@ export const useTotalPlayerData = ({
     return playerForTotalCalc.academyTournaments.filter((t) =>
       belongsToSeason(t.date, season.seasonNumber, careerStartYear, isEurope),
     );
-  }, [playerForTotalCalc, isNotSeason, career, season]);
+  }, [playerForTotalCalc, isNotSeason, career, season, isFromGroup]);
 
   const academyStats = useMemo(() => {
     if (!playerForTotalCalc) return null;

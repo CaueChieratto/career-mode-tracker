@@ -4,6 +4,10 @@ import { Players } from "../../../../common/interfaces/playersInfo/players";
 import { LeagueStats } from "../../../../common/interfaces/playersStats/leagueStats";
 import { League } from "../../../../common/interfaces/League";
 import { Match } from "../../../../common/interfaces/Match";
+import {
+  getPlayerIdentityKey,
+  isSamePlayerId,
+} from "../../../../common/utils/playerIdentity";
 
 const getUnifiedPlayerLeagueStats = (
   player: Players,
@@ -20,7 +24,9 @@ const getUnifiedPlayerLeagueStats = (
 
   uniqueMatches.forEach((match) => {
     if (match.status !== "FINISHED") return;
-    const pStat = match.playerStats?.find((p) => p.playerId === player.id);
+    const pStat = match.playerStats?.find((p) =>
+      isSamePlayerId(p.playerId, player),
+    );
     if (!pStat) return;
 
     const leagueName = match.league;
@@ -121,11 +127,13 @@ export const augmentSeasonWithMatchStats = (
     const currentPlayer = player as AugmentedPlayer;
     if (currentPlayer._isAugmented) return player;
 
+    const baseManual = player.manualStatsLeagues ?? player.statsLeagues ?? [];
+
     return {
       ...player,
-      manualStatsLeagues: player.statsLeagues ?? [],
+      manualStatsLeagues: baseManual,
       statsLeagues: getUnifiedPlayerLeagueStats(
-        player,
+        { ...player, statsLeagues: baseManual },
         season.matches || [],
         season.leagues || [],
         clubName,
@@ -150,6 +158,41 @@ export const augmentCareerWithMatchStats = (career: Career): Career => {
   };
 };
 
+export const areLeagueStatsIdentical = (
+  leaguesA: LeagueStats[] | undefined,
+  leaguesB: LeagueStats[] | undefined,
+): boolean => {
+  if (!leaguesA || !leaguesB) return false;
+  if (leaguesA.length === 0 || leaguesB.length === 0) return false;
+  if (leaguesA.length !== leaguesB.length) return false;
+
+  let totalNonZero = 0;
+  for (const a of leaguesA) {
+    const b = leaguesB.find((item) => item.leagueName === a.leagueName);
+    if (!b) return false;
+    if (
+      (a.stats.games || 0) !== (b.stats.games || 0) ||
+      (a.stats.goals || 0) !== (b.stats.goals || 0) ||
+      (a.stats.assists || 0) !== (b.stats.assists || 0) ||
+      (a.stats.cleanSheets || 0) !== (b.stats.cleanSheets || 0) ||
+      (a.stats.rating || 0) !== (b.stats.rating || 0) ||
+      (a.stats.minutesPlayed || 0) !== (b.stats.minutesPlayed || 0) ||
+      (a.stats.defenses || 0) !== (b.stats.defenses || 0)
+    ) {
+      return false;
+    }
+    if (
+      (a.stats.games || 0) > 0 ||
+      (a.stats.goals || 0) > 0 ||
+      (a.stats.assists || 0) > 0
+    ) {
+      totalNonZero++;
+    }
+  }
+
+  return totalNonZero > 0;
+};
+
 type AggregatedLeague = LeagueStats & { ratingSum: number };
 type AggregatedPlayer = Players & {
   _leagueMap: Record<string, AggregatedLeague>;
@@ -157,10 +200,27 @@ type AggregatedPlayer = Players & {
 
 export const getAggregatedPlayersForCareer = (career: Career): Players[] => {
   const playerMap: Record<string, AggregatedPlayer> = {};
+  const previousSeasonPlayerStats: Record<string, LeagueStats[]> = {};
 
-  career.clubData.forEach((season) => {
-    season.players.forEach((player) => {
-      const key = player.id;
+  const sortedSeasons = [...(career.clubData || [])].sort(
+    (a, b) => (a.seasonNumber || 0) - (b.seasonNumber || 0),
+  );
+
+  sortedSeasons.forEach((season) => {
+    const seasonClubName =
+      (season as unknown as { clubName?: string }).clubName || career.clubName;
+    const augmentedSeason = augmentSeasonWithMatchStats(season, seasonClubName);
+
+    augmentedSeason.players.forEach((player) => {
+      const key = getPlayerIdentityKey(player, career.id);
+      const currentStats = player.statsLeagues || [];
+
+      const prevStats = previousSeasonPlayerStats[key];
+      const isClone =
+        prevStats !== undefined &&
+        areLeagueStatsIdentical(prevStats, currentStats);
+
+      previousSeasonPlayerStats[key] = currentStats;
 
       if (!playerMap[key]) {
         playerMap[key] = {
@@ -182,10 +242,14 @@ export const getAggregatedPlayersForCareer = (career: Career): Players[] => {
 
       const targetPlayer = playerMap[key];
 
+      if (isClone) {
+        return;
+      }
+
       targetPlayer.ballonDor =
         (targetPlayer.ballonDor || 0) + (player.ballonDor || 0);
 
-      (player.statsLeagues || []).forEach((league) => {
+      currentStats.forEach((league) => {
         if (!targetPlayer._leagueMap[league.leagueName]) {
           targetPlayer._leagueMap[league.leagueName] = {
             ...league,
