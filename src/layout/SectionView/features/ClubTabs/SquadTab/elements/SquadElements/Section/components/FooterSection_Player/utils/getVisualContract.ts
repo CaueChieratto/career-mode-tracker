@@ -1,22 +1,41 @@
 import { Match } from "../../../../../../../../../../../common/interfaces/Match";
+import { getContinentByCountry } from "../../../../../../../../../../../common/services/GetContinentByCountry";
 import { formatContractDisplay, getContractInMonths } from "./FormatContract";
 import { getLatestFinishedMatch } from "./getLatestFinishedMatch";
 
 export const getVisualContract = (
   contractTime: number,
   matches: Match[],
+  careerNationOrIsEuropean: string | boolean = true,
 ): string => {
   const latest = getLatestFinishedMatch(matches);
   if (!latest) return formatContractDisplay(contractTime);
 
+  const isEuropean =
+    typeof careerNationOrIsEuropean === "boolean"
+      ? careerNationOrIsEuropean
+      : typeof careerNationOrIsEuropean === "string"
+      ? getContinentByCountry(careerNationOrIsEuropean) === "Europa"
+      : true;
+
   const originalMonths = getContractInMonths(contractTime);
-  const [, month, yearShort] = latest.date.split("/").map(Number);
-  const year = 2000 + yearShort;
-  const seasonStartYear = month >= 6 ? year : year - 1;
-  const baseIndex = seasonStartYear * 12 + 6;
-  const currentIndex = year * 12 + month;
-  const diffMonths = currentIndex - baseIndex;
-  const remainingMonths = originalMonths - diffMonths;
+  const [, month, rawYear] = latest.date.split("/").map(Number);
+  const year = rawYear < 100 ? 2000 + rawYear : rawYear;
+
+  let diffMonths = 0;
+
+  if (isEuropean) {
+    const seasonStartYear = month >= 7 ? year : year - 1;
+    const baseIndex = seasonStartYear * 12 + 7;
+    const currentIndex = year * 12 + month;
+    diffMonths = currentIndex - baseIndex;
+  } else {
+    const baseIndex = year * 12 + 1;
+    const currentIndex = year * 12 + month;
+    diffMonths = currentIndex - baseIndex;
+  }
+
+  const remainingMonths = originalMonths - Math.max(0, diffMonths);
 
   if (remainingMonths <= 0) return "Expirado";
 

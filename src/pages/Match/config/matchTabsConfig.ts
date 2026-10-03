@@ -18,6 +18,7 @@ type MatchTabConfig = {
     onOpenPlayerModal?: (playerId: string) => void;
     onOpenScreen?: (screen: MatchScreen) => void;
     onSaved?: (match: Partial<Match>) => void;
+    onPickerOpenChange?: (isOpen: boolean) => void;
   }>;
   actionButton?: React.FC<{ onClick?: () => void }>;
   action?: () => void;

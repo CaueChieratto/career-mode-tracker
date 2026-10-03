@@ -27,6 +27,8 @@ type SectionProps = {
   academyNickname?: string;
   careerId?: string;
   groupId?: string;
+  careerNation?: string;
+  isEuropean?: boolean;
   onOpenScreen?: (screen: SectionScreen) => void;
 };
 
@@ -49,6 +51,8 @@ export const Section = ({
   academyNickname,
   careerId: propsCareerId,
   groupId: propsGroupId,
+  careerNation,
+  isEuropean,
   onOpenScreen,
 }: SectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,6 +117,8 @@ export const Section = ({
           playerValue={playerValue}
           matches={matches}
           currency={currency}
+          careerNation={careerNation}
+          isEuropean={isEuropean}
         />
       </section>
 

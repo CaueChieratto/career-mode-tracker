@@ -7,6 +7,7 @@ type PlayerPickerProps = {
   assignedIds: Set<string>;
   activeSlotId: string;
   onSelect: (player: Players) => void;
+  onClose?: () => void;
 };
 
 export const PlayerPicker = ({
@@ -14,6 +15,7 @@ export const PlayerPicker = ({
   assignedIds,
   activeSlotId,
   onSelect,
+  onClose,
 }: PlayerPickerProps) => {
   const { search, setSearch, searchRef, availablePlayers } = usePlayerSearch(
     players,
@@ -23,13 +25,26 @@ export const PlayerPicker = ({
 
   return (
     <div className={Styles.picker_container}>
-      <input
-        ref={searchRef}
-        className={Styles.picker_search}
-        placeholder="Buscar jogador..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <div className={Styles.picker_search_wrapper}>
+        <input
+          ref={searchRef}
+          className={Styles.picker_search}
+          placeholder="Buscar jogador..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {onClose && (
+          <button
+            type="button"
+            className={Styles.picker_close_button}
+            onClick={onClose}
+            title="Fechar busca"
+            aria-label="Fechar busca"
+          >
+            ✕
+          </button>
+        )}
+      </div>
       <div className={Styles.picker_list}>
         {availablePlayers.length === 0 && (
           <p className={Styles.picker_empty}>Nenhum jogador disponível</p>

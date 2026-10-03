@@ -2,25 +2,105 @@ import { AcademyPlayers } from "../../../../../../../../interfaces/AcademyPlayer
 import { AcademyMatches } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
 import { PlayerMatchesStats } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
 
-const dateValue = (date: string) => {
-  const [day, month, year] = date.split("/").map(Number);
-  return year && month && day ? Date.UTC(year, month - 1, day) : Number.NaN;
+export const parseDateValue = (date?: string): number => {
+  if (!date || typeof date !== "string") return Number.NaN;
+  const clean = date.trim().split(" ")[0];
+  if (clean.includes("-")) {
+    const parts = clean.split("-").map(Number);
+    if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+      return Date.UTC(parts[0], parts[1] - 1, parts[2]);
+    }
+  }
+  const parts = clean.split("/").map(Number);
+  if (parts.length >= 2) {
+    const day = parts[0];
+    const month = parts[1];
+    let year = parts.length >= 3 ? parts[2] : NaN;
+    if (Number.isNaN(year)) {
+      year = 2000;
+    } else if (year < 100) {
+      year += 2000;
+    }
+    return day && month && year ? Date.UTC(year, month - 1, day) : Number.NaN;
+  }
+  return Number.NaN;
 };
 
-export const getSuggestedLineup = (matches: AcademyMatches[], destination: AcademyMatches, players: AcademyPlayers[]): PlayerMatchesStats[] => {
+export const getSuggestedLineup = (
+  matches: AcademyMatches[],
+  destination: AcademyMatches,
+  players: AcademyPlayers[],
+): PlayerMatchesStats[] => {
   if (destination.result === "FINISHED" || destination.lineup.length) return [];
   const destinationIndex = matches.findIndex((match) => match.id === destination.id);
-  const destinationDate = dateValue(destination.date);
-  const source = matches.map((match, index) => ({ match, index, date: dateValue(match.date) }))
-    .filter(({ match, index, date }) => match.lineup.length > 0 && (date < destinationDate || (date === destinationDate && index < destinationIndex)))
-    .sort((a, b) => b.date - a.date || b.index - a.index)[0]?.match;
+  const destinationDate = parseDateValue(destination.date);
+
+  const source = matches
+    .map((match, index) => ({
+      match,
+      index,
+      date: parseDateValue(match.date),
+    }))
+    .filter(
+      ({ match, index, date }) =>
+        match.lineup.length > 0 &&
+        (!Number.isNaN(destinationDate) && !Number.isNaN(date)
+          ? date < destinationDate || (date === destinationDate && index < destinationIndex)
+          : index < destinationIndex),
+    )
+    .sort((a, b) => {
+      if (!Number.isNaN(a.date) && !Number.isNaN(b.date)) {
+        return b.date - a.date || b.index - a.index;
+      }
+      return b.index - a.index;
+    })[0]?.match;
+
   if (!source) return [];
+
   const seen = new Set<string>();
   return source.lineup.flatMap((stat) => {
-    if (seen.has(stat.playerId)) return [];
-    seen.add(stat.playerId);
-    const player = players.find((candidate) => candidate.id === stat.playerId);
-    if (!player || (player.exitDate && destinationDate > dateValue(player.exitDate))) return [];
-    return [{ playerId: player.id, playerName: player.name, goals: null, assists: null, rating: null, defesas: null, cleanSheets: null }];
+    const rawId = String(stat.playerId || "").trim();
+    if (!rawId || seen.has(rawId)) return [];
+    seen.add(rawId);
+
+    const player = players.find(
+      (candidate) =>
+        String(candidate.id).trim() === rawId ||
+        (Boolean(candidate.name) &&
+          Boolean(stat.playerName) &&
+          candidate.name.trim().toLowerCase() === stat.playerName.trim().toLowerCase()),
+    );
+
+    if (!player) return [];
+
+    const isExited = player.status === "promoted" || player.status === "released";
+    if (isExited) {
+      const exitDateStr =
+        player.exitDate ||
+        player.evolutionHistory?.find(
+          (h) =>
+            h.changedAttribute === "status" &&
+            (h.newValue === "promoted" || h.newValue === "released"),
+        )?.date;
+
+      if (exitDateStr) {
+        const exitDate = parseDateValue(exitDateStr);
+        if (!Number.isNaN(destinationDate) && !Number.isNaN(exitDate) && destinationDate > exitDate) {
+          return [];
+        }
+      }
+    }
+
+    return [
+      {
+        playerId: player.id,
+        playerName: player.name,
+        goals: null,
+        assists: null,
+        rating: null,
+        defesas: null,
+        cleanSheets: null,
+      },
+    ];
   });
 };

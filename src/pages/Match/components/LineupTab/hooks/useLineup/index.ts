@@ -61,6 +61,10 @@ export const useLineup = (season: ClubData, initialLineup?: SavedLineup) => {
     );
   }, []);
 
+  const closePlayerPicker = useCallback(() => {
+    setSelectingSlotId(null);
+  }, []);
+
   const assignPlayer = useCallback(
     (player: Players) => {
       if (!selectingSlotId) {
@@ -108,6 +112,7 @@ export const useLineup = (season: ClubData, initialLineup?: SavedLineup) => {
     activePlayers,
     handleFormationChange,
     openPlayerPicker,
+    closePlayerPicker,
     assignPlayer,
     removePlayer,
     buildSavedLineup,

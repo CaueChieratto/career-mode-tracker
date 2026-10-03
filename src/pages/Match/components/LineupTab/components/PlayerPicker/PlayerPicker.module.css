@@ -6,15 +6,43 @@
   overflow: hidden;
 }
 
+.picker_search_wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
 .picker_search {
   width: 100%;
   padding: 12px 16px;
+  padding-right: 48px;
   border: none;
   border-bottom: 1px solid var(--border-input);
   background-color: var(--card-background);
   color: var(--blackColor);
   font-size: 18px;
   outline: none;
+}
+
+.picker_close_button {
+  position: absolute;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.9);
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
 }
 
 .picker_search::placeholder {

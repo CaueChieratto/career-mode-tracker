@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Swiper as SwiperClass } from "swiper";
 import { useModalManager } from "../../../../common/hooks/Modal/UseModalManager";
 import { useTabView } from "../../../../common/hooks/UseTabView";
 import { ModalType } from "../../../../common/types/enums/ModalType";
@@ -13,6 +14,7 @@ export const useMatchPageController = () => {
   const { activeModal } = useModalManager();
 
   const [modalPlayerId, setModalPlayerId] = useState<string | null>(null);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   const {
     current: screen,
@@ -25,6 +27,16 @@ export const useMatchPageController = () => {
 
   const { activeIndex, swiperRef, handleTabClick, handleSlideChange } =
     useTabView(storageKey);
+
+  const handleTabClickWithReset = (index: number) => {
+    setIsPickerOpen(false);
+    handleTabClick(index);
+  };
+
+  const handleSlideChangeWithReset = (swiper: SwiperClass) => {
+    setIsPickerOpen(false);
+    handleSlideChange(swiper);
+  };
 
   const activeTab = tabsConfig[activeIndex];
 
@@ -53,8 +65,8 @@ export const useMatchPageController = () => {
       titles: tabsConfig.map((tab) => tab.title),
       activeIndex,
       swiperRef,
-      handleTabClick,
-      handleSlideChange,
+      handleTabClick: handleTabClickWithReset,
+      handleSlideChange: handleSlideChangeWithReset,
     },
 
     action: {
@@ -71,6 +83,9 @@ export const useMatchPageController = () => {
       close: () => setModalPlayerId(null),
     },
 
-    shouldShowBottomMenu: activeModal === ModalType.NONE,
+    isPickerOpen,
+    setIsPickerOpen,
+
+    shouldShowBottomMenu: activeModal === ModalType.NONE && !isPickerOpen,
   };
 };

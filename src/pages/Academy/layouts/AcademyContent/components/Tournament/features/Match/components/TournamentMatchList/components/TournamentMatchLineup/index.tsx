@@ -38,7 +38,11 @@ export const TournamentMatchLineup = ({
           const assists = player.assists ?? 0;
           const defesas = player.defesas ?? 0;
           const isGoalkeeper = allPlayersAcademy.find(
-            (academyPlayer) => academyPlayer.id === player.playerId,
+            (academyPlayer) =>
+              String(academyPlayer.id).trim() === String(player.playerId).trim() ||
+              (Boolean(academyPlayer.name) &&
+                Boolean(player.playerName) &&
+                academyPlayer.name.trim().toLowerCase() === player.playerName.trim().toLowerCase()),
           )?.position === "GOL";
 
           return (

@@ -102,7 +102,7 @@ export const Match = () => {
             />
           )}
 
-          {ActionButton && !isFromGeral && (
+          {ActionButton && !isFromGeral && !controller.isPickerOpen && (
             <ContainerButton className={Styles.container_button}>
               <ActionButton onClick={controller.action.execute} />
             </ContainerButton>
@@ -134,6 +134,7 @@ export const Match = () => {
                           onOpenPlayerModal={controller.playerModal.open}
                           onOpenScreen={controller.navigation.open}
                           onSaved={updateLocalMatch}
+                          onPickerOpenChange={controller.setIsPickerOpen}
                         />
                       ) : null}
                     </div>

@@ -59,7 +59,13 @@ export const LineupSection = ({
       ) : (
         <div className={Styles.playerList}>
           {lineupStats.map((stat) => {
-            const player = playersAcademy.find((p) => p.id === stat.playerId);
+            const player = playersAcademy.find(
+              (p) =>
+                String(p.id).trim() === String(stat.playerId).trim() ||
+                (Boolean(p.name) &&
+                  Boolean(stat.playerName) &&
+                  p.name.trim().toLowerCase() === stat.playerName.trim().toLowerCase()),
+            );
             if (!player) return null;
 
             return (

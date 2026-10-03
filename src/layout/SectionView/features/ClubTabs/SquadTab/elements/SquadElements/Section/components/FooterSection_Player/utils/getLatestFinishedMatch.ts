@@ -1,8 +1,9 @@
 import { Match } from "../../../../../../../../../../../common/interfaces/Match";
 
 const parseDateObj = (date: string) => {
-  const [day, month, year] = date.split("/").map(Number);
-  return new Date(2000 + year, month - 1, day);
+  const [day, month, rawYear] = date.split("/").map(Number);
+  const year = rawYear < 100 ? 2000 + rawYear : rawYear;
+  return new Date(year, month - 1, day);
 };
 
 export const getLatestFinishedMatch = (matches: Match[]): Match | null => {

@@ -21,6 +21,7 @@ export interface LineupTabProps {
   onOpenPlayerModal?: (playerId: string) => void;
   onOpenScreen?: OpenMatchScreen;
   onSaved?: MatchSavedCallback;
+  onPickerOpenChange?: (isOpen: boolean) => void;
 }
 
 export type LineupSlot = {

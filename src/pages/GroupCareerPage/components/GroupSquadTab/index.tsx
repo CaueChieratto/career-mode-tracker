@@ -111,6 +111,7 @@ const GroupSquadTab = () => {
                           matches={season.matches || []}
                           key={player.id}
                           currency={career.currency || "€"}
+                          careerNation={career.nation}
                           careerId={career.id}
                           groupId={groupId}
                         />

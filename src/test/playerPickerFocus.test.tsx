@@ -17,7 +17,7 @@ const player = {
 
 const assignedIds = new Set<string>();
 
-const PickerHarness = () => {
+const PickerHarness = ({ withCloseButton }: { withCloseButton?: boolean } = {}) => {
   const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
 
   return (
@@ -37,6 +37,7 @@ const PickerHarness = () => {
           assignedIds={assignedIds}
           activeSlotId={activeSlotId}
           onSelect={() => setActiveSlotId(null)}
+          onClose={withCloseButton ? () => setActiveSlotId(null) : undefined}
         />
       )}
     </>
@@ -153,5 +154,24 @@ describe("PlayerPicker autofocus", () => {
     vi.advanceTimersByTime(150);
 
     expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("renderiza o botao de fechar (✕) e fecha a selecao ao clicar nele", () => {
+    render(<PickerHarness withCloseButton />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Abrir slot 1" }));
+    const closeBtn = screen.getByRole("button", { name: "Fechar busca" });
+    expect(closeBtn).toBeTruthy();
+    expect(closeBtn.textContent).toBe("✕");
+
+    fireEvent.click(closeBtn);
+    expect(screen.queryByPlaceholderText("Buscar jogador...")).toBeNull();
+  });
+
+  it("nao renderiza o botao de fechar quando onClose nao e fornecido", () => {
+    render(<PickerHarness withCloseButton={false} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Abrir slot 1" }));
+    expect(screen.queryByRole("button", { name: "Fechar busca" })).toBeNull();
   });
 });

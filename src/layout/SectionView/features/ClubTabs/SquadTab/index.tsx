@@ -83,6 +83,7 @@ const SquadTab = ({ season, career, onOpenScreen }: SquadTabProps) => {
                   matches={season.matches || []}
                   key={`${player.id}-${y}`}
                   currency={currency}
+                  careerNation={career.nation}
                   academyNickname={player.academyNickname || academyNickname}
                   onOpenScreen={onOpenScreen}
                 />
@@ -99,6 +100,7 @@ const SquadTab = ({ season, career, onOpenScreen }: SquadTabProps) => {
               matches={season.matches || []}
               key={`${player.id}-${x}`}
               currency={currency}
+              careerNation={career.nation}
               academyNickname={academyNickname}
               onOpenScreen={onOpenScreen}
             />

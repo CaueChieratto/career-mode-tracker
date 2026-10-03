@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Bottom } from "./layouts/Bottom";
 import { Header } from "./layouts/Header";
 import { Section } from "./layouts/Section";
@@ -15,6 +16,7 @@ export const LineupTab = ({
   onOpenPlayerModal,
   onOpenScreen,
   onSaved,
+  onPickerOpenChange,
 }: LineupTabProps) => {
   const {
     selectedFormation,
@@ -26,6 +28,7 @@ export const LineupTab = ({
     mvpId,
     handleFormationChange,
     openPlayerPicker,
+    closePlayerPicker,
     assignPlayer,
     removePlayer,
     swapPlayers,
@@ -37,6 +40,16 @@ export const LineupTab = ({
     onOpenScreen,
     onSaved,
   });
+
+  useEffect(() => {
+    onPickerOpenChange?.(Boolean(selectingSlotId));
+  }, [selectingSlotId, onPickerOpenChange]);
+
+  useEffect(() => {
+    return () => {
+      onPickerOpenChange?.(false);
+    };
+  }, [onPickerOpenChange]);
 
   return (
     <div
@@ -70,6 +83,7 @@ export const LineupTab = ({
             assignedIds={assignedPlayerIds}
             activeSlotId={selectingSlotId}
             onSelect={assignPlayer}
+            onClose={closePlayerPicker}
           />
         )}
       </div>

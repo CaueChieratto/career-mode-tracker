@@ -705,4 +705,142 @@ describe("getSuggestedLineup", () => {
     expect(statsBefore.totalStats.matchesPlayed).toBe(1);
     expect(statsBefore.totalStats.totalGoals).toBe(2);
   });
+
+  it("mantém atletas ativos (status academy) mesmo se houver exitDate residual", () => {
+    const pActiveWithResidualExit = academyPlayer({
+      id: "p_active",
+      name: "Ativo Residual",
+      status: "academy",
+      exitDate: "01/08/2024",
+    });
+    const m1: AcademyMatches = {
+      id: "m1",
+      date: "01/08/2024",
+      opponentTeam: "Rival 1",
+      userGoals: 1,
+      opponentGoals: 0,
+      result: "FINISHED",
+      lineup: [
+        { playerId: "p_active", playerName: "Ativo Residual", goals: 1, assists: 0, rating: 8, defesas: 0, cleanSheets: 1 },
+      ],
+    };
+    const destination: AcademyMatches = {
+      id: "m2",
+      date: "05/08/2024",
+      opponentTeam: "Rival 2",
+      userGoals: 0,
+      opponentGoals: 0,
+      lineup: [],
+      result: "SCHEDULED",
+    };
+    const result = getSuggestedLineup([m1, destination], destination, [pActiveWithResidualExit]);
+    expect(result).toHaveLength(1);
+    expect(result[0].playerId).toBe("p_active");
+  });
+
+  it("suporta datas com ano de 2 dígitos e espaços ao verificar exitDate e partidas", () => {
+    const pPromoted2DigitStay = academyPlayer({
+      id: "p_prom_stay",
+      name: "Promovido Depois",
+      status: "promoted",
+      exitDate: "10/08/24",
+    });
+    const pPromoted2DigitExit = academyPlayer({
+      id: "p_prom_exit",
+      name: "Promovido Antes",
+      status: "promoted",
+      exitDate: "03/08/24",
+    });
+    const m1: AcademyMatches = {
+      id: "m1",
+      date: "01/08/24 - 15h",
+      opponentTeam: "Rival 1",
+      userGoals: 1,
+      opponentGoals: 0,
+      result: "FINISHED",
+      lineup: [
+        { playerId: "p_prom_stay", playerName: "Promovido Depois", goals: 0, assists: 0, rating: 7, defesas: 0, cleanSheets: 1 },
+        { playerId: "p_prom_exit", playerName: "Promovido Antes", goals: 0, assists: 0, rating: 7, defesas: 0, cleanSheets: 1 },
+      ],
+    };
+    const destination: AcademyMatches = {
+      id: "m2",
+      date: "05/08/2024",
+      opponentTeam: "Rival 2",
+      userGoals: 0,
+      opponentGoals: 0,
+      lineup: [],
+      result: "SCHEDULED",
+    };
+    const result = getSuggestedLineup([m1, destination], destination, [pPromoted2DigitStay, pPromoted2DigitExit]);
+    expect(result).toEqual([
+      { playerId: "p_prom_stay", playerName: "Promovido Depois", goals: null, assists: null, rating: null, defesas: null, cleanSheets: null },
+    ]);
+  });
+
+  it("recupera jogador por coerção de ID string/número ou nome quando formato difere", () => {
+    const pWithNumberId = academyPlayer({
+      id: "101",
+      name: "Jogador Número",
+      status: "academy",
+    });
+    const pWithNameMatch = academyPlayer({
+      id: "p_new_id",
+      name: "Jogador Nome",
+      status: "academy",
+    });
+    const m1: AcademyMatches = {
+      id: "m1",
+      date: "01/08/2024",
+      opponentTeam: "Rival 1",
+      userGoals: 1,
+      opponentGoals: 0,
+      result: "FINISHED",
+      lineup: [
+        { playerId: 101 as unknown as string, playerName: "Jogador Número", goals: 0, assists: 0, rating: 7, defesas: 0, cleanSheets: 1 },
+        { playerId: "p_old_id", playerName: "Jogador Nome", goals: 0, assists: 0, rating: 7, defesas: 0, cleanSheets: 1 },
+      ],
+    };
+    const destination: AcademyMatches = {
+      id: "m2",
+      date: "05/08/2024",
+      opponentTeam: "Rival 2",
+      userGoals: 0,
+      opponentGoals: 0,
+      lineup: [],
+      result: "SCHEDULED",
+    };
+    const result = getSuggestedLineup([m1, destination], destination, [pWithNumberId, pWithNameMatch]);
+    expect(result).toEqual([
+      { playerId: "101", playerName: "Jogador Número", goals: null, assists: null, rating: null, defesas: null, cleanSheets: null },
+      { playerId: "p_new_id", playerName: "Jogador Nome", goals: null, assists: null, rating: null, defesas: null, cleanSheets: null },
+    ]);
+  });
+
+  it("faz fallback para ordem no array caso datas de partidas sejam inválidas ou sem ano", () => {
+    const m1: AcademyMatches = {
+      id: "m1",
+      date: "data-invalida",
+      opponentTeam: "Rival 1",
+      userGoals: 1,
+      opponentGoals: 0,
+      result: "FINISHED",
+      lineup: [
+        { playerId: "p1", playerName: "Jogador 1", goals: 0, assists: 0, rating: 7, defesas: 0, cleanSheets: 1 },
+      ],
+    };
+    const destination: AcademyMatches = {
+      id: "m2",
+      date: "outra-data-invalida",
+      opponentTeam: "Rival 2",
+      userGoals: 0,
+      opponentGoals: 0,
+      lineup: [],
+      result: "SCHEDULED",
+    };
+    const result = getSuggestedLineup([m1, destination], destination, [p1]);
+    expect(result).toHaveLength(1);
+    expect(result[0].playerId).toBe("p1");
+  });
 });
+
