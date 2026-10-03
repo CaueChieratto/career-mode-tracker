@@ -4,22 +4,17 @@ import {
   MatchEvent,
   OpponentAssist,
   OpponentCard,
-  OpponentEvents,
   OpponentGoal,
 } from "../../../../types";
 import { getEventDetails } from "../timeUtils";
-
-type MatchWithOpponentEvents = Match & {
-  opponentEvents?: OpponentEvents;
-};
+import { normalizeOpponentEvents } from "../../../../../../helpers/opponentCards";
 
 export const extractOpponentEvents = (match: Match) => {
   const events: MatchEvent[] = [];
   const goals: GoalListItem[] = [];
   const ownGoals: GoalListItem[] = [];
 
-  const matchWithEvents = match as MatchWithOpponentEvents;
-  const oppEv = matchWithEvents.opponentEvents;
+  const oppEv = normalizeOpponentEvents(match.opponentEvents);
 
   if (!oppEv) return { events, goals, ownGoals };
 

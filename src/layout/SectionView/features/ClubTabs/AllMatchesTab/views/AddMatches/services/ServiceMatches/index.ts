@@ -301,8 +301,12 @@ export const ServiceMatches = {
       updatedMatch.matchesId,
     );
     const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+
     const statsUpdate = Object.fromEntries(
-      MATCH_STATS_FIELDS.map((field) => [field, updatedMatch[field] ?? null]),
+      MATCH_STATS_FIELDS.map((field) => [
+        field,
+        updatedMatch[field] ?? null,
+      ]),
     );
 
     const batch = writeBatch(db);
@@ -347,9 +351,21 @@ export const ServiceMatches = {
         updatedMatch[field] ?? null,
       ]),
     );
+    const isUserHome = updatedMatch.homeTeam === career.clubName;
+    const opponentCardUpdates = isUserHome
+      ? {
+          awayYellowCards: updatedMatch.awayYellowCards ?? 0,
+          awayRedCards: updatedMatch.awayRedCards ?? 0,
+        }
+      : {
+          homeYellowCards: updatedMatch.homeYellowCards ?? 0,
+          homeRedCards: updatedMatch.homeRedCards ?? 0,
+        };
+
     const batch = writeBatch(db);
     batch.update(matchRef, {
       ...detailsUpdate,
+      ...opponentCardUpdates,
       ...(removePenalties
         ? { homePenScore: deleteField(), awayPenScore: deleteField() }
         : {

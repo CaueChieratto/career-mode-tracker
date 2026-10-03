@@ -1,5 +1,11 @@
 import { Match } from "../../../../../../../../../common/interfaces/Match";
-import { MatchWithOpponentEvents } from "../../../../../../../../../common/interfaces/OpponentEventsMatches";
+import {
+  OpponentAssist,
+  OpponentCard,
+  OpponentGoal,
+  OpponentOwnGoal,
+} from "../../../../../../../../../common/interfaces/OpponentEventsMatches";
+import { normalizeOpponentEvents } from "../../../../../../../helpers/opponentCards";
 
 interface InitialMatchState {
   initialFormValues: Record<string, string>;
@@ -38,22 +44,21 @@ export const buildInitialFormValues = (
   };
 
   const booleansToSet: { key: string; value: boolean }[] = [];
-  const matchWithEvents = match as MatchWithOpponentEvents;
+  const oppEv = normalizeOpponentEvents(match.opponentEvents);
 
-  if (matchWithEvents.opponentEvents) {
-    const oppEv = matchWithEvents.opponentEvents;
-    oppEv.goals?.forEach((g, i) => {
+  if (oppEv) {
+    oppEv.goals?.forEach((g: OpponentGoal, i: number) => {
       initialFormValues[`opponentGoalPlayer_${i}`] = g.player;
       initialFormValues[`opponentGoalMinute_${i}`] = g.minute;
     });
-    oppEv.assists?.forEach((a, i) => {
+    oppEv.assists?.forEach((a: OpponentAssist, i: number) => {
       initialFormValues[`opponentAssistPlayer_${i}`] = a.player;
       initialFormValues[`opponentAssistTo_${i}`] = a.goalReference;
     });
 
     if (oppEv.cards?.length) {
       initialFormValues.opponentCardCount = String(oppEv.cards.length);
-      oppEv.cards.forEach((c, i) => {
+      oppEv.cards.forEach((c: OpponentCard, i: number) => {
         initialFormValues[`opponentCardPlayer_${i}`] = c.player;
         initialFormValues[`opponentYellowMin_${i}`] = c.yellowMinute;
         initialFormValues[`opponentSecondYellowMin_${i}`] =
@@ -70,7 +75,7 @@ export const buildInitialFormValues = (
 
     if (oppEv.ownGoals?.length) {
       initialFormValues.opponentOwnGoalCount = String(oppEv.ownGoals.length);
-      oppEv.ownGoals.forEach((og, i) => {
+      oppEv.ownGoals.forEach((og: OpponentOwnGoal, i: number) => {
         initialFormValues[`opponentOwnGoalPlayer_${i}`] = og.player;
         initialFormValues[`opponentOwnGoalMinute_${i}`] = og.minute;
       });

@@ -24,6 +24,7 @@ const FormField = ({
     type={field.inputType || "text"}
     placeholder={field.placeholder}
     value={value}
+    disabled={field.disabled}
     onChange={onChange}
     onKeyDown={onKeyDown}
     onKeyUp={onKeyUp}

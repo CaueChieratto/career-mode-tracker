@@ -1,4 +1,5 @@
 import { Match } from "../../../../../../../../common/interfaces/Match";
+import { getDerivedOpponentCards } from "../../../../../../helpers/opponentCards";
 
 const calcAcc = (success?: number, total?: number): string => {
   return success !== undefined && total !== undefined && total > 0
@@ -47,6 +48,24 @@ export const buildInitialStats = (
     ? match.homePossession
     : match.awayPossession;
 
+  const derivedOpponent = getDerivedOpponentCards(match.opponentEvents);
+
+  const initialHomeYellow = !isUserHome
+    ? safeStr(match.homeYellowCards ?? derivedOpponent?.yellowCards)
+    : safeStr(match.homeYellowCards) || formatSum(userYellows);
+
+  const initialAwayYellow = isUserHome
+    ? safeStr(match.awayYellowCards ?? derivedOpponent?.yellowCards)
+    : safeStr(match.awayYellowCards) || (!isUserHome ? formatSum(userYellows) : "");
+
+  const initialHomeRed = !isUserHome
+    ? safeStr(match.homeRedCards ?? derivedOpponent?.redCards)
+    : safeStr(match.homeRedCards) || formatSum(userReds);
+
+  const initialAwayRed = isUserHome
+    ? safeStr(match.awayRedCards ?? derivedOpponent?.redCards)
+    : safeStr(match.awayRedCards) || (!isUserHome ? formatSum(userReds) : "");
+
   return {
     userPossession: safeStr(initialUserPoss),
     homeXG: safeStr(match.homeXG),
@@ -81,15 +100,9 @@ export const buildInitialStats = (
     awayDefenses:
       safeStr(match.awayDefenses) ||
       (!isUserHome ? formatSum(userDefenses) : ""),
-    homeYellowCards:
-      safeStr(match.homeYellowCards) ||
-      (isUserHome ? formatSum(userYellows) : ""),
-    awayYellowCards:
-      safeStr(match.awayYellowCards) ||
-      (!isUserHome ? formatSum(userYellows) : ""),
-    homeRedCards:
-      safeStr(match.homeRedCards) || (isUserHome ? formatSum(userReds) : ""),
-    awayRedCards:
-      safeStr(match.awayRedCards) || (!isUserHome ? formatSum(userReds) : ""),
+    homeYellowCards: initialHomeYellow,
+    awayYellowCards: initialAwayYellow,
+    homeRedCards: initialHomeRed,
+    awayRedCards: initialAwayRed,
   };
 };

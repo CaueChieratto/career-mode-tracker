@@ -42,6 +42,11 @@ export const buildMatchUpdate = (
       ? Math.round((aPasses * aPassAcc) / 100)
       : match.awayPassesCompleted;
 
+  const homeYellowCards = parseNum(formValues.homeYellowCards);
+  const awayYellowCards = parseNum(formValues.awayYellowCards);
+  const homeRedCards = parseNum(formValues.homeRedCards);
+  const awayRedCards = parseNum(formValues.awayRedCards);
+
   const updatedMatch = {
     ...match,
     homePossession,
@@ -60,10 +65,10 @@ export const buildMatchUpdate = (
     awayPassesCompleted,
     homeDefenses: parseNum(formValues.homeDefenses),
     awayDefenses: parseNum(formValues.awayDefenses),
-    homeYellowCards: parseNum(formValues.homeYellowCards),
-    awayYellowCards: parseNum(formValues.awayYellowCards),
-    homeRedCards: parseNum(formValues.homeRedCards),
-    awayRedCards: parseNum(formValues.awayRedCards),
+    homeYellowCards,
+    awayYellowCards,
+    homeRedCards,
+    awayRedCards,
   };
 
   return Object.fromEntries(

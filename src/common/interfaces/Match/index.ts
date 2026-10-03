@@ -18,7 +18,7 @@ export type Match = {
   status: MatchStatus;
   playerStats?: PlayerMatchStat[];
   _playerStatsVersion?: number;
-  opponentEvents?: OpponentEvents[];
+  opponentEvents?: OpponentEvents | OpponentEvents[];
   lineup?: SavedLineup;
   stoppage1T?: number;
   stoppage2T?: number;

@@ -10,7 +10,7 @@ export type OpponentAssist = {
   goalReference: string;
 };
 
-type OpponentCard = {
+export type OpponentCard = {
   player: string;
   yellow: boolean;
   yellowMinute: string;
@@ -20,7 +20,7 @@ type OpponentCard = {
   redMinute: string;
 };
 
-type OpponentOwnGoal = {
+export type OpponentOwnGoal = {
   player: string;
   minute: string;
 };
@@ -30,6 +30,7 @@ export type OpponentEvents = {
   assists?: OpponentAssist[];
   cards?: OpponentCard[];
   ownGoals?: OpponentOwnGoal[];
+  cardsAuthoritative?: boolean;
 };
 
 export type MatchWithOpponentEvents = Omit<Match, "opponentEvents"> & {

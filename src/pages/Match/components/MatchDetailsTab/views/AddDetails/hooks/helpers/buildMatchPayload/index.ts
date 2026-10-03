@@ -2,6 +2,7 @@ import { Match } from "../../../../../../../../../common/interfaces/Match";
 import { buildOpponentEvents } from "../../../helpers/buildOpponentEvents";
 import { calculateMatchResult } from "../../../helpers/calculateMatchResult";
 import { MatchWithOpponentEvents } from "../../../../../../../../../common/interfaces/OpponentEventsMatches";
+import { countOpponentCards } from "../../../../../../../helpers/opponentCards";
 
 interface MatchPayloadResult {
   updatedMatch: MatchWithOpponentEvents;
@@ -42,6 +43,8 @@ export const buildMatchPayload = (
     booleanValues,
   );
 
+  const { yellowCards, redCards } = countOpponentCards(opponentEvents.cards);
+
   const updatedMatch: MatchWithOpponentEvents = {
     ...match,
     homeScore: homeScoreNum,
@@ -54,6 +57,15 @@ export const buildMatchPayload = (
     status: "FINISHED",
     result: userResult,
     opponentEvents,
+    ...(isUserHome
+      ? {
+          awayYellowCards: yellowCards,
+          awayRedCards: redCards,
+        }
+      : {
+          homeYellowCards: yellowCards,
+          homeRedCards: redCards,
+        }),
   };
 
   if (formValues.opponentMvpName && formValues.opponentMvpName.trim() !== "") {

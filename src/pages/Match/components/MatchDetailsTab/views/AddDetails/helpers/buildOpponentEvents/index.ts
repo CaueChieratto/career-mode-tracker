@@ -26,10 +26,11 @@ export const buildOpponentEvents = (
         red: booleanValues[`opponentRed_${i}`] || false,
         redMinute: formValues[`opponentRedMin_${i}`] || "",
       }))
-      .filter((c) => c.player && (c.yellow || c.red)),
+      .filter((c) => c.player && (c.yellow || c.secondYellow || c.red)),
     ownGoals: Array.from({ length: opponentOwnGoalCount }).map((_, i) => ({
       player: formValues[`opponentOwnGoalPlayer_${i}`] || "",
       minute: formValues[`opponentOwnGoalMinute_${i}`] || "",
     })),
+    cardsAuthoritative: true,
   };
 };

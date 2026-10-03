@@ -7,6 +7,7 @@ import {
 import { Match } from "../../../../common/interfaces/Match";
 import { ClubData } from "../../../../common/interfaces/club/clubData";
 import { Career } from "../../../../common/interfaces/Career";
+import { getOpponentCardsProjection } from "../../helpers/opponentCards";
 
 type MixedStat =
   | ({ type: "standard" } & StatRowProps)
@@ -19,9 +20,16 @@ type MatchStatsTabProps = {
   onRegisterSave?: (fn: () => Promise<void> | void) => void;
 };
 
-export const MatchStatsTab = ({ match }: MatchStatsTabProps) => {
+export const MatchStatsTab = ({ match, career }: MatchStatsTabProps) => {
   const homePossession = match.homePossession || 0;
   const awayPossession = match.awayPossession || 0;
+  const cardProjection = getOpponentCardsProjection(match, career?.clubName);
+  const homeYellowCards =
+    match.homeYellowCards ?? cardProjection.homeYellowCards ?? 0;
+  const awayYellowCards =
+    match.awayYellowCards ?? cardProjection.awayYellowCards ?? 0;
+  const homeRedCards = match.homeRedCards ?? cardProjection.homeRedCards ?? 0;
+  const awayRedCards = match.awayRedCards ?? cardProjection.awayRedCards ?? 0;
 
   const STATS_DATA: MixedStat[] = [
     {
@@ -75,15 +83,15 @@ export const MatchStatsTab = ({ match }: MatchStatsTabProps) => {
     {
       type: "standard",
       label: "Cartões amarelos",
-      home: match.homeYellowCards || 0,
-      away: match.awayYellowCards || 0,
+      home: homeYellowCards,
+      away: awayYellowCards,
       reverseWinner: true,
     },
     {
       type: "standard",
       label: "Cartões vermelhos",
-      home: match.homeRedCards || 0,
-      away: match.awayRedCards || 0,
+      home: homeRedCards,
+      away: awayRedCards,
       reverseWinner: true,
     },
   ];
