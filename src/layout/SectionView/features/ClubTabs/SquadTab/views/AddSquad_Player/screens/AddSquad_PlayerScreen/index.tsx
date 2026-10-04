@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import ModalManager from "../../../../../../../../../common/constants/ModalManager";
 import { useModalManager } from "../../../../../../../../../common/hooks/Modal/UseModalManager";
 import { useSeasonTheme } from "../../../../../../../../../common/hooks/Seasons/UseSeasonTheme";
@@ -24,6 +24,7 @@ export default function AddSquad_PlayerScreen({
   playerId,
   onClose,
 }: Props) {
+  const [isReturningIncomingLoan, setIsReturningIncomingLoan] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const modalManager = useModalManager();
   const { clubColor, darkClubColor } = useSeasonTheme();
@@ -52,7 +53,11 @@ export default function AddSquad_PlayerScreen({
     }
   };
 
-  const activeLabel = player ? "Editar Jogador" : "Adicionar Jogador";
+  const activeLabel = isReturningIncomingLoan
+    ? "Retornar Jogador"
+    : player
+      ? "Editar Jogador"
+      : "Adicionar Jogador";
 
   return (
     <>
@@ -76,6 +81,7 @@ export default function AddSquad_PlayerScreen({
             career={career}
             season={season}
             openModal={modalManager.openModal}
+            onReturnIncomingLoanChange={setIsReturningIncomingLoan}
           />
         </div>
       </div>

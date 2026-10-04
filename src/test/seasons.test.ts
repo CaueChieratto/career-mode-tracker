@@ -131,11 +131,41 @@ describe("criação write-only de temporada", () => {
     });
     expect(writes[1]).toMatchObject({
       id: "incoming",
-      incomingLoan: true,
-      loan: true,
+      sell: true,
+      incomingLoan: false,
+      loan: false,
+      contract: [
+        expect.objectContaining({
+          leftClub: "Origem",
+          dataExit: expect.any(Date),
+        }),
+      ],
     });
     expect(writes[2]).toMatchObject({ id: "promoted", isAcademy: true });
     expect(writes[3]).toMatchObject({ id: "a1", evolutionHistory: [] });
+  });
+
+  it("incomingLoan com loanDuration > 1 continua no clube e tem loanDuration decrementado", async () => {
+    const input = deepFreeze(
+      career({
+        clubData: [
+          season({
+            players: [loanPlayer(true, 2)],
+          }),
+        ],
+      }),
+    );
+    const before = structuredClone(input);
+
+    await ServiceSeasons.addSeason(input);
+    const transported = batchSet.mock.calls[0][1] as ReturnType<
+      typeof player
+    >;
+    expect(transported.incomingLoan).toBe(true);
+    expect(transported.sell).toBe(false);
+    expect(transported.contract).toHaveLength(1);
+    expect(transported.contract[0].loanDuration).toBe(1);
+    expect(input).toEqual(before);
   });
 
   it.each([
@@ -165,6 +195,76 @@ describe("criação write-only de temporada", () => {
       expect(input).toEqual(before);
     },
   );
+
+  it.each([
+    ["Inglaterra", 6],
+    ["Brasil", 0],
+    ["País desconhecido", 0],
+  ])(
+    "preserva o calendário de %s ao registrar saída de incomingLoan",
+    async (nation, expectedMonth) => {
+      const input = deepFreeze(
+        career({
+          nation,
+          clubData: [season({ players: [loanPlayer(true, 1)] })],
+        }),
+      );
+      const before = structuredClone(input);
+
+      await ServiceSeasons.addSeason(input);
+      const transported = batchSet.mock.calls[0][1] as ReturnType<
+        typeof player
+      >;
+      expect(transported.sell).toBe(true);
+      expect(transported.incomingLoan).toBe(false);
+      expect(transported.loan).toBe(false);
+      expect(transported.contract).toHaveLength(1);
+      const exitDate = transported.contract[0].dataExit;
+      expect(exitDate).toBeInstanceOf(Date);
+      expect(exitDate?.getMonth()).toBe(expectedMonth);
+      expect(exitDate?.getDate()).toBe(1);
+      expect(input).toEqual(before);
+    },
+  );
+
+  it("jogador real com loan: false e incomingLoan: true registra saída corretamente", async () => {
+    const realIncomingPlayer = player({
+      id: "real-incoming",
+      loan: false,
+      incomingLoan: true,
+      contract: [
+        {
+          buyValue: 0,
+          sellValue: 0,
+          fromClub: "Barcelona",
+          leftClub: "",
+          dataArrival: new Date("2024-07-01T00:00:00Z"),
+          dataExit: null,
+          loanDuration: 1,
+          isLoan: true,
+        },
+      ],
+    });
+    const input = deepFreeze(
+      career({
+        nation: "Inglaterra",
+        clubData: [season({ players: [realIncomingPlayer] })],
+      }),
+    );
+    const before = structuredClone(input);
+
+    await ServiceSeasons.addSeason(input);
+    const transported = batchSet.mock.calls[0][1] as ReturnType<
+      typeof player
+    >;
+    expect(transported.sell).toBe(true);
+    expect(transported.incomingLoan).toBe(false);
+    expect(transported.loan).toBe(false);
+    expect(transported.contract[0].leftClub).toBe("Barcelona");
+    expect(transported.contract[0].dataExit?.getMonth()).toBe(6);
+    expect(transported.contract[0].dataExit?.getDate()).toBe(1);
+    expect(input).toEqual(before);
+  });
 
   it("duas chamadas do mesmo snapshot usam os mesmos paths e metadados", async () => {
     const input = deepFreeze(

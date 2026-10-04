@@ -199,6 +199,12 @@ export const useTransferForm = ({
   };
 
   const handleSave = async () => {
+    if (player.incomingLoan) {
+      alert(
+        "Jogadores emprestados ao clube não podem ser vendidos ou emprestados.",
+      );
+      return;
+    }
     setIsLoading(true);
     try {
       if (activeTab === 1) {

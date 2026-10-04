@@ -7,6 +7,7 @@ import { LeagueLevels } from "../../../../../../../common/constants/LeagueLevels
 import { calculateTotalStats } from "../../../../ClubTabs/StatsTab_Club/components/PlayerStatsList/utils/calculateTotalStats";
 import { SeasonCareerData } from "../../../SeasonsPlayerTab/hooks/useRenderableSeasons";
 import { PlayersGroupService } from "../../../../../../../common/services/ServicePlayers/PlayersGroupService";
+import { isSamePlayerId } from "../../../../../../../common/utils/playerIdentity";
 
 export const useTotalPlayerTab = (
   career: Career,
@@ -48,8 +49,9 @@ export const useTotalPlayerTab = (
     const seasonsPlayerPlayed = allSeasonsData.filter(({ season }) => {
       const playerInSeason = season.players.find(
         (p) =>
-          p.name.trim().toLowerCase() === normalizedName &&
-          p.nation.trim().toLowerCase() === normalizedNation,
+          isSamePlayerId(p, player) ||
+          (p.name.trim().toLowerCase() === normalizedName &&
+            p.nation.trim().toLowerCase() === normalizedNation),
       );
 
       if (!playerInSeason) return false;

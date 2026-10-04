@@ -17,6 +17,7 @@ import { augmentSeasonWithMatchStats } from "../../../helpers/mergeMatchStats";
 import { SectionScreen } from "../../../config/screens";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
 import { GroupCareerContext } from "../../../../../pages/GroupCareerPage/contexts/GroupCareerContext";
+import { isSamePlayerId } from "../../../../../common/utils/playerIdentity";
 
 type StatsTab_ClubProps = {
   season: ClubData;
@@ -45,9 +46,26 @@ export const StatsTab_Club = ({
     if (isGroup && groupContext?.groupPlayers && groupContext.groupPlayers.length > 0) {
       return groupContext.groupPlayers;
     }
-    return isGeralPage
+    const basePlayers = isGeralPage
       ? careerAggregatedPlayers
       : augmentSeasonWithMatchStats(season, career.clubName).players;
+
+    return basePlayers.filter((p) => {
+      const isSuperseded = basePlayers.some((other) => {
+        if (other.id === p.id) return false;
+        if (other.playedWithUs === p.id) return true;
+        if (!other.sell && p.sell && isSamePlayerId(other, p)) return true;
+        if (
+          Boolean(other.playedWithUs) &&
+          isSamePlayerId(other, p) &&
+          (!other.sell || (other.overall || 0) >= (p.overall || 0))
+        ) {
+          return true;
+        }
+        return false;
+      });
+      return !isSuperseded;
+    });
   }, [isGroup, groupContext?.groupPlayers, isGeralPage, careerAggregatedPlayers, season, career.clubName]);
 
   const playersWithStats = useSortedPlayersWithStats(playersToDisplay);

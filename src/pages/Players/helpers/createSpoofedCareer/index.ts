@@ -1,11 +1,13 @@
 import type { CareerPlayer, CreateSpoofedCareerParams } from "../../types";
+import { isSamePlayerId } from "../../../../common/utils/playerIdentity";
 
 const isSelectedPlayer = (
   player: CareerPlayer,
   selectedPlayer: CareerPlayer,
   playerId: string | undefined,
 ): boolean =>
-  player.id === playerId ||
+  (playerId ? player.id === playerId || player.playedWithUs === playerId : false) ||
+  isSamePlayerId(player, selectedPlayer) ||
   (player.name === selectedPlayer.name &&
     player.nation === selectedPlayer.nation);
 

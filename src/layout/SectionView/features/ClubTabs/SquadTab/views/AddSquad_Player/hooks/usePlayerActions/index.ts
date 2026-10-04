@@ -52,6 +52,21 @@ export const usePlayerActions = ({
   const handleAddOrEditPlayer = async (formData: FormData) => {
     setIsLoading(true);
     try {
+      if (
+        player?.incomingLoan &&
+        formData.get("isReturnIncomingLoan") === "true"
+      ) {
+        const returnDate = (
+          (formData.get("returnDate") as string) || ""
+        ).trim();
+        if (!returnDate)
+          throw new Error("Por favor, preencha a data de retorno.");
+        await returnLoanPlayer(returnDate);
+        Object.assign(player, { sell: true, incomingLoan: false });
+        onSuccess();
+        return;
+      }
+
       const newPlayerData = mapFormDataToPlayerData(
         formData,
         career,
@@ -62,12 +77,29 @@ export const usePlayerActions = ({
         newPlayerData.loan = player.loan ?? false;
         newPlayerData.sell = player.sell ?? false;
         newPlayerData.incomingLoan = player.incomingLoan ?? false;
+        newPlayerData.statsLeagues = player.statsLeagues ?? [];
+        if (player.manualStatsLeagues) {
+          newPlayerData.manualStatsLeagues = player.manualStatsLeagues;
+        }
+        newPlayerData.ballonDor = player.ballonDor ?? 0;
+
+        if (!newPlayerData.playedWithUs) {
+          delete player.playedWithUs;
+        }
 
         Object.assign(player, newPlayerData);
       } else {
+        const globalId = (formData.get("globalId") as string) || null;
+        const candidateId = globalId || Math.random().toString();
         season.players = [
           ...season.players,
-          { id: Math.random().toString(), ...newPlayerData } as Players,
+          {
+            id: candidateId,
+            ...newPlayerData,
+            ...(globalId
+              ? { playedWithUs: newPlayerData.playedWithUs || globalId }
+              : {}),
+          } as Players,
         ];
       }
 
@@ -150,6 +182,15 @@ export const usePlayerActions = ({
     setIsLoading(true);
     try {
       await returnLoanPlayer(returnDate);
+      if (player) {
+        Object.assign(
+          player,
+          player.incomingLoan
+            ? { sell: true, incomingLoan: false }
+            : { loan: false },
+        );
+      }
+      onSuccess();
     } catch (error) {
       console.error("Falha ao retornar o jogador:", error);
     } finally {

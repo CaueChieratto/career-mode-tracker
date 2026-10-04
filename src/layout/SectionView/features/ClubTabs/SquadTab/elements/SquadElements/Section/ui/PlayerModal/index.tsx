@@ -14,6 +14,7 @@ import { SectionScreen } from "../../../../../../../../config/screens";
 type PlayerModalProps = {
   id: string;
   playerName: string;
+  incomingLoan?: boolean;
   onClose: () => void;
   onOpenScreen?: (screen: SectionScreen) => void;
 };
@@ -23,6 +24,7 @@ type ModalAction = "view" | "edit" | "transfer" | "loan";
 export const PlayerModal = ({
   id,
   playerName,
+  incomingLoan,
   onClose,
   onOpenScreen,
 }: PlayerModalProps) => {
@@ -109,26 +111,30 @@ export const PlayerModal = ({
             darkClubColor={darkClubColor}
             className={selectedAction === "edit" ? Styles.selected_card : ""}
           />
-          <CardsModal
-            icon={<IoPersonOutline className={Styles.icon} />}
-            label="Vender"
-            title={playerName}
-            onClick={() => setSelectedAction("transfer")}
-            clubColor={clubColor}
-            darkClubColor={darkClubColor}
-            className={
-              selectedAction === "transfer" ? Styles.selected_card : ""
-            }
-          />
-          <CardsModal
-            icon={<IoCreateOutline className={Styles.icon} />}
-            label="Emprestar"
-            title={playerName}
-            onClick={() => setSelectedAction("loan")}
-            clubColor={clubColor}
-            darkClubColor={darkClubColor}
-            className={selectedAction === "loan" ? Styles.selected_card : ""}
-          />
+          {!incomingLoan && (
+            <>
+              <CardsModal
+                icon={<IoPersonOutline className={Styles.icon} />}
+                label="Vender"
+                title={playerName}
+                onClick={() => setSelectedAction("transfer")}
+                clubColor={clubColor}
+                darkClubColor={darkClubColor}
+                className={
+                  selectedAction === "transfer" ? Styles.selected_card : ""
+                }
+              />
+              <CardsModal
+                icon={<IoCreateOutline className={Styles.icon} />}
+                label="Emprestar"
+                title={playerName}
+                onClick={() => setSelectedAction("loan")}
+                clubColor={clubColor}
+                darkClubColor={darkClubColor}
+                className={selectedAction === "loan" ? Styles.selected_card : ""}
+              />
+            </>
+          )}
         </div>
         {selectedAction && (
           <Button

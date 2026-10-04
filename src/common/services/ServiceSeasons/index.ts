@@ -57,10 +57,12 @@ export const ServiceSeasons = {
       .filter((player) => !player.sell)
       .map((player) => {
         const lastContract = player.contract?.[player.contract.length - 1];
+        const remainingLoan = lastContract?.loanDuration ?? 0;
+        const isIncoming = !!player.incomingLoan;
         const shouldReturnLoan =
           player.loan &&
-          !player.incomingLoan &&
-          (lastContract?.loanDuration ?? 0) <= 1;
+          !isIncoming &&
+          remainingLoan <= 1;
         const updatedPlayer: Players = {
           ...player,
           age: (player.age || 0) + 1,
@@ -93,14 +95,33 @@ export const ServiceSeasons = {
           ];
         } else if (
           player.loan &&
-          !player.incomingLoan &&
-          (lastContract?.loanDuration ?? 0) > 1
+          !isIncoming &&
+          remainingLoan > 1
         ) {
           updatedPlayer.contract = player.contract.map((contract, index) =>
             index === player.contract.length - 1
               ? {
                   ...contract,
                   loanDuration: (contract.loanDuration || 0) - 1,
+                }
+              : contract,
+          );
+        } else if (isIncoming && remainingLoan > 1) {
+          updatedPlayer.contract = player.contract.map((contract, index) =>
+            index === player.contract.length - 1
+              ? { ...contract, loanDuration: remainingLoan - 1 }
+              : contract,
+          );
+        } else if (isIncoming && lastContract) {
+          updatedPlayer.sell = true;
+          updatedPlayer.incomingLoan = false;
+          updatedPlayer.loan = false;
+          updatedPlayer.contract = player.contract.map((contract, index) =>
+            index === player.contract.length - 1
+              ? {
+                  ...contract,
+                  dataExit: returnDate,
+                  leftClub: contract.fromClub || "Fim de Empréstimo",
                 }
               : contract,
           );

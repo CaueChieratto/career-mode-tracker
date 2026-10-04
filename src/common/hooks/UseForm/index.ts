@@ -33,7 +33,11 @@ export const useForm = () => {
 
       if (["playerValue", "buyValue", "salary"].includes(field.id)) {
         processedValue = value.replace(",", ".");
-      } else if (field.id === "dateArrival" || field.id === "date") {
+      } else if (
+        field.id === "dateArrival" ||
+        field.id === "date" ||
+        field.id === "returnDate"
+      ) {
         processedValue = formatDateInputShort(value);
       } else if (field.transform === "uppercase") {
         processedValue = processedValue.toUpperCase();

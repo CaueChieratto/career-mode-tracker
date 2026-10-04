@@ -21,6 +21,7 @@ type SectionProps = {
   contractTime: number;
   matches: Match[];
   loan?: boolean;
+  incomingLoan?: boolean;
   contract?: Contract[];
   currency?: string;
   isAcademy?: boolean;
@@ -45,6 +46,7 @@ export const Section = ({
   contractTime,
   matches,
   loan,
+  incomingLoan,
   contract,
   currency,
   isAcademy,
@@ -126,6 +128,7 @@ export const Section = ({
         <PlayerModal
           id={id}
           playerName={name}
+          incomingLoan={incomingLoan}
           onClose={() => setIsModalOpen(false)}
           onOpenScreen={onOpenScreen}
         />

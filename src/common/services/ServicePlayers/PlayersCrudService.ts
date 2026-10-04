@@ -49,23 +49,35 @@ export const PlayersCrudService = {
     const career = await getCareerById(user.uid, careerId);
 
     let existingPlayerId: string | null = globalId || null;
+    let playedWithUs: string | undefined = player.playedWithUs;
+
     if (!existingPlayerId) {
       for (const season of career.clubData) {
         const found = season.players.find(
           (p) =>
-            !p.sell &&
             p.name.trim().toLowerCase() === player.name.trim().toLowerCase() &&
             p.nation.trim().toLowerCase() ===
               player.nation.trim().toLowerCase(),
         );
         if (found) {
           existingPlayerId = found.id;
+          if (!playedWithUs) {
+            playedWithUs = found.playedWithUs || found.id;
+          }
           break;
         }
       }
     }
 
-    const newPlayer: Players = { ...player, id: existingPlayerId || uuidv4() };
+    if (existingPlayerId && !playedWithUs) {
+      playedWithUs = existingPlayerId;
+    }
+
+    const newPlayer: Players = {
+      ...player,
+      id: existingPlayerId || uuidv4(),
+      ...(playedWithUs ? { playedWithUs } : {}),
+    };
     const playerRef = doc(
       db,
       `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/players`,
@@ -95,6 +107,14 @@ export const PlayersCrudService = {
       ...updatedPlayer,
       contract: mergedContract,
     };
+
+    if (
+      "playedWithUs" in updatedPlayer &&
+      !updatedPlayer.playedWithUs &&
+      finalPlayer.playedWithUs
+    ) {
+      delete finalPlayer.playedWithUs;
+    }
 
     const playerRef = doc(
       db,

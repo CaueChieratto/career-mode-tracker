@@ -20,10 +20,11 @@ type AddSquad_PlayerProps = {
   openModal: (modal: ModalType, career?: Career) => void;
   season: ClubData;
   career: Career;
+  onReturnIncomingLoanChange?: (value: boolean) => void;
 };
 
 const AddSquad_Player = forwardRef<HTMLFormElement, AddSquad_PlayerProps>(
-  ({ player, season, career, openModal }, ref) => {
+  ({ player, season, career, openModal, onReturnIncomingLoanChange }, ref) => {
     const {
       formValues,
       booleanValues,
@@ -35,10 +36,15 @@ const AddSquad_Player = forwardRef<HTMLFormElement, AddSquad_PlayerProps>(
       isEditing,
       isLoaned,
       isIncomingLoanPlayer,
+      isReturningIncomingLoan,
       isKnownPlayer,
       isSigning,
       isIncomingLoan,
     } = useSquadPlayerForm(player, career, season);
+
+    useEffect(() => {
+      onReturnIncomingLoanChange?.(isReturningIncomingLoan);
+    }, [isReturningIncomingLoan, onReturnIncomingLoanChange]);
 
     const [globalTeams, setGlobalTeams] = useState<string[]>(() => {
       if (!career?.clubData) return [];
@@ -102,6 +108,7 @@ const AddSquad_Player = forwardRef<HTMLFormElement, AddSquad_PlayerProps>(
       isEditing,
       isLoaned,
       isIncomingLoanPlayer,
+      isReturningIncomingLoan,
       isSigning,
       isIncomingLoan,
       isKnownPlayer,
@@ -120,6 +127,12 @@ const AddSquad_Player = forwardRef<HTMLFormElement, AddSquad_PlayerProps>(
         {isKnownPlayer && formValues.globalId && (
           <input type="hidden" name="globalId" value={formValues.globalId} />
         )}
+
+        <input
+          type="hidden"
+          name="playedWithUs"
+          value={isKnownPlayer ? formValues.playedWithUs || "" : ""}
+        />
 
         {formValues.isAcademy === "true" && (
           <>

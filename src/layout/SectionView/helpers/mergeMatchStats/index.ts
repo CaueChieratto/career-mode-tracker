@@ -142,9 +142,26 @@ export const augmentSeasonWithMatchStats = (
     };
   });
 
+  const activeFilteredPlayers = augmentedPlayers.filter((p) => {
+    const isSuperseded = augmentedPlayers.some((other) => {
+      if (other.id === p.id) return false;
+      if (other.playedWithUs === p.id) return true;
+      if (!other.sell && p.sell && isSamePlayerId(other, p)) return true;
+      if (
+        Boolean(other.playedWithUs) &&
+        isSamePlayerId(other, p) &&
+        (!other.sell || (other.overall || 0) >= (p.overall || 0))
+      ) {
+        return true;
+      }
+      return false;
+    });
+    return !isSuperseded;
+  });
+
   return {
     ...season,
-    players: augmentedPlayers,
+    players: activeFilteredPlayers,
     _isAugmented: true,
   } as ClubData;
 };

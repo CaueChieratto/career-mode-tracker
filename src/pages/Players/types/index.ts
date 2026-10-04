@@ -5,8 +5,10 @@ type CareerSeason = NonNullable<Career["clubData"]>[number];
 export type CareerPlayer = NonNullable<CareerSeason["players"]>[number];
 
 export type PlayerIdentity = Pick<CareerPlayer, "name"> & {
+  id?: string;
   nation?: string;
   nationality?: string;
+  playedWithUs?: string;
 };
 
 export interface PlayerPageParams {

@@ -24,21 +24,24 @@ export const getPlayerIdentityKey = (
     player.academyData?.nation ||
     "";
 
-  // Para save-1786982104992 ou em geral, a identidade canônica é nome + nacionalidade
+  // Para save-1786982104992 a chave mantém a regra estrita de nome + nacionalidade
   if (careerId === "save-1786982104992") {
     if (player.name && nation) {
       return `${player.name.trim().toLowerCase()}-${nation.trim().toLowerCase()}`;
     }
   }
 
-  // Identidade canônica por nome + nacionalidade (requisito do usuário)
+  // 1. Identidade canônica por nome + nacionalidade
   if (player.name && nation) {
     return `${player.name.trim().toLowerCase()}-${nation.trim().toLowerCase()}`;
   }
 
+  // 2. playedWithUs explícito
   if (player.playedWithUs) {
     return player.playedWithUs;
   }
+
+  // 3. Base da academia
   if (player.academyData?.id) {
     return `academy:${player.academyData.id}`;
   }
@@ -48,21 +51,32 @@ export const getPlayerIdentityKey = (
   if (player.isAcademy && player.id) {
     return `academy:${player.id}`;
   }
+
   return player.id || "";
 };
 
 /**
  * Compara se um playerId ou objeto de jogador corresponde a outro.
- * Trata variações de prefixo 'academy-', isAcademy e vínculo academyData.
+ * Trata playedWithUs, variações de prefixo 'academy-', isAcademy e vínculo academyData.
  */
 export const isSamePlayerId = (
   idOrPlayerA:
     | string
-    | { id: string; isAcademy?: boolean; academyData?: { id?: string } }
+    | {
+        id: string;
+        isAcademy?: boolean;
+        academyData?: { id?: string };
+        playedWithUs?: string;
+      }
     | undefined,
   idOrPlayerB:
     | string
-    | { id: string; isAcademy?: boolean; academyData?: { id?: string } }
+    | {
+        id: string;
+        isAcademy?: boolean;
+        academyData?: { id?: string };
+        playedWithUs?: string;
+      }
     | undefined,
 ): boolean => {
   if (!idOrPlayerA || !idOrPlayerB) return false;
@@ -70,6 +84,22 @@ export const isSamePlayerId = (
   const idB = typeof idOrPlayerB === "string" ? idOrPlayerB : idOrPlayerB.id;
   if (!idA || !idB) return false;
   if (idA === idB) return true;
+
+  const playedWithUsA =
+    typeof idOrPlayerA === "object" ? idOrPlayerA.playedWithUs : undefined;
+  const playedWithUsB =
+    typeof idOrPlayerB === "object" ? idOrPlayerB.playedWithUs : undefined;
+
+  if (
+    playedWithUsA &&
+    (playedWithUsA === idB || playedWithUsA === playedWithUsB)
+  )
+    return true;
+  if (
+    playedWithUsB &&
+    (playedWithUsB === idA || playedWithUsB === playedWithUsA)
+  )
+    return true;
 
   const cleanA = idA.startsWith("academy-") ? idA.slice(8) : idA;
   const cleanB = idB.startsWith("academy-") ? idB.slice(8) : idB;

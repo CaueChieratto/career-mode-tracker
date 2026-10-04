@@ -3,6 +3,7 @@ import { ClubData } from "../../../../../../common/interfaces/club/clubData";
 import { calculateTotalStats } from "../../../ClubTabs/StatsTab_Club/components/PlayerStatsList/utils/calculateTotalStats";
 import { Players } from "../../../../../../common/interfaces/playersInfo/players";
 import { Career } from "../../../../../../common/interfaces/Career";
+import { isSamePlayerId } from "../../../../../../common/utils/playerIdentity";
 
 export type SeasonCareerData = {
   season: ClubData;
@@ -21,8 +22,9 @@ export const useRenderableSeasons = (
     const filtered = seasonsPlayerPlayed.filter(({ season }) => {
       const playerInSeason = season.players.find(
         (p) =>
-          p.name.trim().toLowerCase() === normalizedName &&
-          p.nation.trim().toLowerCase() === normalizedNation,
+          isSamePlayerId(p, player) ||
+          (p.name.trim().toLowerCase() === normalizedName &&
+            p.nation.trim().toLowerCase() === normalizedNation),
       );
 
       if (!playerInSeason) {

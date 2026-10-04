@@ -7,6 +7,7 @@ import { League } from "../../../../../../common/interfaces/League";
 import { leaguesByContinent } from "../../../../../../common/utils/league";
 import { SeasonCareerData } from "./useRenderableSeasons";
 import { PlayersGroupService } from "../../../../../../common/services/ServicePlayers/PlayersGroupService";
+import { isSamePlayerId } from "../../../../../../common/utils/playerIdentity";
 
 export const useSeasonsPlayerTab = (
   career: Career,
@@ -53,8 +54,10 @@ export const useSeasonsPlayerTab = (
   const seasonsPlayerPlayed = allSeasonsData.filter(({ season }) =>
     season.players.some(
       (p) =>
-        p.name.trim().toLowerCase() === normalizedName &&
-        p.nation.trim().toLowerCase() === normalizedNation,
+        (player && isSamePlayerId(p, player)) ||
+        (Boolean(normalizedName && normalizedNation) &&
+          p.name.trim().toLowerCase() === normalizedName &&
+          p.nation.trim().toLowerCase() === normalizedNation),
     ),
   );
 

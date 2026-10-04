@@ -15,6 +15,7 @@ export interface SquadFormField {
   isKnownPlayerOnly?: boolean;
   hideOnSell?: boolean;
   addOnly?: boolean;
+  editOnly?: boolean;
   checkbox?: boolean;
   note?: string;
   inputType?: string;
@@ -25,11 +26,16 @@ export interface SquadFormField {
   maxLength?: number;
   transform?: "uppercase" | "capitalize";
   action?: ModalType | string;
+  incomingLoanPlayerOnly?: boolean;
+  returnIncomingLoanOnly?: boolean;
+  hideOnReturnIncomingLoan?: boolean;
+  disabled?: boolean;
 }
 
 export interface SquadFormSection<T extends SquadFormField> {
   title: string;
   editOnly?: boolean;
+  addOnly?: boolean;
   fields: T[][];
 }
 
@@ -37,6 +43,7 @@ interface FieldConditionContext {
   isEditing: boolean;
   isLoaned: boolean;
   isIncomingLoanPlayer: boolean;
+  isReturningIncomingLoan: boolean;
   isSigning: boolean;
   isIncomingLoan: boolean;
   isKnownPlayer: boolean;
@@ -48,7 +55,11 @@ export const filterFormSections = <T extends SquadFormField>(
   context: FieldConditionContext,
 ): Array<Omit<SquadFormSection<T>, "fields"> & { fields: T[][] }> => {
   return sections
-    .filter((section) => !section.editOnly || context.isEditing)
+    .filter(
+      (section) =>
+        (!section.editOnly || context.isEditing) &&
+        (!section.addOnly || !context.isEditing),
+    )
     .map((section) => {
       const filteredRows = section.fields
         .map((row) =>
@@ -60,6 +71,12 @@ export const filterFormSections = <T extends SquadFormField>(
             )
               return false;
             if (field.hideOnIncomingLoanPlayer && context.isIncomingLoanPlayer)
+              return false;
+            if (field.incomingLoanPlayerOnly && !context.isIncomingLoanPlayer)
+              return false;
+            if (field.returnIncomingLoanOnly && !context.isReturningIncomingLoan)
+              return false;
+            if (field.hideOnReturnIncomingLoan && context.isReturningIncomingLoan)
               return false;
             if (field.isSigningOnly && !context.isSigning) return false;
             if (field.isIncomingLoanOnly && !context.isIncomingLoan)
@@ -74,6 +91,8 @@ export const filterFormSections = <T extends SquadFormField>(
               return false;
             if (field.isKnownPlayerOnly && !context.isKnownPlayer) return false;
             if (field.requiresGroupId && !context.hasGroupId) return false;
+            if (field.addOnly && context.isEditing) return false;
+            if (field.editOnly && !context.isEditing) return false;
 
             return true;
           }),

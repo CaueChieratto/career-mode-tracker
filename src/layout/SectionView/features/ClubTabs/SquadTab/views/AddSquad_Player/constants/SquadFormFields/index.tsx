@@ -5,10 +5,11 @@ import {
   FaSignature,
   FaHandHoldingUsd,
   FaHistory,
+  FaUndo,
 } from "react-icons/fa";
 import { GiPodium, GiSoccerField } from "react-icons/gi";
 import { MdAttachMoney, MdNumbers } from "react-icons/md";
-import { BsCalendar } from "react-icons/bs";
+import { BsCalendar, BsCalendar2Event } from "react-icons/bs";
 import { RxLapTimer } from "react-icons/rx";
 import { FaTrashCan } from "react-icons/fa6";
 import { TbBrandElectronicArts } from "react-icons/tb";
@@ -70,15 +71,20 @@ export const getSquadFormFields = (
             name: "Já treinou o jogador?",
             icon: <FaHistory />,
             checkbox: true,
-            addOnly: true,
             showOnJoin: true,
-            requiresGroupId: true,
+            addOnly: true,
+            disabled: pastPlayerOptions.length === 0,
+            note:
+              pastPlayerOptions.length === 0
+                ? "Nenhum ex-jogador disponível para recontratação."
+                : undefined,
           },
         ],
       ],
     },
     {
       title: "Buscar Jogador",
+      addOnly: true,
       fields: [
         [
           {
@@ -89,6 +95,7 @@ export const getSquadFormFields = (
             inputType: "searchable-select",
             options: pastPlayerOptions,
             isKnownPlayerOnly: true,
+            addOnly: true,
           },
         ],
       ],
@@ -166,6 +173,27 @@ export const getSquadFormFields = (
       fields: [
         [
           {
+            id: "isReturnIncomingLoan",
+            name: "Encerrou o empréstimo?",
+            icon: <FaUndo />,
+            checkbox: true,
+            editOnly: true,
+            incomingLoanPlayerOnly: true,
+          },
+        ],
+        [
+          {
+            id: "returnDate",
+            name: "Data de retorno",
+            placeholder: "Ex: 11/07",
+            icon: <BsCalendar2Event />,
+            maxLength: 5,
+            editOnly: true,
+            returnIncomingLoanOnly: true,
+          },
+        ],
+        [
+          {
             id: "fromClub",
             name: "Clube de Origem",
             inputType: "searchable-select",
@@ -174,6 +202,7 @@ export const getSquadFormFields = (
             options: teamOptions,
             showOnJoin: true,
             hideOnSell: true,
+            hideOnReturnIncomingLoan: true,
           },
         ],
         [
@@ -185,6 +214,7 @@ export const getSquadFormFields = (
             icon: <MdNumbers />,
             hideOnSell: true,
             maxLength: 7,
+            hideOnReturnIncomingLoan: true,
           },
           {
             id: "buyValue",
@@ -194,6 +224,7 @@ export const getSquadFormFields = (
             icon: <FaHandHoldingUsd />,
             isSigningOnly: true,
             maxLength: 7,
+            hideOnReturnIncomingLoan: true,
           },
           {
             id: "loanDuration",
@@ -202,6 +233,7 @@ export const getSquadFormFields = (
             placeholder: "Ex: 1, 2",
             icon: <RxLapTimer />,
             isIncomingLoanOnly: true,
+            hideOnReturnIncomingLoan: true,
           },
         ],
         [
@@ -213,6 +245,7 @@ export const getSquadFormFields = (
             icon: <MdAttachMoney />,
             hideOnSell: true,
             maxLength: 7,
+            hideOnReturnIncomingLoan: true,
           },
           {
             id: "contractTime",
@@ -223,6 +256,7 @@ export const getSquadFormFields = (
             hideOnSell: true,
             hideOnIncomingLoan: true,
             maxLength: 1,
+            hideOnReturnIncomingLoan: true,
           },
           {
             id: "wagePercentage",
@@ -232,6 +266,7 @@ export const getSquadFormFields = (
             icon: <MdAttachMoney />,
             isIncomingLoanOnly: true,
             maxLength: 3,
+            hideOnReturnIncomingLoan: true,
           },
         ],
         [
@@ -242,6 +277,35 @@ export const getSquadFormFields = (
             icon: <RxLapTimer />,
             showOnJoin: true,
             maxLength: 5,
+            hideOnReturnIncomingLoan: true,
+          },
+        ],
+        [
+          {
+            id: "isKnownPlayer",
+            name: "Esse jogador ja jogou conosco antes?",
+            icon: <FaHistory />,
+            checkbox: true,
+            editOnly: true,
+            hideOnReturnIncomingLoan: true,
+            disabled: pastPlayerOptions.length === 0,
+            note:
+              pastPlayerOptions.length === 0
+                ? "Nenhum ex-jogador disponível para vincular."
+                : undefined,
+          },
+        ],
+        [
+          {
+            id: "selectedPastPlayer",
+            name: "Selecione o Jogador",
+            placeholder: "Busque pelo nome...",
+            icon: <FaUser />,
+            inputType: "searchable-select",
+            options: pastPlayerOptions,
+            editOnly: true,
+            isKnownPlayerOnly: true,
+            hideOnReturnIncomingLoan: true,
           },
         ],
       ],

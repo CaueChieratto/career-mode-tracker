@@ -47,6 +47,7 @@ export const mapPlayerToFormValues = (
       : "",
     loanDuration: latestContract?.loanDuration?.toString() || "",
     wagePercentage: latestContract?.wagePercentage?.toString() || "",
+    playedWithUs: player.playedWithUs || "",
   };
 
   return formValues;
@@ -123,6 +124,12 @@ export const mapFormDataToPlayerData = (
     });
   }
 
+  const playedWithUsRaw = formData.get("playedWithUs");
+  const playedWithUs =
+    playedWithUsRaw !== null
+      ? (playedWithUsRaw as string).trim() || undefined
+      : player?.playedWithUs;
+
   return {
     name: (formData.get("playerName") as string) || "",
     overall: Number(formData.get("overall")) || 0,
@@ -141,8 +148,12 @@ export const mapFormDataToPlayerData = (
     sell: false,
     loan: false,
     incomingLoan: isIncomingLoan,
-    ballonDor: 0,
-    statsLeagues: [],
+    ballonDor: player?.ballonDor ?? 0,
+    statsLeagues: player?.statsLeagues ?? [],
+    ...(player?.manualStatsLeagues
+      ? { manualStatsLeagues: player.manualStatsLeagues }
+      : {}),
+    ...(playedWithUs ? { playedWithUs } : {}),
     ...(newContract.length > 0 && { contract: newContract }),
   };
 };

@@ -13,6 +13,7 @@ import { getSeasonDateRange } from "../../../../../common/utils/GetSeasonDateRan
 import { getMatchSeason, processMatches } from "./helpers/processMatches";
 import { SectionScreen } from "../../../config/screens";
 import { MatchesContext } from "./contexts/MatchesContext";
+import { isSamePlayerId } from "../../../../../common/utils/playerIdentity";
 
 type AllMatchesTabProps = {
   season: ClubData;
@@ -81,6 +82,31 @@ export const AllMatchesTab = ({
     );
   }, [activeTab, selectedMonth, selectedSeasonLabel, storageKeySuffix]);
 
+  const playerMatchingIds = useMemo(() => {
+    if (!player) return new Set<string>();
+    const ids = new Set<string>();
+    ids.add(player.id);
+    if (player.playedWithUs) ids.add(player.playedWithUs);
+
+    const normName = player.name.trim().toLowerCase();
+    const normNation = player.nation.trim().toLowerCase();
+
+    career.clubData?.forEach((s) => {
+      s.players?.forEach((p) => {
+        if (
+          isSamePlayerId(p, player) ||
+          (p.name.trim().toLowerCase() === normName &&
+            p.nation.trim().toLowerCase() === normNation)
+        ) {
+          ids.add(p.id);
+          if (p.playedWithUs) ids.add(p.playedWithUs);
+        }
+      });
+    });
+
+    return ids;
+  }, [career.clubData, player]);
+
   const seasonOptions = useMemo(() => {
     const availableSeasons =
       career.clubData?.filter((s) => {
@@ -88,7 +114,10 @@ export const AllMatchesTab = ({
 
         return s.matches?.some((m) =>
           m.playerStats?.some(
-            (ps) => ps.playerId === player.id && (ps.minutesPlayed ?? 0) > 0,
+            (ps) =>
+              (playerMatchingIds.has(ps.playerId) ||
+                isSamePlayerId(ps.playerId, player)) &&
+              (ps.minutesPlayed ?? 0) > 0,
           ),
         );
       }) || [];
@@ -97,7 +126,7 @@ export const AllMatchesTab = ({
       "Todas",
       ...availableSeasons.map((s) => `Temporada ${s.seasonNumber}`),
     ];
-  }, [career.clubData, player]);
+  }, [career.clubData, player, playerMatchingIds]);
 
   const selectedSeasonId =
     selectedSeasonLabel === "Todas"
@@ -106,7 +135,7 @@ export const AllMatchesTab = ({
           (s) => `Temporada ${s.seasonNumber}` === selectedSeasonLabel,
         )?.id;
 
-  const effectiveSeasonId = isGeralUrl ? selectedSeasonId : season.id;
+  const effectiveSeasonId = isGeralPage ? selectedSeasonId : season.id;
 
   const matches = processMatches({
     season,
@@ -116,6 +145,7 @@ export const AllMatchesTab = ({
     selectedMonth,
     selectedSeasonId: effectiveSeasonId,
     playerId: player?.id,
+    matchingPlayerIds: playerMatchingIds,
   });
 
   return (
@@ -131,9 +161,9 @@ export const AllMatchesTab = ({
           onSelectChange={setSelectedMonth}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          seasonOptions={isGeralUrl ? seasonOptions : undefined}
-          seasonValue={isGeralUrl ? selectedSeasonLabel : undefined}
-          onSeasonChange={isGeralUrl ? setSelectedSeasonLabel : undefined}
+          seasonOptions={isGeralPage ? seasonOptions : undefined}
+          seasonValue={isGeralPage ? selectedSeasonLabel : undefined}
+          onSeasonChange={isGeralPage ? setSelectedSeasonLabel : undefined}
         />
         {!matches.length ? (
           <NoStatsMessage
@@ -152,8 +182,12 @@ export const AllMatchesTab = ({
               season,
               isGeralPage,
             );
-            const playerStat = player?.id
-              ? match.playerStats?.find((p) => p.playerId === player.id)
+            const playerStat = player
+              ? match.playerStats?.find(
+                  (p) =>
+                    playerMatchingIds.has(p.playerId) ||
+                    isSamePlayerId(p.playerId, player),
+                )
               : undefined;
 
             return (
