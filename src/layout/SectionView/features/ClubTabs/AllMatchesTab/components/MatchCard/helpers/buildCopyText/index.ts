@@ -33,6 +33,16 @@ export const buildMatchCopyText = ({
   const myXg = isHome ? match.homeXG : match.awayXG;
   const opponentXg = isHome ? match.awayXG : match.homeXG;
 
+  const hasPenalties =
+    match.homePenScore !== undefined &&
+    match.homePenScore !== null &&
+    match.awayPenScore !== undefined &&
+    match.awayPenScore !== null;
+  const myPen = isHome ? match.homePenScore : match.awayPenScore;
+  const opponentPen = isHome ? match.awayPenScore : match.homePenScore;
+  const penaltiesText = hasPenalties ? ` (PEN: ${myPen}x${opponentPen})` : "";
+  const extraTimePrefix = match.hasExtraTime ? "PRORROGAÇÃO | " : "";
+
   const isLeague = isLeagueCompetition(match.league);
   const competitionText = isLeague ? "" : match.league;
   const matchContext = competitionText
@@ -97,5 +107,5 @@ export const buildMatchCopyText = ({
     ? `\nAdversário: ${opponentEventsText}`
     : "";
 
-  return `Dia ${day}: ${resultText} ${myScore}x${opponentScore} vs ${opponent} (${matchContext})\nPosse: ${possession}% | Chutes: ${myShots}x${opponentShots} | xG: ${myXg}x${opponentXg}${startersText}${oppText}`;
+  return `Dia ${day}: ${resultText} ${myScore}x${opponentScore}${penaltiesText} vs ${opponent} (${matchContext})\n${extraTimePrefix}Posse: ${possession}% | Chutes: ${myShots}x${opponentShots} | xG: ${myXg}x${opponentXg}${startersText}${oppText}`;
 };

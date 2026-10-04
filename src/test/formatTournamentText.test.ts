@@ -415,5 +415,101 @@ Newell’s Old Boys 2 x 0 Gimnasia y Esgrima
     const result = formatTournamentText(tournament, career, allPlayers);
     expect(result).toBe(expectedText);
   });
+
+  it("inclui placar de pênaltis quando a partida for decidida nos pênaltis", () => {
+    const career = createMockCareer("Newell’s Old Boys");
+    const allPlayers: AcademyPlayers[] = [
+      createMockPlayer("p1", "Lucas Blanco", "ATA"),
+      createMockPlayer("p2", "Christian Arce", "MEI"),
+      createMockPlayer("p3", "Christian Nelson", "GOL"),
+      createMockPlayer("p4", "Cristian Bello", "ZAG"),
+      createMockPlayer("p5", "Simón Ruiz", "VOL"),
+    ];
+
+    const tournament: AcademyTournaments = {
+      id: "t1",
+      name: "Copa Jorge Griffa - 4ª Edição",
+      date: "01/08/2024",
+      totalMatches: 1,
+      isChampion: true,
+      tournamentResult: "Campeão",
+      matches: [
+        {
+          id: "m1",
+          date: "01/08/2024",
+          opponentTeam: "Boca Juniors",
+          userGoals: 0,
+          opponentGoals: 0,
+          userPenalties: 2,
+          opponentPenalties: 1,
+          status: "Final",
+          result: "FINISHED",
+          lineup: [
+            {
+              playerId: "p1",
+              playerName: "Lucas Blanco",
+              rating: 6.2,
+              goals: 0,
+              assists: 0,
+              defesas: null,
+              cleanSheets: null,
+            },
+            {
+              playerId: "p2",
+              playerName: "Christian Arce",
+              rating: 7.3,
+              goals: 0,
+              assists: 0,
+              defesas: null,
+              cleanSheets: null,
+            },
+            {
+              playerId: "p4",
+              playerName: "Cristian Bello",
+              rating: 8.4,
+              goals: 0,
+              assists: 0,
+              defesas: null,
+              cleanSheets: null,
+            },
+            {
+              playerId: "p5",
+              playerName: "Simón Ruiz",
+              rating: 7.0,
+              goals: 0,
+              assists: 0,
+              defesas: null,
+              cleanSheets: null,
+            },
+            {
+              playerId: "p3",
+              playerName: "Christian Nelson",
+              rating: 6.7,
+              goals: 0,
+              assists: 0,
+              defesas: 0,
+              cleanSheets: 0,
+            },
+          ],
+        },
+      ],
+    };
+
+    const expectedText = `4ª edição da Copa Jorge Griffa {
+
+FINAL {
+Newell’s Old Boys 0 x 0 Boca Juniors — PEN (2 x 1)
+
+• Lucas Blanco — nota 6,2; sem gols ou assistências.
+• Christian Arce — nota 7,3; sem gols ou assistências.
+• Cristian Bello — nota 8,4; sem gols ou assistências.
+• Simón Ruiz — nota 7,0; sem gols ou assistências.
+• Christian Nelson — nota 6,7; sem defesas ou assistências.
+}
+}`;
+
+    const result = formatTournamentText(tournament, career, allPlayers);
+    expect(result).toBe(expectedText);
+  });
 });
 

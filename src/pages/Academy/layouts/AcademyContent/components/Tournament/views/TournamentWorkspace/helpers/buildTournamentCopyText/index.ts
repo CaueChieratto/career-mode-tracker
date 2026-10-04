@@ -84,7 +84,15 @@ export const buildTournamentCopyText = (
     const userGoals = match.userGoals ?? 0;
     const oppGoals = match.opponentGoals ?? 0;
     const oppTeam = match.opponentTeam || "Adversário";
-    const scoreLine = `${userTeam} ${userGoals} x ${oppGoals} ${oppTeam}`;
+    const hasPenalties =
+      match.userPenalties !== undefined &&
+      match.userPenalties !== null &&
+      match.opponentPenalties !== undefined &&
+      match.opponentPenalties !== null;
+    const penaltiesText = hasPenalties
+      ? ` — PEN (${match.userPenalties} x ${match.opponentPenalties})`
+      : "";
+    const scoreLine = `${userTeam} ${userGoals} x ${oppGoals} ${oppTeam}${penaltiesText}`;
 
     const playerLines = (match.lineup || []).map((stat) =>
       formatPlayerLine(stat, allPlayers),
