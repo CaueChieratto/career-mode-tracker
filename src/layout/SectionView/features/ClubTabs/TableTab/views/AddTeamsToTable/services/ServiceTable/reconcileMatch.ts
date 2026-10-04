@@ -38,9 +38,16 @@ export async function reconcileMatch(
     const next = update
       ? { ...previous, ...update, matchesId: matchId }
       : undefined;
-    if (next && removePenalties) {
-      delete next.homePenScore;
-      delete next.awayPenScore;
+    if (next) {
+      if (removePenalties) {
+        delete next.homePenScore;
+        delete next.awayPenScore;
+      }
+      for (const key of Object.keys(next)) {
+        if ((next as Record<string, unknown>)[key] === undefined) {
+          delete (next as Record<string, unknown>)[key];
+        }
+      }
     }
     const standingsChanged = hasStandingsImpact(previous, next);
     let career: Career | undefined;

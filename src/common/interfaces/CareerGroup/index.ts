@@ -7,6 +7,7 @@ export interface CareerGroup {
   careerIds: string[];
   createdAt: Date;
   updatedAt?: number;
+  stadiums?: string[];
 }
 
 export type BoardItem =

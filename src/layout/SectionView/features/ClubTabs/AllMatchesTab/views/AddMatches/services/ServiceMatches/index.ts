@@ -186,7 +186,17 @@ export const ServiceMatches = {
       match.matchesId,
     );
 
-    await setDoc(matchRef, match);
+    const cleanedMatch = Object.entries(match).reduce<Record<string, unknown>>(
+      (acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {},
+    );
+
+    await setDoc(matchRef, cleanedMatch);
 
     await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
   },
@@ -492,5 +502,86 @@ export const ServiceMatches = {
     }
 
     return null;
+  },
+
+  saveStadium: async (
+    careerId: string,
+    stadium: string,
+    groupId?: string | null,
+  ): Promise<void> => {
+    const trimmedStadium = stadium.trim();
+    if (!trimmedStadium) return;
+
+    const user = auth.currentUser;
+    if (!user) throw new Error("Usuário não autenticado");
+
+    const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+    const careerSnap = await getDoc(careerRef);
+    if (careerSnap.exists()) {
+      const careerData = careerSnap.data() as Career;
+      const existingStadiums = careerData.stadiums || [];
+      if (!existingStadiums.includes(trimmedStadium)) {
+        await updateDoc(careerRef, {
+          stadiums: [...existingStadiums, trimmedStadium],
+          updatedAt: Date.now(),
+        });
+      }
+    }
+
+    if (groupId) {
+      const groupRef = doc(db, `users/${user.uid}/careerGroups/${groupId}`);
+      const groupSnap = await getDoc(groupRef);
+      if (groupSnap.exists()) {
+        const groupData = groupSnap.data() as { stadiums?: string[] };
+        const existingGroupStadiums = groupData.stadiums || [];
+        if (!existingGroupStadiums.includes(trimmedStadium)) {
+          await updateDoc(groupRef, {
+            stadiums: [...existingGroupStadiums, trimmedStadium],
+            updatedAt: Date.now(),
+          });
+        }
+      }
+    }
+  },
+
+  getStadiumsByCareerOrGroup: async (
+    careerId: string,
+    groupId?: string | null,
+  ): Promise<string[]> => {
+    const user = auth.currentUser;
+    if (!user) return [];
+
+    const stadiumsSet = new Set<string>();
+
+    try {
+      const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+      const careerSnap = await getDoc(careerRef);
+      if (careerSnap.exists()) {
+        const careerData = careerSnap.data() as Career;
+        careerData.stadiums?.forEach((s) => {
+          if (s?.trim()) stadiumsSet.add(s.trim());
+        });
+        careerData.clubData?.forEach((season) => {
+          season.matches?.forEach((m) => {
+            if (m.stadium?.trim()) stadiumsSet.add(m.stadium.trim());
+          });
+        });
+      }
+
+      if (groupId) {
+        const groupRef = doc(db, `users/${user.uid}/careerGroups/${groupId}`);
+        const groupSnap = await getDoc(groupRef);
+        if (groupSnap.exists()) {
+          const groupData = groupSnap.data() as { stadiums?: string[] };
+          groupData.stadiums?.forEach((s) => {
+            if (s?.trim()) stadiumsSet.add(s.trim());
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao buscar estádios:", error);
+    }
+
+    return Array.from(stadiumsSet).sort((a, b) => a.localeCompare(b, "pt-BR"));
   },
 };

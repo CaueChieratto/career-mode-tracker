@@ -39,7 +39,11 @@ export const MatchCard = ({ match, season, playerStat }: MatchCardProps) => {
     : goToEdit;
 
   const copyText = async () => {
-    const text = buildMatchCopyText({ match, career });
+    const text = buildMatchCopyText({
+      match,
+      career,
+      seasonMatches: season.matches,
+    });
     await Copy(text, "Copiado!");
   };
 

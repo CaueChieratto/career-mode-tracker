@@ -7,6 +7,9 @@ import { buildTeamData } from "../../helpers/buildTeamData";
 import { Teams } from "../../../../../../../../../common/interfaces/Teams";
 import { auth } from "../../../../../../../../../common/services/Firebase";
 import { useAddMatchesContext } from "../../contexts/context";
+import { ServiceCareer } from "../../../../../../../../../common/services/ServiceCareer";
+import { getSeasonName } from "../../../../../../../../../common/utils/GetSeasonName";
+import { Trophy } from "../../../../../../../../../common/interfaces/club/trophy";
 
 export function useMatchActions() {
   const {
@@ -24,6 +27,10 @@ export function useMatchActions() {
     date: string;
     league: string;
     opponentTeam: string;
+    matchVenue?: string;
+    neutralHost?: string;
+    stadium?: string;
+    stage?: string;
   };
 
   const [isSaving, setIsSaving] = useState(false);
@@ -44,12 +51,25 @@ export function useMatchActions() {
       return;
     }
 
-    const isHomeMatch = booleanValues.isHomeMatch ?? false;
+    const matchVenue =
+      formValues.matchVenue ||
+      (booleanValues.isHomeMatch !== undefined
+        ? booleanValues.isHomeMatch
+          ? "Casa"
+          : "Fora"
+        : "Casa");
+    const isKnockout = booleanValues.isKnockout ?? false;
+    const isReturnMatch = isKnockout ? (booleanValues.isReturnMatch ?? false) : false;
 
     const matchData = buildMatchData({
       ...formValues,
       date: finalDate,
-      isHomeMatch,
+      matchVenue,
+      neutralHost: formValues.neutralHost,
+      stadium: formValues.stadium,
+      isKnockout,
+      stage: formValues.stage,
+      isReturnMatch,
       career,
       season,
       matchesId,
@@ -160,10 +180,44 @@ export function useMatchActions() {
         );
       }
 
+      if (matchVenue === "Neutro" && formValues.stadium?.trim()) {
+        try {
+          await ServiceMatches.saveStadium(
+            careerId,
+            formValues.stadium.trim(),
+            career.groupId,
+          );
+        } catch (stadiumErr) {
+          console.error("Erro ao salvar estádio:", stadiumErr);
+        }
+      }
+
+      let updatedTrophies: Trophy[] | undefined;
+      if (
+        matchData.stage?.trim().toLowerCase() === "final" &&
+        matchData.result === "V"
+      ) {
+        try {
+          const seasonName = getSeasonName(
+            season.seasonNumber,
+            career.createdAt,
+            career.nation,
+          );
+          updatedTrophies = await ServiceCareer.saveClubTrophies(
+            careerId,
+            [matchData.league],
+            [seasonName],
+          );
+        } catch (trophyErr) {
+          console.error("Erro ao adicionar título na final:", trophyErr);
+        }
+      }
+
       onSuccess({
         type: matchesId ? "UPDATE" : "ADD",
         match: matchData,
         team: newTeamData || undefined,
+        trophies: updatedTrophies,
       });
     } catch (error) {
       console.error("Erro: ", error);

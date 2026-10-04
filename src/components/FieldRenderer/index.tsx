@@ -86,7 +86,8 @@ type FieldRendererProps = Pick<
 };
 
 const FieldRenderer = (props: FieldRendererProps) => {
-  const { field, onInputChange, onKeyDown, onKeyUp, formValues } = props;
+  const { field, onInputChange, onKeyDown, onKeyUp, formValues, clubColor } =
+    props;
   const value = formValues?.[field.id] ?? "";
 
   const handleInputChange = (
@@ -111,6 +112,20 @@ const FieldRenderer = (props: FieldRendererProps) => {
         onChange={handleInputChange}
         disabled={field.disabled}
         useAlternateStyle={field.id === "nation"}
+      />
+    );
+  }
+
+  if (field.inputType === "segmented" && field.options) {
+    return (
+      <FormSegmentedControl
+        name={field.id}
+        clubColor={clubColor}
+        options={field.options}
+        value={value || field.options[0]}
+        onOptionChange={(option) =>
+          handleInputChange({ target: { name: field.id, value: option } })
+        }
       />
     );
   }

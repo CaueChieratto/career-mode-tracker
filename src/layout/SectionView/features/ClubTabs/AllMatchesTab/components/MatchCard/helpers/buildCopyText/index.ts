@@ -4,19 +4,23 @@ import { isLeagueCompetition } from "../isLeagueCompetition";
 import { buildSubstitutionsMap } from "./helpers/buildSubstitutionsMap";
 import { buildPlayerText } from "./helpers/buildPlayerText";
 import { buildOpponentEventsText } from "./helpers/buildOpponentEventsText";
+import { calculateAggregateScore } from "./helpers/calculateAggregateScore";
+import { formatKnockoutStage } from "./helpers/formatKnockoutStage";
 
 type BuildMatchCopyTextParams = {
   match: Match;
   career: Career;
+  seasonMatches?: Match[];
 };
 
 export const buildMatchCopyText = ({
   match,
   career,
+  seasonMatches,
 }: BuildMatchCopyTextParams): string => {
   const isHome = match.homeTeam === career.clubName;
   const opponent = isHome ? match.awayTeam : match.homeTeam;
-  const location = isHome ? "Casa" : "Fora";
+  const location = match.isNeutral ? "Neutro" : isHome ? "Casa" : "Fora";
   const day = match.date.split("/")[0];
   const resultText =
     match.result === "V"
@@ -33,6 +37,11 @@ export const buildMatchCopyText = ({
   const myXg = isHome ? match.homeXG : match.awayXG;
   const opponentXg = isHome ? match.awayXG : match.homeXG;
 
+  const aggregate = calculateAggregateScore(match, career, seasonMatches);
+  const aggregateText = aggregate
+    ? ` (AGR: ${aggregate.userScore}x${aggregate.opponentScore})`
+    : "";
+
   const hasPenalties =
     match.homePenScore !== undefined &&
     match.homePenScore !== null &&
@@ -43,11 +52,32 @@ export const buildMatchCopyText = ({
   const penaltiesText = hasPenalties ? ` (PEN: ${myPen}x${opponentPen})` : "";
   const extraTimePrefix = match.hasExtraTime ? "PRORROGAÇÃO | " : "";
 
-  const isLeague = isLeagueCompetition(match.league);
-  const competitionText = isLeague ? "" : match.league;
-  const matchContext = competitionText
-    ? `${location}, ${competitionText}`
-    : location;
+  const formattedStage = match.stage
+    ? formatKnockoutStage(match.stage, match.isReturnMatch)
+    : match.isReturnMatch
+      ? "Jogo de Volta"
+      : "";
+
+  let matchContext: string;
+
+  if (match.isNeutral && match.stadium?.trim()) {
+    const venueDetail = formattedStage
+      ? `${formattedStage} no ${match.stadium.trim()}`
+      : `no ${match.stadium.trim()}`;
+
+    matchContext = match.league
+      ? `${match.league}, ${venueDetail}`
+      : venueDetail;
+  } else if (formattedStage) {
+    const leaguePart = match.league ? `, ${match.league}` : "";
+    matchContext = `${location}${leaguePart}, ${formattedStage}`;
+  } else {
+    const isLeague = isLeagueCompetition(match.league);
+    const competitionText = isLeague ? "" : match.league;
+    matchContext = competitionText
+      ? `${location}, ${competitionText}`
+      : location;
+  }
 
   const getPlayerStat = (id?: string | null) => {
     if (!id) return undefined;
@@ -107,5 +137,5 @@ export const buildMatchCopyText = ({
     ? `\nAdversário: ${opponentEventsText}`
     : "";
 
-  return `Dia ${day}: ${resultText} ${myScore}x${opponentScore}${penaltiesText} vs ${opponent} (${matchContext})\n${extraTimePrefix}Posse: ${possession}% | Chutes: ${myShots}x${opponentShots} | xG: ${myXg}x${opponentXg}${startersText}${oppText}`;
+  return `Dia ${day}: ${resultText} ${myScore}x${opponentScore}${aggregateText}${penaltiesText} vs ${opponent} (${matchContext})\n${extraTimePrefix}Posse: ${possession}% | Chutes: ${myShots}x${opponentShots} | xG: ${myXg}x${opponentXg}${startersText}${oppText}`;
 };

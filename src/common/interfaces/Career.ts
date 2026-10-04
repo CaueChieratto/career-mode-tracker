@@ -16,4 +16,6 @@ export interface Career {
   colorsTeams: string[];
   trophies: Trophy[];
   clubData: ClubData[];
+  stadiums?: string[];
+  stages?: string[];
 }

@@ -47,4 +47,10 @@ export type Match = {
   awayRedCards?: number;
   opponentMvpName?: string;
   opponentMvpRating?: number;
+  stadium?: string;
+  stage?: string;
+  isNeutral?: boolean;
+  isKnockout?: boolean;
+  isReturnMatch?: boolean;
+  firstLegScore?: { userScore: number; opponentScore: number };
 };

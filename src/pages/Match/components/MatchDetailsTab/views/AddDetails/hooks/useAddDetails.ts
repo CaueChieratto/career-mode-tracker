@@ -10,6 +10,8 @@ import { resolveCardConflicts } from "./helpers/resolveCardConflicts";
 import { Match } from "../../../../../../../common/interfaces/Match";
 import { Career } from "../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../common/interfaces/club/clubData";
+import { ServiceCareer } from "../../../../../../../common/services/ServiceCareer";
+import { getSeasonName } from "../../../../../../../common/utils/GetSeasonName";
 
 type UseAddDetailsProps = {
   career: Career;
@@ -91,6 +93,26 @@ export const useAddDetails = ({
         updatedMatch as Match,
         !booleanValues.hasPenalties,
       );
+      if (
+        (updatedMatch.stage?.trim().toLowerCase() === "final" ||
+          match.stage?.trim().toLowerCase() === "final") &&
+        updatedMatch.result === "V"
+      ) {
+        try {
+          const seasonName = getSeasonName(
+            season.seasonNumber,
+            career.createdAt,
+            career.nation,
+          );
+          await ServiceCareer.saveClubTrophies(
+            career.id,
+            [match.league],
+            [seasonName],
+          );
+        } catch (trophyErr) {
+          console.error("Erro ao adicionar título na final:", trophyErr);
+        }
+      }
       onClose();
       onSaved?.(updatedMatch as Match);
     } finally {

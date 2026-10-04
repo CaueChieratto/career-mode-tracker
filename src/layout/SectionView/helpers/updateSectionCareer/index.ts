@@ -129,8 +129,15 @@ export function applyOptimisticUpdate(
   seasonId: string,
   optimisticData: OptimisticUpdateData,
 ): Career {
+  const updatedTrophies =
+    (optimisticData.type === "ADD" || optimisticData.type === "UPDATE") &&
+    optimisticData.trophies
+      ? optimisticData.trophies
+      : career.trophies;
+
   return {
     ...career,
+    trophies: updatedTrophies,
     clubData: career.clubData.map((season) => {
       if (season.id !== seasonId) {
         return season;
