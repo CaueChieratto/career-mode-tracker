@@ -1,6 +1,12 @@
 export const getContractInMonths = (savedValue: number): number => {
-  if (savedValue <= 10) return savedValue * 12;
-  return savedValue;
+  if (savedValue <= 0) return 0;
+  if (savedValue > 10) return Math.round(savedValue);
+
+  const normalized = Math.round(savedValue * 10) / 10;
+  const years = Math.floor(normalized);
+  const months = Math.round((normalized - years) * 10);
+
+  return years * 12 + months;
 };
 
 export const formatContractDisplay = (savedValue: number): string => {

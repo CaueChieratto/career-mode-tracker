@@ -35,7 +35,7 @@ export const getVisualContract = (
     diffMonths = currentIndex - baseIndex;
   }
 
-  const remainingMonths = originalMonths - Math.max(0, diffMonths);
+  const remainingMonths = Math.round(originalMonths - Math.max(0, diffMonths));
 
   if (remainingMonths <= 0) return "Expirado";
 

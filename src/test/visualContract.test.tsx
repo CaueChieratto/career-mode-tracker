@@ -100,6 +100,51 @@ describe("getVisualContract - Continent Calendar Contract Calculation", () => {
       expect(getVisualContract(0, matches, false)).toBe("Expirado");
     });
   });
+
+  describe("Contratos Decimais (1.6 e 0.6)", () => {
+    it("1.6 sem partidas finalizadas exibe 1A. 6M.", () => {
+      expect(getVisualContract(1.6, [], "Argentina")).toBe("1A. 6M.");
+    });
+
+    it("1.6 com 1 mês decorrido desconta do número após o ponto (1A. 5M.)", () => {
+      const matches = [makeMatch("15/02/25")];
+      expect(getVisualContract(1.6, matches, "Argentina")).toBe("1A. 5M.");
+    });
+
+    it("1.6 com 2 meses decorridos exibe 1A. 4M.", () => {
+      const matches = [makeMatch("15/03/25")];
+      expect(getVisualContract(1.6, matches, "Argentina")).toBe("1A. 4M.");
+    });
+
+    it("1.6 com 6 meses decorridos desconta todos os meses após o ponto e exibe 1 Ano", () => {
+      const matches = [makeMatch("15/07/25")];
+      expect(getVisualContract(1.6, matches, "Argentina")).toBe("1 Ano");
+    });
+
+    it("1.6 com 7 meses decorridos passa a descontar dos 12 meses restantes e exibe 11 Meses", () => {
+      const matches = [makeMatch("15/08/25")];
+      expect(getVisualContract(1.6, matches, "Argentina")).toBe("11 Meses");
+    });
+
+    it("0.6 sem partidas finalizadas exibe 6 Meses", () => {
+      expect(getVisualContract(0.6, [], "Argentina")).toBe("6 Meses");
+    });
+
+    it("0.6 com 1 mês decorrido exibe 5 Meses", () => {
+      const matches = [makeMatch("15/02/25")];
+      expect(getVisualContract(0.6, matches, "Argentina")).toBe("5 Meses");
+    });
+
+    it("0.6 com 5 meses decorridos exibe 1 Mês", () => {
+      const matches = [makeMatch("15/06/25")];
+      expect(getVisualContract(0.6, matches, "Argentina")).toBe("1 Mês");
+    });
+
+    it("0.6 com 6 meses decorridos exibe Expirado", () => {
+      const matches = [makeMatch("15/07/25")];
+      expect(getVisualContract(0.6, matches, "Argentina")).toBe("Expirado");
+    });
+  });
 });
 
 describe("FooterSection_Player Component", () => {

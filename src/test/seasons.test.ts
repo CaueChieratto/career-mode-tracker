@@ -168,6 +168,53 @@ describe("criação write-only de temporada", () => {
     expect(input).toEqual(before);
   });
 
+  it("incomingLoan com 1.6 (1 ano e 6 meses) continua no clube na 1ª virada e passa para 0.6", async () => {
+    const loanPlayer16 = loanPlayer(true, 1.6);
+    loanPlayer16.contractTime = 1.6;
+
+    const input = deepFreeze(
+      career({
+        clubData: [
+          season({
+            players: [loanPlayer16],
+          }),
+        ],
+      }),
+    );
+
+    await ServiceSeasons.addSeason(input);
+    const transported = batchSet.mock.calls[0][1] as ReturnType<
+      typeof player
+    >;
+    expect(transported.incomingLoan).toBe(true);
+    expect(transported.sell).toBe(false);
+    expect(transported.contract[0].loanDuration).toBe(0.6);
+    expect(transported.contractTime).toBe(0.6);
+  });
+
+  it("incomingLoan com 0.6 (6 meses) encerra empréstimo na virada de temporada", async () => {
+    const loanPlayer06 = loanPlayer(true, 0.6);
+    loanPlayer06.contractTime = 0.6;
+
+    const input = deepFreeze(
+      career({
+        clubData: [
+          season({
+            players: [loanPlayer06],
+          }),
+        ],
+      }),
+    );
+
+    await ServiceSeasons.addSeason(input);
+    const transported = batchSet.mock.calls[0][1] as ReturnType<
+      typeof player
+    >;
+    expect(transported.incomingLoan).toBe(false);
+    expect(transported.sell).toBe(true);
+    expect(transported.loan).toBe(false);
+  });
+
   it.each([
     ["Inglaterra", 6],
     ["Brasil", 0],

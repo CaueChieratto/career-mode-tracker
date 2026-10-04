@@ -57,8 +57,9 @@ export const ServiceSeasons = {
       .filter((player) => !player.sell)
       .map((player) => {
         const lastContract = player.contract?.[player.contract.length - 1];
-        const remainingLoan = lastContract?.loanDuration ?? 0;
         const isIncoming = !!player.incomingLoan;
+        const remainingLoan =
+          lastContract?.loanDuration ?? (isIncoming ? player.contractTime : 0) ?? 0;
         const shouldReturnLoan =
           player.loan &&
           !isIncoming &&
@@ -66,7 +67,10 @@ export const ServiceSeasons = {
         const updatedPlayer: Players = {
           ...player,
           age: (player.age || 0) + 1,
-          contractTime: Math.max(0, (player.contractTime || 0) - 1),
+          contractTime: Math.max(
+            0,
+            Math.round(((player.contractTime || 0) - 1) * 10) / 10,
+          ),
           statsLeagues: [],
           ballonDor: 0,
           buy: false,
@@ -102,14 +106,18 @@ export const ServiceSeasons = {
             index === player.contract.length - 1
               ? {
                   ...contract,
-                  loanDuration: (contract.loanDuration || 0) - 1,
+                  loanDuration:
+                    Math.round(((contract.loanDuration || 0) - 1) * 10) / 10,
                 }
               : contract,
           );
         } else if (isIncoming && remainingLoan > 1) {
           updatedPlayer.contract = player.contract.map((contract, index) =>
             index === player.contract.length - 1
-              ? { ...contract, loanDuration: remainingLoan - 1 }
+              ? {
+                  ...contract,
+                  loanDuration: Math.round((remainingLoan - 1) * 10) / 10,
+                }
               : contract,
           );
         } else if (isIncoming && lastContract) {
