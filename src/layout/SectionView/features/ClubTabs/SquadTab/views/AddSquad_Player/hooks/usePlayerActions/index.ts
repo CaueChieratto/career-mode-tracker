@@ -52,21 +52,6 @@ export const usePlayerActions = ({
   const handleAddOrEditPlayer = async (formData: FormData) => {
     setIsLoading(true);
     try {
-      if (
-        player?.incomingLoan &&
-        formData.get("isReturnIncomingLoan") === "true"
-      ) {
-        const returnDate = (
-          (formData.get("returnDate") as string) || ""
-        ).trim();
-        if (!returnDate)
-          throw new Error("Por favor, preencha a data de retorno.");
-        await returnLoanPlayer(returnDate);
-        Object.assign(player, { sell: true, incomingLoan: false });
-        onSuccess();
-        return;
-      }
-
       const newPlayerData = mapFormDataToPlayerData(
         formData,
         career,
@@ -105,7 +90,7 @@ export const usePlayerActions = ({
 
       const fromClubName = (formData.get("fromClub") as string)?.trim();
 
-      if (fromClubName) {
+      if (!player && fromClubName) {
         const teamAlreadyExists = season.teams?.some(
           (t) => t.name.toLowerCase() === fromClubName.toLowerCase(),
         );

@@ -287,7 +287,56 @@ export const ServiceMatches = {
     seasonId: string,
     updatedMatch: Match,
     removePenalties = false,
+    previousMatch?: Match,
   ): Promise<void> => {
+    if (
+      previousMatch &&
+      previousMatch.status !== "FINISHED" &&
+      updatedMatch.status !== "FINISHED"
+    ) {
+      const user = auth.currentUser;
+      if (!user) throw new Error("Usuário não autenticado");
+
+      const matchRef = doc(
+        db,
+        `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/matches`,
+        updatedMatch.matchesId,
+      );
+
+      const cleanedMatch = Object.entries(updatedMatch).reduce<Record<string, unknown>>(
+        (acc, [key, value]) => {
+          if (value !== undefined) {
+            acc[key] = value;
+          }
+          return acc;
+        },
+        {},
+      );
+
+      if (removePenalties) {
+        delete cleanedMatch.homePenScore;
+        delete cleanedMatch.awayPenScore;
+        cleanedMatch.homePenScore = deleteField();
+        cleanedMatch.awayPenScore = deleteField();
+      }
+
+      await setDoc(matchRef, cleanedMatch, { merge: true });
+
+      const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+      try {
+        await updateCareerFirestore(user.uid, careerId, {
+          updatedAt: Date.now(),
+        });
+      } catch {
+        try {
+          await updateDoc(careerRef, { updatedAt: Date.now() });
+        } catch {
+          // ignore
+        }
+      }
+      return;
+    }
+
     await ServiceTable.reconcileMatch(
       careerId,
       seasonId,

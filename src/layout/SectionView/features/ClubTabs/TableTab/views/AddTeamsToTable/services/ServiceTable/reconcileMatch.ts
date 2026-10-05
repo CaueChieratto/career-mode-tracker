@@ -1,9 +1,12 @@
 import {
   collection,
+  deleteDoc,
   deleteField,
   doc,
   getDocsFromServer,
   runTransaction,
+  setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import type { DocumentReference } from "firebase/firestore";
 import { auth, db } from "../../../../../../../../../common/services/Firebase";
@@ -14,6 +17,29 @@ import { leaguesByContinent } from "../../../../../../../../../common/utils/leag
 import { calculateMatchResult } from "../../../../../../../../../pages/Match/components/MatchDetailsTab/views/AddDetails/helpers/calculateMatchResult";
 import { getUpdatedTableTeamData } from "../../../../../../../../../pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/helpers/calculateTableStats";
 import { hasStandingsImpact } from "./hasStandingsImpact";
+import { withFirestoreRetry } from "../../../../../../../../../common/utils/firestoreRetry";
+import { updateCareerFirestore } from "../../../../../../../../../common/helpers/Setters";
+
+export function isQuotaExceededError(error: unknown): boolean {
+  if (!error) return false;
+  const err = error as {
+    code?: string;
+    message?: string;
+    status?: number;
+    name?: string;
+  };
+  const code = (err.code || "").toLowerCase();
+  const message = (err.message || "").toLowerCase();
+  return (
+    code === "resource-exhausted" ||
+    code.includes("429") ||
+    message.includes("quota exceeded") ||
+    message.includes("resource-exhausted") ||
+    message.includes("too many requests") ||
+    message.includes("429") ||
+    err.status === 429
+  );
+}
 
 // The career document serializes result writes, including new rows/matches that
 // collection enumeration alone cannot lock. All document reads precede writes.
@@ -31,7 +57,10 @@ export async function reconcileMatch(
   const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
   const base = `${careerRef.path}/seasons/${seasonId}`;
   const matchRef = doc(db, `${base}/matches/${matchId}`);
-  await runTransaction(db, async (transaction) => {
+  try {
+    await withFirestoreRetry(
+      () =>
+        runTransaction(db, async (transaction) => {
     const previous = (await transaction.get(matchRef)).data() as
       | Match
       | undefined;
@@ -192,5 +221,57 @@ export async function reconcileMatch(
         ? Math.max(Date.now(), (career.updatedAt || 0) + 1)
         : Date.now(),
     });
-  });
+  }),
+  2,
+  200,
+  (err) => !isQuotaExceededError(err),
+);
+  } catch (error: unknown) {
+    if (isQuotaExceededError(error)) {
+      console.warn(
+        "Firestore quota exceeded during match reconciliation; falling back to direct write.",
+        error,
+      );
+      if (update) {
+        const next = { ...update, matchesId: matchId };
+        if (removePenalties) {
+          delete next.homePenScore;
+          delete next.awayPenScore;
+        }
+        const cleanedPayload: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(next)) {
+          if (value !== undefined) {
+            cleanedPayload[key] = value;
+          }
+        }
+        if (removePenalties) {
+          cleanedPayload.homePenScore = deleteField();
+          cleanedPayload.awayPenScore = deleteField();
+        }
+        await setDoc(matchRef, cleanedPayload, { merge: true });
+      } else {
+        await deleteDoc(matchRef);
+      }
+      for (const dependentRef of dependentRefs) {
+        try {
+          await deleteDoc(dependentRef);
+        } catch {
+          // ignore
+        }
+      }
+      try {
+        await updateCareerFirestore(user.uid, careerId, {
+          updatedAt: Date.now(),
+        });
+      } catch {
+        try {
+          await updateDoc(careerRef, { updatedAt: Date.now() });
+        } catch {
+          // ignore
+        }
+      }
+      return;
+    }
+    throw error;
+  }
 }

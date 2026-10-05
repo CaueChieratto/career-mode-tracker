@@ -5,11 +5,10 @@ import {
   FaSignature,
   FaHandHoldingUsd,
   FaHistory,
-  FaUndo,
 } from "react-icons/fa";
 import { GiPodium, GiSoccerField } from "react-icons/gi";
 import { MdAttachMoney, MdNumbers } from "react-icons/md";
-import { BsCalendar, BsCalendar2Event } from "react-icons/bs";
+import { BsCalendar } from "react-icons/bs";
 import { RxLapTimer } from "react-icons/rx";
 import { FaTrashCan } from "react-icons/fa6";
 import { TbBrandElectronicArts } from "react-icons/tb";
@@ -173,27 +172,6 @@ export const getSquadFormFields = (
       fields: [
         [
           {
-            id: "isReturnIncomingLoan",
-            name: "Encerrou o empréstimo?",
-            icon: <FaUndo />,
-            checkbox: true,
-            editOnly: true,
-            incomingLoanPlayerOnly: true,
-          },
-        ],
-        [
-          {
-            id: "returnDate",
-            name: "Data de retorno",
-            placeholder: "Ex: 11/07",
-            icon: <BsCalendar2Event />,
-            maxLength: 5,
-            editOnly: true,
-            returnIncomingLoanOnly: true,
-          },
-        ],
-        [
-          {
             id: "fromClub",
             name: "Clube de Origem",
             inputType: "searchable-select",
@@ -201,8 +179,7 @@ export const getSquadFormFields = (
             icon: <GiPodium />,
             options: teamOptions,
             showOnJoin: true,
-            hideOnSell: true,
-            hideOnReturnIncomingLoan: true,
+            addOnly: true,
           },
         ],
         [
@@ -212,9 +189,7 @@ export const getSquadFormFields = (
             inputType: "text",
             placeholder: "Ex: 100M, 1.5B, 500k",
             icon: <MdNumbers />,
-            hideOnSell: true,
             maxLength: 7,
-            hideOnReturnIncomingLoan: true,
           },
           {
             id: "buyValue",
@@ -224,7 +199,7 @@ export const getSquadFormFields = (
             icon: <FaHandHoldingUsd />,
             isSigningOnly: true,
             maxLength: 7,
-            hideOnReturnIncomingLoan: true,
+            addOnly: true,
           },
           {
             id: "loanDuration",
@@ -233,7 +208,7 @@ export const getSquadFormFields = (
             placeholder: "Ex: 1, 2",
             icon: <RxLapTimer />,
             isIncomingLoanOnly: true,
-            hideOnReturnIncomingLoan: true,
+            addOnly: true,
           },
         ],
         [
@@ -243,9 +218,7 @@ export const getSquadFormFields = (
             inputType: "text",
             placeholder: "Ex: 50k, 1.2M",
             icon: <MdAttachMoney />,
-            hideOnSell: true,
             maxLength: 7,
-            hideOnReturnIncomingLoan: true,
           },
           {
             id: "contractTime",
@@ -253,10 +226,8 @@ export const getSquadFormFields = (
             inputType: "number",
             placeholder: "Ex: 4",
             icon: <RxLapTimer />,
-            hideOnSell: true,
             hideOnIncomingLoan: true,
             maxLength: 1,
-            hideOnReturnIncomingLoan: true,
           },
           {
             id: "wagePercentage",
@@ -266,7 +237,7 @@ export const getSquadFormFields = (
             icon: <MdAttachMoney />,
             isIncomingLoanOnly: true,
             maxLength: 3,
-            hideOnReturnIncomingLoan: true,
+            addOnly: true,
           },
         ],
         [
@@ -277,7 +248,7 @@ export const getSquadFormFields = (
             icon: <RxLapTimer />,
             showOnJoin: true,
             maxLength: 5,
-            hideOnReturnIncomingLoan: true,
+            addOnly: true,
           },
         ],
         [
@@ -287,7 +258,6 @@ export const getSquadFormFields = (
             icon: <FaHistory />,
             checkbox: true,
             editOnly: true,
-            hideOnReturnIncomingLoan: true,
             disabled: pastPlayerOptions.length === 0,
             note:
               pastPlayerOptions.length === 0
@@ -305,7 +275,6 @@ export const getSquadFormFields = (
             options: pastPlayerOptions,
             editOnly: true,
             isKnownPlayerOnly: true,
-            hideOnReturnIncomingLoan: true,
           },
         ],
       ],

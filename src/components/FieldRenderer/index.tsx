@@ -82,7 +82,7 @@ type FieldRendererProps = Pick<
   field: Field;
   clubColor: string;
   isSelectDisabled?: boolean;
-  onActionClick?: (modal: ModalType) => void;
+  onActionClick?: (modal: ModalType | string) => void;
 };
 
 const FieldRenderer = (props: FieldRendererProps) => {

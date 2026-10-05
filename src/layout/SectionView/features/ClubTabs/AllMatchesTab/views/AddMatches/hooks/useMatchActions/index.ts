@@ -61,6 +61,10 @@ export function useMatchActions() {
     const isKnockout = booleanValues.isKnockout ?? false;
     const isReturnMatch = isKnockout ? (booleanValues.isReturnMatch ?? false) : false;
 
+    const existingMatch = matchesId
+      ? season.matches?.find((m) => m.matchesId === matchesId)
+      : undefined;
+
     const matchData = buildMatchData({
       ...formValues,
       date: finalDate,
@@ -137,7 +141,13 @@ export function useMatchActions() {
       setIsSaving(true);
 
       if (matchesId) {
-        await ServiceMatches.updateMatchInSeason(careerId, seasonId, matchData);
+        await ServiceMatches.updateMatchInSeason(
+          careerId,
+          seasonId,
+          matchData,
+          false,
+          existingMatch || undefined,
+        );
       } else {
         await ServiceMatches.addMatchToSeason(careerId, seasonId, matchData);
       }

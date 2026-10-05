@@ -6,7 +6,6 @@ import { Career } from "../../../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../../../common/interfaces/club/clubData";
 import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
 import { Field } from "../../../../../../../../../components/FormSection";
-import { formatDateInputShort } from "../../../../../../../../../common/utils/Date";
 
 export const useSquadPlayerForm = (
   player: Players | undefined,
@@ -85,7 +84,6 @@ export const useSquadPlayerForm = (
       handleBooleanChange("isSigning", isSigningValue);
       handleBooleanChange("isCaptain", Boolean(player.captain));
       handleBooleanChange("isLoan", isIncomingLoanValue);
-      handleBooleanChange("isReturnIncomingLoan", false);
 
       const hasPlayedWithUs = Boolean(player.playedWithUs);
       handleBooleanChange("isKnownPlayer", hasPlayedWithUs);
@@ -137,9 +135,6 @@ export const useSquadPlayerForm = (
       e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
       field: Field,
     ) => {
-      if (field.id === "returnDate") {
-        e.target.value = formatDateInputShort(e.target.value);
-      }
       handleInputChange(e, field);
     },
     [handleInputChange],
@@ -151,18 +146,25 @@ export const useSquadPlayerForm = (
       handleBooleanChange("isLoan", false);
     } else if (id === "isLoan" && value) {
       handleBooleanChange("isSigning", false);
-    } else if (id === "isKnownPlayer" && !value) {
-      setFormValues((prev) => ({
-        ...prev,
-        selectedPastPlayer: "",
-        playedWithUs: "",
-        globalId: "",
-      }));
+    } else if (id === "isKnownPlayer") {
+      if (!value) {
+        setFormValues((prev) => ({
+          ...prev,
+          selectedPastPlayer: "",
+          playedWithUs: "",
+          globalId: "",
+        }));
+      } else if (player?.playedWithUs) {
+        setFormValues((prev) => ({
+          ...prev,
+          playedWithUs: player.playedWithUs || "",
+          globalId: player.playedWithUs || "",
+        }));
+      }
     }
   };
 
-  const isReturningIncomingLoan =
-    !!player?.incomingLoan && !!booleanValues.isReturnIncomingLoan;
+  const hasInitialPlayedWithUs = Boolean(player?.playedWithUs);
 
   return {
     ...form,
@@ -172,9 +174,9 @@ export const useSquadPlayerForm = (
     isEditing,
     isLoaned: !!player?.loan,
     isIncomingLoanPlayer: !!player?.incomingLoan,
-    isReturningIncomingLoan,
     isKnownPlayer: booleanValues.isKnownPlayer,
     isSigning: booleanValues.isSigning,
     isIncomingLoan: booleanValues.isLoan,
+    hasInitialPlayedWithUs,
   };
 };

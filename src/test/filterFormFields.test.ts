@@ -36,12 +36,11 @@ describe("filterFormSections - incomingLoan retorno", () => {
     expect(allFieldIds).toContain("contractTime");
   });
 
-  it("exibe isReturnIncomingLoan para jogador incomingLoan na edição, mas não returnDate antes de marcar retorno", () => {
+  it("não exibe campos de transferência nem de retorno de empréstimo para jogador incomingLoan na edição", () => {
     const sections = filterFormSections(dynamicFields, {
       isEditing: true,
       isLoaned: false,
       isIncomingLoanPlayer: true,
-      isReturningIncomingLoan: false,
       isSigning: false,
       isIncomingLoan: true,
       isKnownPlayer: false,
@@ -53,22 +52,37 @@ describe("filterFormSections - incomingLoan retorno", () => {
     );
     expect(contractSection).toBeDefined();
     const allFieldIds = contractSection!.fields.flat().map((f) => f.id);
-    expect(allFieldIds).toContain("isReturnIncomingLoan");
+    expect(allFieldIds).not.toContain("isReturnIncomingLoan");
     expect(allFieldIds).not.toContain("returnDate");
-    expect(allFieldIds).toContain("salary");
-    expect(allFieldIds).toContain("wagePercentage");
+    expect(allFieldIds).not.toContain("fromClub");
+    expect(allFieldIds).not.toContain("buyValue");
+    expect(allFieldIds).not.toContain("loanDuration");
+    expect(allFieldIds).not.toContain("wagePercentage");
+    expect(allFieldIds).not.toContain("dateArrival");
+    expect(allFieldIds).toEqual([
+      "playerValue",
+      "salary",
+      "contractTime",
+      "isKnownPlayer",
+    ]);
   });
 
-  it("ao marcar retorno de incomingLoan, esconde campos contratuais e mantém apenas isReturnIncomingLoan e returnDate", () => {
-    const sections = filterFormSections(dynamicFields, {
+  it("na edição, com jogador já vinculado (hasInitialPlayedWithUs: true), não exibe o searchable-select mesmo com isKnownPlayer = true", () => {
+    const fieldsWithPast = getSquadFormFields(
+      "BRA",
+      ["Emprestimo"],
+      [],
+    ) as SquadFormSection<SquadFormField>[];
+
+    const sections = filterFormSections(fieldsWithPast, {
       isEditing: true,
       isLoaned: false,
-      isIncomingLoanPlayer: true,
-      isReturningIncomingLoan: true,
+      isIncomingLoanPlayer: false,
       isSigning: false,
-      isIncomingLoan: true,
-      isKnownPlayer: false,
+      isIncomingLoan: false,
+      isKnownPlayer: true,
       hasGroupId: false,
+      hasInitialPlayedWithUs: true,
     });
 
     const contractSection = sections.find(
@@ -76,7 +90,8 @@ describe("filterFormSections - incomingLoan retorno", () => {
     );
     expect(contractSection).toBeDefined();
     const allFieldIds = contractSection!.fields.flat().map((f) => f.id);
-    expect(allFieldIds).toEqual(["isReturnIncomingLoan", "returnDate"]);
+    expect(allFieldIds).not.toContain("selectedPastPlayer");
+    expect(allFieldIds).toContain("isKnownPlayer");
   });
 
   it("não exibe isKnownPlayer se não for compra nem empréstimo", () => {

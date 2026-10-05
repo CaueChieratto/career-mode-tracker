@@ -20,11 +20,10 @@ type AddSquad_PlayerProps = {
   openModal: (modal: ModalType, career?: Career) => void;
   season: ClubData;
   career: Career;
-  onReturnIncomingLoanChange?: (value: boolean) => void;
 };
 
 const AddSquad_Player = forwardRef<HTMLFormElement, AddSquad_PlayerProps>(
-  ({ player, season, career, openModal, onReturnIncomingLoanChange }, ref) => {
+  ({ player, season, career, openModal }, ref) => {
     const {
       formValues,
       booleanValues,
@@ -36,15 +35,11 @@ const AddSquad_Player = forwardRef<HTMLFormElement, AddSquad_PlayerProps>(
       isEditing,
       isLoaned,
       isIncomingLoanPlayer,
-      isReturningIncomingLoan,
       isKnownPlayer,
       isSigning,
       isIncomingLoan,
+      hasInitialPlayedWithUs,
     } = useSquadPlayerForm(player, career, season);
-
-    useEffect(() => {
-      onReturnIncomingLoanChange?.(isReturningIncomingLoan);
-    }, [isReturningIncomingLoan, onReturnIncomingLoanChange]);
 
     const [globalTeams, setGlobalTeams] = useState<string[]>(() => {
       if (!career?.clubData) return [];
@@ -108,11 +103,11 @@ const AddSquad_Player = forwardRef<HTMLFormElement, AddSquad_PlayerProps>(
       isEditing,
       isLoaned,
       isIncomingLoanPlayer,
-      isReturningIncomingLoan,
       isSigning,
       isIncomingLoan,
       isKnownPlayer,
       hasGroupId: !!career?.groupId,
+      hasInitialPlayedWithUs,
     });
 
     const mergedFormValues = {

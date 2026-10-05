@@ -33,6 +33,15 @@ export const clearGettersCache = (): void => {
   listCareersCache.clear();
 };
 
+export const updateCachedCareer = (career: Career): void => {
+  if (career.updatedAt) {
+    listCareersCache.set(career.id, {
+      updatedAt: career.updatedAt,
+      career,
+    });
+  }
+};
+
 export const getAllCareers = (
   uid: string,
   callback: (careers: Career[]) => void,

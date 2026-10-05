@@ -3,6 +3,7 @@ import { Players } from "../../../../../common/interfaces/playersInfo/players";
 export type TransferEvent = {
   player: Players;
   contract: NonNullable<Players["contract"]>[number];
+  contractIndex?: number;
 };
 
 export const sortTransfersByValue = (

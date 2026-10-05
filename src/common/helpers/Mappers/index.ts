@@ -75,9 +75,10 @@ export const mapFormDataToPlayerData = (
 
   const rawSalary = parseValue((formData.get("salary") as string) || "0");
   const wagePercentage = Number(wagePercentageRaw) || 100;
-  const finalSalary = isIncomingLoan
-    ? rawSalary * (wagePercentage / 100)
-    : rawSalary;
+  const finalSalary =
+    !player && isIncomingLoan
+      ? rawSalary * (wagePercentage / 100)
+      : rawSalary;
 
   const { startDate, endDate } = getSeasonDateRange(
     season.seasonNumber,
@@ -88,11 +89,12 @@ export const mapFormDataToPlayerData = (
   const newContract: Contract[] = [];
 
   if (
-    isSigning ||
-    isIncomingLoan ||
-    buyValueRaw ||
-    fromClubRaw ||
-    dateArrivalRaw
+    !player &&
+    (isSigning ||
+      isIncomingLoan ||
+      buyValueRaw ||
+      fromClubRaw ||
+      dateArrivalRaw)
   ) {
     let dataArrival: Date | null = null;
 
@@ -127,8 +129,8 @@ export const mapFormDataToPlayerData = (
   const playedWithUsRaw = formData.get("playedWithUs");
   const playedWithUs =
     playedWithUsRaw !== null
-      ? (playedWithUsRaw as string).trim() || undefined
-      : player?.playedWithUs;
+      ? (playedWithUsRaw as string).trim()
+      : (player?.playedWithUs || "");
 
   return {
     name: (formData.get("playerName") as string) || "",
@@ -139,21 +141,24 @@ export const mapFormDataToPlayerData = (
     nation: (formData.get("nation") as string) || "",
     shirtNumber: (formData.get("shirtNumber") as string) || "",
     playerValue: parseValue((formData.get("playerValue") as string) || "0"),
-    contractTime: isIncomingLoan
-      ? Number(loanDurationRaw) || 0
-      : Number(formData.get("contractTime")) || 0,
+    contractTime:
+      !player && isIncomingLoan
+        ? Number(loanDurationRaw) || 0
+        : Number(formData.get("contractTime")) || 0,
     salary: finalSalary,
-    buy: isSigning,
+    buy: player ? player.buy : isSigning,
     captain: (formData.get("isCaptain") as string) === "true",
-    sell: false,
-    loan: false,
-    incomingLoan: isIncomingLoan,
+    sell: player ? player.sell : false,
+    loan: player ? player.loan : false,
+    incomingLoan: player ? player.incomingLoan : isIncomingLoan,
     ballonDor: player?.ballonDor ?? 0,
     statsLeagues: player?.statsLeagues ?? [],
     ...(player?.manualStatsLeagues
       ? { manualStatsLeagues: player.manualStatsLeagues }
       : {}),
-    ...(playedWithUs ? { playedWithUs } : {}),
-    ...(newContract.length > 0 && { contract: newContract }),
+    ...(player
+      ? { playedWithUs }
+      : (playedWithUs ? { playedWithUs } : {})),
+    ...(!player && newContract.length > 0 && { contract: newContract }),
   };
 };

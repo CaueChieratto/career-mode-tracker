@@ -7,12 +7,16 @@ export async function withFirestoreRetry<T>(
   operation: () => Promise<T>,
   maxRetries = 2,
   initialDelayMs = 200,
+  shouldRetry?: (error: unknown) => boolean,
 ): Promise<T> {
   let attempt = 0;
   while (true) {
     try {
       return await operation();
     } catch (error: unknown) {
+      if (shouldRetry && !shouldRetry(error)) {
+        throw error;
+      }
       attempt++;
       const err = error as { code?: string; message?: string } | undefined;
       const errorCode = err?.code || "";

@@ -4,6 +4,7 @@ import {
   doc,
   setDoc,
   deleteDoc,
+  deleteField,
 } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 import { getCareerById } from "../../helpers/Getters";
@@ -108,12 +109,13 @@ export const PlayersCrudService = {
       contract: mergedContract,
     };
 
+    const firestoreData: Record<string, unknown> = { ...finalPlayer };
     if (
       "playedWithUs" in updatedPlayer &&
-      !updatedPlayer.playedWithUs &&
-      finalPlayer.playedWithUs
+      !updatedPlayer.playedWithUs
     ) {
       delete finalPlayer.playedWithUs;
+      firestoreData.playedWithUs = deleteField();
     }
 
     const playerRef = doc(
@@ -121,7 +123,7 @@ export const PlayersCrudService = {
       `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/players`,
       playerId,
     );
-    await setDoc(playerRef, finalPlayer, { merge: true });
+    await setDoc(playerRef, firestoreData, { merge: true });
     await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
   },
 

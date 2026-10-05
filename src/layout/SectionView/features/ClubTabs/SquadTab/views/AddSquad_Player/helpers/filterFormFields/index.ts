@@ -43,11 +43,12 @@ interface FieldConditionContext {
   isEditing: boolean;
   isLoaned: boolean;
   isIncomingLoanPlayer: boolean;
-  isReturningIncomingLoan: boolean;
+  isReturningIncomingLoan?: boolean;
   isSigning: boolean;
   isIncomingLoan: boolean;
   isKnownPlayer: boolean;
   hasGroupId: boolean;
+  hasInitialPlayedWithUs?: boolean;
 }
 
 export const filterFormSections = <T extends SquadFormField>(
@@ -87,9 +88,12 @@ export const filterFormSections = <T extends SquadFormField>(
               !context.isIncomingLoan
             )
               return false;
-            if (field.hideOnIncomingLoan && context.isIncomingLoan)
+            if (field.hideOnIncomingLoan && context.isIncomingLoan && !context.isEditing)
               return false;
-            if (field.isKnownPlayerOnly && !context.isKnownPlayer) return false;
+            if (field.isKnownPlayerOnly) {
+              if (!context.isKnownPlayer) return false;
+              if (context.isEditing && context.hasInitialPlayedWithUs) return false;
+            }
             if (field.requiresGroupId && !context.hasGroupId) return false;
             if (field.addOnly && context.isEditing) return false;
             if (field.editOnly && !context.isEditing) return false;
