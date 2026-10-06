@@ -244,11 +244,17 @@ export const buildTransferCopyText = ({
   }
 
   // 3. Fim de Empréstimo (jogador emprestado ao nosso clube retorna ao clube de origem)
-  if (
-    contract.fromClub &&
-    contract.leftClub &&
-    (contract.isLoan || player.incomingLoan)
-  ) {
+  const isIncomingLoanReturn = Boolean(
+    contract.leftClub === "Fim de Empréstimo" ||
+    (player.incomingLoan && contract.leftClub) ||
+    (contract.fromClub &&
+      contract.leftClub &&
+      contract.fromClub !== "Base" &&
+      contract.fromClub === contract.leftClub &&
+      contract.isLoan),
+  );
+
+  if (isIncomingLoanReturn) {
     return `${prefix}, retornou ao ${contract.leftClub} após o fim do empréstimo.`;
   }
 

@@ -2,6 +2,7 @@ import { FiPlus } from "react-icons/fi";
 import Styles from "./PlayerSelectionCard.module.css";
 import { Players } from "../../../../common/interfaces/playersInfo/players";
 import { PlayerCircle } from "../../../Match/components/LineupTab/layouts/Section/components/SlotButton/components/PlayerDetails/PlayerCircle";
+import { formatPlayerName } from "../../../../common/utils/formatPlayerName";
 
 interface PlayerSelectionCardProps {
   player: Players | null;
@@ -26,7 +27,9 @@ export const PlayerSelectionCard = ({
       {player ? (
         <div className={Styles.selectedPlayer}>
           <PlayerCircle shirtNumber={player.shirtNumber} />
-          <span className={Styles.playerName}>{player.name}</span>
+          <span className={Styles.playerName}>
+            {formatPlayerName(player.name)}
+          </span>
           {!isLocked && (
             <span className={Styles.changeText}>Trocar jogador</span>
           )}

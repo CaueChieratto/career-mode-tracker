@@ -17,7 +17,16 @@ export const buildFormFields = (
   homeTeam: string = "Mandante",
   awayTeam: string = "Visitante",
   formValues: Record<string, string> = {},
+  opponentPlayerOptions: string[] = [],
 ): { title: string; fields: Field[][] }[] => {
+  const getFilteredOpponentOptions = (currentValue?: string): string[] => {
+    const search = (currentValue ?? "").trim().toLowerCase();
+    if (!search) return opponentPlayerOptions;
+    return opponentPlayerOptions.filter((opt) =>
+      opt.toLowerCase().includes(search),
+    );
+  };
+
   const stoppageFields: Field[] = [
     {
       id: "stoppage1T",
@@ -80,7 +89,8 @@ export const buildFormFields = (
           {
             id: "opponentMvpName",
             name: "Nome do MVP (Adversário)",
-            inputType: "text",
+            inputType: "searchable-select",
+            options: getFilteredOpponentOptions(formValues.opponentMvpName),
             placeholder: "Ex: J. Jogador",
             icon: <IoIosPerson />,
           },
@@ -179,7 +189,10 @@ export const buildFormFields = (
         {
           id: `opponentGoalPlayer_${i}`,
           name: `Autor do Gol ${i + 1}`,
-          inputType: "text",
+          inputType: "searchable-select",
+          options: getFilteredOpponentOptions(
+            formValues[`opponentGoalPlayer_${i}`],
+          ),
           placeholder: "Ex: J. Jogador",
           icon: <IoIosPerson />,
         },
@@ -196,7 +209,10 @@ export const buildFormFields = (
         {
           id: `opponentAssistPlayer_${i}`,
           name: `Autor da Assist. ${i + 1}`,
-          inputType: "text",
+          inputType: "searchable-select",
+          options: getFilteredOpponentOptions(
+            formValues[`opponentAssistPlayer_${i}`],
+          ),
           placeholder: "Ex: J. Jogador 2",
           icon: <IoIosPerson />,
         },
@@ -230,15 +246,40 @@ export const buildFormFields = (
       const hasSecondYellow = booleanValues[`opponentSecondYellow_${i}`];
       const hasRed = booleanValues[`opponentRed_${i}`];
 
-      disciplineFields.push([
-        {
-          id: `opponentCardPlayer_${i}`,
-          name: `Jogador Advertido ${i + 1}`,
-          inputType: "text",
-          placeholder: "Ex: J. Jogador",
-          icon: <IoIosPerson />,
-        },
-      ]);
+      const playerField: Field = {
+        id: `opponentCardPlayer_${i}`,
+        name: `Jogador Advertido ${i + 1}`,
+        inputType: "searchable-select",
+        options: getFilteredOpponentOptions(
+          formValues[`opponentCardPlayer_${i}`],
+        ),
+        placeholder: "Ex: J. Jogador",
+        icon: <IoIosPerson />,
+      };
+
+      const yellowMinField: Field = {
+        id: `opponentYellowMin_${i}`,
+        name: "Minuto 1º C. Amarelo",
+        inputType: "number",
+        placeholder: "Ex: 35",
+        icon: <RefereeCard type="yellow" />,
+      };
+
+      const secondYellowMinField: Field = {
+        id: `opponentSecondYellowMin_${i}`,
+        name: "Minuto 2º C. Amarelo",
+        inputType: "number",
+        placeholder: "Ex: 65",
+        icon: <RefereeCard type="yellow" />,
+      };
+
+      const redMinField: Field = {
+        id: `opponentRedMin_${i}`,
+        name: "Minuto C. Vermelho",
+        inputType: "number",
+        placeholder: "Ex: 70",
+        icon: <RefereeCard type="red" />,
+      };
 
       const cardsRow: Field[] = [
         {
@@ -265,37 +306,21 @@ export const buildFormFields = (
         icon: <RefereeCard type="red" />,
       });
 
-      disciplineFields.push(cardsRow);
-
-      const minutesRow: Field[] = [];
-      if (hasYellow)
-        minutesRow.push({
-          id: `opponentYellowMin_${i}`,
-          name: "Minuto 1º C. Amarelo",
-          inputType: "number",
-          placeholder: "Ex: 35",
-          icon: <RefereeCard type="yellow" />,
-        });
-      if (hasSecondYellow)
-        minutesRow.push({
-          id: `opponentSecondYellowMin_${i}`,
-          name: "Minuto 2º C. Amarelo",
-          inputType: "number",
-          placeholder: "Ex: 65",
-          icon: <RefereeCard type="yellow" />,
-        });
-      if (hasRed)
-        minutesRow.push({
-          id: `opponentRedMin_${i}`,
-          name: "Minuto C. Vermelho",
-          inputType: "number",
-          placeholder: "Ex: 70",
-          icon: <RefereeCard type="red" />,
-        });
-
-      if (minutesRow.length > 0) {
-        disciplineFields.push(...chunkArray(minutesRow, 2));
+      const playerRow: Field[] = [playerField];
+      if (hasYellow) {
+        playerRow.push(yellowMinField);
+      } else if (hasRed) {
+        playerRow.push(redMinField);
       }
+      disciplineFields.push(playerRow);
+
+      if (hasYellow && hasSecondYellow) {
+        disciplineFields.push([secondYellowMinField]);
+      } else if (hasYellow && hasRed) {
+        disciplineFields.push([redMinField]);
+      }
+
+      disciplineFields.push(cardsRow);
     }
 
     formSections.push({
@@ -312,7 +337,10 @@ export const buildFormFields = (
         {
           id: `opponentOwnGoalPlayer_${i}`,
           name: `Autor do Gol Contra ${i + 1}`,
-          inputType: "text",
+          inputType: "searchable-select",
+          options: getFilteredOpponentOptions(
+            formValues[`opponentOwnGoalPlayer_${i}`],
+          ),
           placeholder: "Ex: J. Jogador",
           icon: <IoIosPerson />,
         },

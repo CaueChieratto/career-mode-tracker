@@ -80,7 +80,7 @@ describe("PlayerPicker Mobile Visibility & Close Button", () => {
     expect(onPickerOpenChange).toHaveBeenCalledWith(true);
 
     // Select the player
-    const playerItem = screen.getByRole("button", { name: /Gabriel Barbosa/ });
+    const playerItem = screen.getByRole("button", { name: /Barbosa/ });
     fireEvent.click(playerItem);
 
     // Should close picker and notify false

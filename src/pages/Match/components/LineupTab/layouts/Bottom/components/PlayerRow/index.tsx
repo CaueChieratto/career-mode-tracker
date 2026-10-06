@@ -12,6 +12,7 @@ import { PlayerMatchStat } from "../../../../../../../../common/interfaces/Playe
 import { Players } from "../../../../../../../../common/interfaces/playersInfo/players";
 import { NumberStats } from "../../../../../../ui/NumberStats";
 import { OwnGoal } from "../../../../../../../../ui/IconsSVG/OwnGoal";
+import { formatPlayerName } from "../../../../../../../../common/utils/formatPlayerName";
 
 type PlayerRowProps = {
   slot: BenchSlot;
@@ -96,7 +97,7 @@ export const PlayerRow = ({
       >
         <div className={Styles.player_name_row}>
           <span className={Styles.shirt_number}>{slot.player.shirtNumber}</span>
-          <span className={Styles.player_name}>{slot.player.name}</span>
+          <span className={Styles.player_name}>{formatPlayerName(slot.player.name)}</span>
 
           {stats && stats.goals > 0 && (
             <div className={Styles.icons}>
@@ -157,7 +158,7 @@ export const PlayerRow = ({
               <Sub className={Styles.sub_icon} />
             </span>
             <span className={Styles.sub_minute}>{subMinute}'</span>
-            <span className={Styles.sub_out}>Saiu: {subOutName}</span>
+            <span className={Styles.sub_out}>Saiu: {formatPlayerName(subOutName)}</span>
           </div>
         )}
       </div>

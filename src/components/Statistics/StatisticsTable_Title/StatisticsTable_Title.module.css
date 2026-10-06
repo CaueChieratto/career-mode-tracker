@@ -1,10 +1,21 @@
 .container_name_over,
-.container_league,
 .container_name_over_expand {
   width: 120px;
   max-width: 120px;
   height: 100%;
   gap: 12px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.container_league {
+  width: 120px;
+  max-width: 120px;
+  height: 100%;
+  gap: 6px;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -136,6 +147,15 @@
   background-color: var(--logo-image);
   border-radius: 2px;
   padding: 1px;
+  flex-shrink: 0;
+}
+
+.league_name_container {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .logo_container {

@@ -8,6 +8,7 @@ import {
 } from "./utils/sortTransfersByValue";
 import { formatDateToLongBrazilian } from "./utils/formatDateToLongBrazilian";
 import { buildTransferCopyText } from "./utils/buildTransferCopyText";
+import { formatPlayerName } from "../../../../common/utils/formatPlayerName";
 import Styles from "./TransfersPanel.module.css";
 import { OverflowText } from "../../../OverflowText";
 
@@ -15,7 +16,10 @@ type TransfersPanelProps = {
   title: string;
   players: Players[];
   currency?: string;
-  onTransferClick?: (event: TransferEvent, direction: "arrivals" | "exit") => void;
+  onTransferClick?: (
+    event: TransferEvent,
+    direction: "arrivals" | "exit",
+  ) => void;
 };
 
 const TransfersPanel = ({
@@ -79,24 +83,32 @@ const TransfersPanel = ({
             if (isArrival) {
               if (value && (value as number) > 0) {
                 displayValue = formatDisplayValue(value as number, currency);
-              } else if (contract.isLoan) {
-                displayValue = "Empréstimo";
-              } else if (contract.fromClub === "Passes Livres") {
-                displayValue = "Custo Zero";
               } else if (contract.fromClub === "Base") {
                 displayValue = "Promovido da Base";
+              } else if (contract.fromClub === "Passes Livres") {
+                displayValue = "Custo Zero";
+              } else if (contract.isLoan || player.incomingLoan) {
+                displayValue = "Empréstimo";
               } else if (contract.fromClub) {
                 displayValue = "Fim do Empréstimo";
               }
             } else {
+              const isIncomingLoanReturn = Boolean(
+                contract.leftClub === "Fim de Empréstimo" ||
+                (player.incomingLoan && contract.leftClub) ||
+                (contract.fromClub &&
+                  contract.leftClub &&
+                  contract.fromClub !== "Base" &&
+                  contract.fromClub === contract.leftClub &&
+                  contract.isLoan),
+              );
+
               if (value && (value as number) > 0) {
                 displayValue = formatDisplayValue(value as number, currency);
-              } else if (contract.isLoan) {
-                if (contract.fromClub && contract.leftClub) {
-                  displayValue = "Fim do Empréstimo";
-                } else {
-                  displayValue = "Empréstimo";
-                }
+              } else if (isIncomingLoanReturn) {
+                displayValue = "Fim do Empréstimo";
+              } else if (contract.isLoan || player.loan) {
+                displayValue = "Empréstimo";
               } else if (
                 contract.leftClub === "Aposentou" ||
                 contract.leftClub === "Aposentadoria"
@@ -119,20 +131,25 @@ const TransfersPanel = ({
               currency,
             });
 
+            const isPromotedFromAcademy =
+              isArrival && contract.fromClub === "Base";
+
             return (
               <li
                 key={`${player.id}-${date}-${index}`}
                 className={Styles.item}
-                onClick={() =>
+                style={isPromotedFromAcademy ? { cursor: "default" } : undefined}
+                onClick={() => {
+                  if (isPromotedFromAcademy) return;
                   onTransferClick?.(
                     { player, contract, contractIndex },
                     transferType,
-                  )
-                }
+                  );
+                }}
               >
                 <div className={Styles.playerInfo}>
                   <OverflowText
-                    text={player.name}
+                    text={formatPlayerName(player.name)}
                     className={Styles.playerName}
                   />
 

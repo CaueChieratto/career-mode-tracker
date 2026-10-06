@@ -42,6 +42,9 @@ const Season = () => {
     event: TransferEvent,
     direction: "arrivals" | "exit",
   ) => {
+    if (direction === "arrivals" && event.contract.fromClub === "Base") {
+      return;
+    }
     handleCloseModal();
     setEditingTransfer({
       player: event.player,
@@ -90,4 +93,3 @@ const Season = () => {
 };
 
 export default Season;
-

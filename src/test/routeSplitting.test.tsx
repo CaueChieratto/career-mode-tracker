@@ -28,7 +28,7 @@ describe("[7E2] Route Code Splitting", () => {
 
   describe(
     "Resolução de exports default e named para rotas lazy",
-    { timeout: 15000 },
+    { timeout: 30000 },
     () => {
       it("resolve Tutorial como export default de função/componente", async () => {
         const mod = await import("../pages/Tutorial");

@@ -3,11 +3,13 @@ import { Match } from "../Match";
 export type OpponentGoal = {
   player: string;
   minute: string;
+  playerId?: string;
 };
 
 export type OpponentAssist = {
   player: string;
   goalReference: string;
+  playerId?: string;
 };
 
 export type OpponentCard = {
@@ -18,11 +20,13 @@ export type OpponentCard = {
   secondYellowMinute: string;
   red: boolean;
   redMinute: string;
+  playerId?: string;
 };
 
 export type OpponentOwnGoal = {
   player: string;
   minute: string;
+  playerId?: string;
 };
 
 export type OpponentEvents = {

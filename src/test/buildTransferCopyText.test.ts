@@ -430,4 +430,62 @@ describe("buildTransferCopyText - Formato exato solicitado pelo usuário", () =>
       "Kylian Mbappé, ATA, 25 anos, FRA, deixou o clube em fim de contrato.",
     );
   });
+
+  it("gera texto correto para jogador da base promovido e depois emprestado (Chegada: promovido da base, Saída: emprestado)", () => {
+    const player: Players = {
+      id: "academy-e4136303-7b35-4458-a8f7-dce010dde1c2",
+      name: "Base 2",
+      position: "ATA",
+      age: 17,
+      nation: "GHA",
+      contractTime: 5,
+      salary: 35000,
+      sector: "Atacantes",
+      shirtNumber: "",
+      overall: 65,
+      playerValue: 1500000,
+      buy: true,
+      captain: false,
+      sell: false,
+      loan: true,
+      incomingLoan: false,
+      ballonDor: 0,
+      contract: [],
+      statsLeagues: [],
+    };
+
+    const contract: Contract = {
+      fromClub: "Base",
+      leftClub: "AJ Auxerre",
+      buyValue: 0,
+      sellValue: 0,
+      isLoan: true,
+      loanDuration: 1,
+      wagePercentage: 50,
+      dataArrival: new Date("2030-03-01T03:00:00.000Z"),
+      dataExit: new Date("2030-01-10T03:00:00.000Z"),
+    };
+
+    // Chegadas deve ser promovido da base
+    const arrivalText = buildTransferCopyText({
+      player,
+      contract,
+      direction: "arrivals",
+      currency: "EUR",
+    });
+    expect(arrivalText).toBe(
+      "Base 2, ATA, 17 anos, GHA, 5 anos de contrato com um salario semanal de 35 mil, foi promovido da base.",
+    );
+
+    // Saídas deve ser empréstimo ao AJ Auxerre por 1 ano
+    const exitText = buildTransferCopyText({
+      player,
+      contract,
+      direction: "exit",
+      currency: "EUR",
+    });
+    expect(exitText).toBe(
+      "Base 2, ATA, 17 anos, GHA, foi emprestado ao AJ Auxerre por 1 ano.",
+    );
+  });
 });

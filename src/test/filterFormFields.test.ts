@@ -59,12 +59,91 @@ describe("filterFormSections - incomingLoan retorno", () => {
     expect(allFieldIds).not.toContain("loanDuration");
     expect(allFieldIds).not.toContain("wagePercentage");
     expect(allFieldIds).not.toContain("dateArrival");
+    expect(allFieldIds).not.toContain("contractTime");
     expect(allFieldIds).toEqual([
       "playerValue",
       "salary",
-      "contractTime",
       "isKnownPlayer",
     ]);
+  });
+
+  it("não exibe contractTime para jogador em empréstimo recebido (incomingLoan) na criação ou edição", () => {
+    // Na criação com isIncomingLoan = true
+    const creationSections = filterFormSections(dynamicFields, {
+      isEditing: false,
+      isLoaned: false,
+      isIncomingLoanPlayer: false,
+      isReturningIncomingLoan: false,
+      isSigning: false,
+      isIncomingLoan: true,
+      isKnownPlayer: false,
+      hasGroupId: false,
+    });
+    const creationFields = creationSections
+      .flatMap((s) => s.fields.flat().map((f) => f.id));
+    expect(creationFields).not.toContain("contractTime");
+
+    // Na edição com isIncomingLoanPlayer = true
+    const editSections = filterFormSections(dynamicFields, {
+      isEditing: true,
+      isLoaned: false,
+      isIncomingLoanPlayer: true,
+      isReturningIncomingLoan: false,
+      isSigning: false,
+      isIncomingLoan: true,
+      isKnownPlayer: false,
+      hasGroupId: false,
+    });
+    const editFields = editSections
+      .flatMap((s) => s.fields.flat().map((f) => f.id));
+    expect(editFields).not.toContain("contractTime");
+  });
+
+  it("ao editar jogador com apenas valor e salário (ex: incomingLoanPlayer sem contractTime), coloca playerValue e salary lado a lado na mesma linha", () => {
+    const editSections = filterFormSections(dynamicFields, {
+      isEditing: true,
+      isLoaned: false,
+      isIncomingLoanPlayer: true,
+      isReturningIncomingLoan: false,
+      isSigning: false,
+      isIncomingLoan: true,
+      isKnownPlayer: false,
+      hasGroupId: false,
+      hasInitialPlayedWithUs: true,
+    });
+    const contractSection = editSections.find(
+      (s) => s.title === "Detalhes Contratuais",
+    );
+    expect(contractSection).toBeDefined();
+
+    // Deve ter uma linha contendo exatamente [playerValue, salary]
+    const rows = contractSection!.fields;
+    const valueSalaryRow = rows.find(
+      (r) =>
+        r.length === 2 &&
+        r[0].id === "playerValue" &&
+        r[1].id === "salary",
+    );
+    expect(valueSalaryRow).toBeDefined();
+  });
+
+  it("exibe contractTime para jogador que pertence ao clube e saiu de empréstimo (isLoaned: true)", () => {
+    const sections = filterFormSections(dynamicFields, {
+      isEditing: true,
+      isLoaned: true,
+      isIncomingLoanPlayer: false,
+      isReturningIncomingLoan: false,
+      isSigning: false,
+      isIncomingLoan: false,
+      isKnownPlayer: false,
+      hasGroupId: false,
+    });
+    const contractSection = sections.find(
+      (s) => s.title === "Detalhes Contratuais",
+    );
+    expect(contractSection).toBeDefined();
+    const contractFields = contractSection!.fields.flat().map((f) => f.id);
+    expect(contractFields).toContain("contractTime");
   });
 
   it("na edição, com jogador já vinculado (hasInitialPlayedWithUs: true), não exibe o searchable-select mesmo com isKnownPlayer = true", () => {

@@ -71,7 +71,7 @@ describe("PlayerPicker autofocus", () => {
     render(<PickerHarness />);
 
     fireEvent.click(screen.getByRole("button", { name: "Abrir slot 1" }));
-    fireEvent.click(screen.getByRole("button", { name: /Jogador Teste/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Teste/ }));
     expect(screen.queryByPlaceholderText("Buscar jogador...")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Abrir slot 2" }));

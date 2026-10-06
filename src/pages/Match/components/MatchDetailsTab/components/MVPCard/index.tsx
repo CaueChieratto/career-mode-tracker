@@ -3,6 +3,7 @@ import Styles from "./MVPCard.module.css";
 import { CardDetails } from "../../../../../../ui/IconsSVG/CardDetails";
 import { UseMatchRatingColor } from "../../../../../../common/hooks/Colors/GetOverallColor";
 import { PlayerCircle } from "../../../LineupTab/layouts/Section/components/SlotButton/components/PlayerDetails/PlayerCircle";
+import { formatPlayerName } from "../../../../../../common/utils/formatPlayerName";
 
 type MVPCardProps = {
   playerName: string;
@@ -37,7 +38,9 @@ export const MVPCard = ({
           {isUserPlayer && shirtNumber && (
             <PlayerCircle shirtNumber={shirtNumber} />
           )}
-          <span className={Styles.mvp_name}>{playerName}</span>
+          <span className={Styles.mvp_name}>
+            {formatPlayerName(playerName)}
+          </span>
         </div>
         <div className={Styles.mvp_rating} style={{ backgroundColor: colors }}>
           {rating}

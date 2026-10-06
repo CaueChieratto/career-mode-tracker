@@ -15,6 +15,7 @@ type PlayerModalProps = {
   id: string;
   playerName: string;
   incomingLoan?: boolean;
+  loan?: boolean;
   onClose: () => void;
   onOpenScreen?: (screen: SectionScreen) => void;
 };
@@ -25,6 +26,7 @@ export const PlayerModal = ({
   id,
   playerName,
   incomingLoan,
+  loan,
   onClose,
   onOpenScreen,
 }: PlayerModalProps) => {
@@ -111,7 +113,7 @@ export const PlayerModal = ({
             darkClubColor={darkClubColor}
             className={selectedAction === "edit" ? Styles.selected_card : ""}
           />
-          {!incomingLoan && (
+          {!incomingLoan && !loan && (
             <>
               <CardsModal
                 icon={<IoPersonOutline className={Styles.icon} />}

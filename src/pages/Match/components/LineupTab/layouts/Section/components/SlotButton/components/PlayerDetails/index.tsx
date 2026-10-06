@@ -10,6 +10,7 @@ import { NumberStats } from "../../../../../../../../ui/NumberStats";
 import { OwnGoal } from "../../../../../../../../../../ui/IconsSVG/OwnGoal";
 import { OverflowText } from "../../../../../../../../../../components/OverflowText";
 import { PlayerCircle } from "./PlayerCircle";
+import { formatPlayerName } from "../../../../../../../../../../common/utils/formatPlayerName";
 
 type PlayerDetailsProps = {
   player: Players;
@@ -143,14 +144,19 @@ export const PlayerDetails = ({
         marginTop: stats?.rating != null && stats.rating > 0 ? "20px" : "0",
       }}
     >
-      <OverflowText
-        disableDynamicMinWidth
-        text={player.name}
-        className={`${Styles.player_name_text} ${
-          player.name.length > 8 ? Styles.long_name : ""
-        }`}
-        widthReference={40}
-      />
+      {(() => {
+        const displayName = formatPlayerName(player.name);
+        return (
+          <OverflowText
+            disableDynamicMinWidth
+            text={displayName}
+            className={`${Styles.player_name_text} ${
+              displayName.length > 8 ? Styles.long_name : ""
+            }`}
+            widthReference={40}
+          />
+        );
+      })()}
     </div>
   </div>
 );

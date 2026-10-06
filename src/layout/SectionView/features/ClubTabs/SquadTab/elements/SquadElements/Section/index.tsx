@@ -129,6 +129,7 @@ export const Section = ({
           id={id}
           playerName={name}
           incomingLoan={incomingLoan}
+          loan={loan}
           onClose={() => setIsModalOpen(false)}
           onOpenScreen={onOpenScreen}
         />

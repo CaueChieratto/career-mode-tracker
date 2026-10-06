@@ -1,10 +1,22 @@
 import { EXCEPTIONS } from "./constants/EXCEPTIONS";
 import { SINGULAR_MAP } from "./constants/SINGULAR_MAP";
 
-export const toSingular = (text: string): string => {
-  if (!text.trim()) return "";
+const capitalizeLike = (original: string, result: string): string => {
+  if (!result) return result;
 
-  return text
+  return original[0] === original[0].toUpperCase()
+    ? result.charAt(0).toUpperCase() + result.slice(1)
+    : result;
+};
+
+export const toSingular = (text: string): string => {
+  const trimmed = text.trim();
+  if (!trimmed) return "";
+
+  const phrase = SINGULAR_MAP[trimmed.toLowerCase()];
+  if (phrase !== undefined) return phrase;
+
+  return trimmed
     .split(/\s+/)
     .map((word) => {
       const lower = word.toLowerCase();
@@ -13,11 +25,12 @@ export const toSingular = (text: string): string => {
 
       const singular = SINGULAR_MAP[lower];
 
-      if (!singular) return word;
+      if (singular === undefined) return word;
 
-      return word[0] === word[0].toUpperCase()
-        ? singular.charAt(0).toUpperCase() + singular.slice(1)
-        : singular;
+      if (singular === "") return "";
+
+      return capitalizeLike(word, singular);
     })
+    .filter(Boolean)
     .join(" ");
 };

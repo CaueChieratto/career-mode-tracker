@@ -17,6 +17,7 @@ import {
   isSamePlayerId,
   getPlayerIdentityKey,
 } from "../../../../../../../../../common/utils/playerIdentity";
+import { formatPlayerName } from "../../../../../../../../../common/utils/formatPlayerName";
 
 type PlayerStatsProps = {
   player: Players;
@@ -120,7 +121,7 @@ const PlayerStats = ({
         >
           <StatisticsTable_Title
             type="info"
-            playerName={player.name}
+            playerName={formatPlayerName(player.name)}
             overall={player.overall}
           />
           <CalculatedStatistics

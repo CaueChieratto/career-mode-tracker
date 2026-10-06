@@ -227,6 +227,7 @@ export const getSquadFormFields = (
             placeholder: "Ex: 4",
             icon: <RxLapTimer />,
             hideOnIncomingLoan: true,
+            hideOnIncomingLoanPlayer: true,
             maxLength: 1,
           },
           {

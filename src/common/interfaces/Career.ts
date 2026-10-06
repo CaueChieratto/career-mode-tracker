@@ -1,6 +1,7 @@
 import { AcademyData } from "./AcademyData";
 import { ClubData } from "./club/clubData";
 import { Trophy } from "./club/trophy";
+import { OpponentPlayer } from "./OpponentPlayer";
 
 export interface Career {
   id: string;
@@ -18,4 +19,5 @@ export interface Career {
   clubData: ClubData[];
   stadiums?: string[];
   stages?: string[];
+  opponentPlayers?: OpponentPlayer[];
 }

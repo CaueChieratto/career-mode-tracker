@@ -17,6 +17,7 @@ import { ModalType } from "../common/types/enums/ModalType";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import EditTransferScreen from "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/screens/EditTransferScreen";
 import { Contract } from "../common/interfaces/playersInfo/contract";
+import { formatPlayerName } from "../common/utils/formatPlayerName";
 
 // Mock Firebase & Auth
 vi.mock("../common/services/Firebase", () => ({
@@ -693,7 +694,7 @@ describe("TransfersPanel click handling", () => {
       />,
     );
 
-    const item = screen.getByText("Neymar Jr").closest("li");
+    const item = screen.getByText(formatPlayerName("Neymar Jr")).closest("li");
     expect(item).not.toBeNull();
     fireEvent.click(item!);
 
@@ -705,6 +706,68 @@ describe("TransfersPanel click handling", () => {
       }),
       "arrivals",
     );
+  });
+
+  it("não chama onTransferClick ao clicar em chegada de jogador promovido da base", () => {
+    const academyPlayer = {
+      id: "p-academy",
+      name: "Garoto da Base",
+      contract: [
+        {
+          fromClub: "Base",
+          buyValue: 0,
+          dataArrival: new Date("2024-07-15"),
+        },
+      ],
+    } as unknown as Players;
+
+    const onTransferClick = vi.fn();
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        players={[academyPlayer]}
+        currency="€"
+        onTransferClick={onTransferClick}
+      />,
+    );
+
+    const item = screen.getByText(formatPlayerName("Garoto da Base")).closest("li");
+    expect(item).not.toBeNull();
+    fireEvent.click(item!);
+
+    expect(onTransferClick).not.toHaveBeenCalled();
+  });
+
+  it("permite clicar em saída de jogador que veio da base e foi vendido", () => {
+    const soldAcademyPlayer = {
+      id: "p-sold-academy",
+      name: "Base Vendido",
+      sell: true,
+      contract: [
+        {
+          fromClub: "Base",
+          leftClub: "Chelsea",
+          sellValue: 15000000,
+          dataExit: new Date("2024-08-01"),
+        },
+      ],
+    } as unknown as Players;
+
+    const onTransferClick = vi.fn();
+    render(
+      <TransfersPanel
+        title="Saídas"
+        players={[soldAcademyPlayer]}
+        currency="€"
+        onTransferClick={onTransferClick}
+      />,
+    );
+
+    const item = screen.getByText(formatPlayerName("Base Vendido")).closest("li");
+    expect(item).not.toBeNull();
+    fireEvent.click(item!);
+
+    expect(onTransferClick).toHaveBeenCalledTimes(1);
   });
 });
 

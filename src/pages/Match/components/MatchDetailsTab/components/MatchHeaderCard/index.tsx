@@ -1,6 +1,7 @@
 import { GiSoccerBall } from "react-icons/gi";
 import Styles from "./MatchHeaderCard.module.css";
 import { Match } from "../../../../../../common/interfaces/Match";
+import { formatPlayerName } from "../../../../../../common/utils/formatPlayerName";
 
 type Goal = {
   playerName: string;
@@ -100,7 +101,7 @@ export const MatchHeaderCard = ({
           <div className={Styles.scorers_left}>
             {homeGoals.map((goal, idx) => (
               <span key={`home-${idx}`}>
-                {goal.playerName} {goal.isOwnGoal ? "(GC) " : ""}
+                {formatPlayerName(goal.playerName)} {goal.isOwnGoal ? "(GC) " : ""}
                 {goal.displayTime || `${goal.time}'`}
               </span>
             ))}
@@ -113,7 +114,8 @@ export const MatchHeaderCard = ({
           <div className={Styles.scorers_right}>
             {awayGoals.map((goal, idx) => (
               <span key={`away-${idx}`}>
-                {goal.displayTime || `${goal.time}'`} {goal.playerName}
+                {goal.displayTime || `${goal.time}'`}{" "}
+                {formatPlayerName(goal.playerName)}
                 {goal.isOwnGoal ? " (GC)" : ""}
               </span>
             ))}

@@ -9,6 +9,7 @@ import { StatCard } from "./components/StatCard";
 import { statConfigs } from "./constants/statConfigs";
 import { Copy } from "../../../../../common/utils/Copy";
 import { ButtonsSwitch } from "../../../../../components/ButtonsSwitch";
+import { formatPlayerName } from "../../../../../common/utils/formatPlayerName";
 
 type BestPlayersTabProps = {
   season: ClubData;
@@ -96,7 +97,7 @@ export const BestPlayersTab = ({ season, career }: BestPlayersTabProps) => {
               ? rawValue
               : rawValue.toFixed(1);
 
-          finalString += `${index + 1}º ${statItem.player.name} - ${displayValue}\n`;
+          finalString += `${index + 1}º ${formatPlayerName(statItem.player.name)} - ${displayValue}\n`;
         });
 
         finalString += "\n";

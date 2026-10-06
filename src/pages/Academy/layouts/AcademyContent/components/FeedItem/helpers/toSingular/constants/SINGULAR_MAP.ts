@@ -45,4 +45,5 @@ export const SINGULAR_MAP: Record<string, string> = {
   meses: "mês",
   dias: "dia",
   cubs: "cub",
+  "los pibes del parque": "Pibe del Parque",
 };

@@ -88,7 +88,10 @@ export const filterFormSections = <T extends SquadFormField>(
               !context.isIncomingLoan
             )
               return false;
-            if (field.hideOnIncomingLoan && context.isIncomingLoan && !context.isEditing)
+            if (
+              field.hideOnIncomingLoan &&
+              (context.isIncomingLoan || context.isIncomingLoanPlayer)
+            )
               return false;
             if (field.isKnownPlayerOnly) {
               if (!context.isKnownPlayer) return false;
@@ -102,6 +105,35 @@ export const filterFormSections = <T extends SquadFormField>(
           }),
         )
         .filter((row) => row.length > 0);
+
+      if (context.isEditing && section.title === "Detalhes Contratuais") {
+        const hasPlayerValueRow = filteredRows.some(
+          (r) => r.length === 1 && r[0].id === "playerValue",
+        );
+        const hasSalaryRow = filteredRows.some(
+          (r) => r.length === 1 && r[0].id === "salary",
+        );
+        const hasContractTime = filteredRows.some((r) =>
+          r.some((f) => f.id === "contractTime"),
+        );
+
+        if (hasPlayerValueRow && hasSalaryRow && !hasContractTime) {
+          const playerValueField = filteredRows
+            .find((r) => r.some((f) => f.id === "playerValue"))!
+            .find((f) => f.id === "playerValue")!;
+          const salaryField = filteredRows
+            .find((r) => r.some((f) => f.id === "salary"))!
+            .find((f) => f.id === "salary")!;
+
+          const otherRows = filteredRows.filter(
+            (r) =>
+              !r.some((f) => f.id === "playerValue" || f.id === "salary"),
+          );
+
+          const combinedRow = [playerValueField, salaryField];
+          return { ...section, fields: [combinedRow, ...otherRows] };
+        }
+      }
 
       return { ...section, fields: filteredRows };
     })

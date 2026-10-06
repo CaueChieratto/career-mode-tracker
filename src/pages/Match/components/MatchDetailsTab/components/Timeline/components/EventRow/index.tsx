@@ -1,5 +1,6 @@
 import { MatchEvent } from "../../../../types";
 import { EventIcon } from "./components/EventIcon";
+import { formatPlayerName } from "../../../../../../../../common/utils/formatPlayerName";
 import Styles from "./EventRow.module.css";
 
 type Props = {
@@ -12,6 +13,11 @@ export const EventRow = ({ event, isUserHome }: Props) => {
 
   const isHomeEvent = event.isOpponent ? !isUserHome : isUserHome;
 
+  const formattedMainPlayer = formatPlayerName(event.mainPlayer);
+  const formattedSecondaryPlayer = event.secondaryPlayer
+    ? formatPlayerName(event.secondaryPlayer)
+    : null;
+
   if (isHomeEvent) {
     return (
       <div className={`${Styles.event_row} ${Styles.event_left}`}>
@@ -19,10 +25,10 @@ export const EventRow = ({ event, isUserHome }: Props) => {
         <span className={Styles.event_icon}>
           <EventIcon type={event.type} />
         </span>
-        <span className={Styles.event_main}>{event.mainPlayer}</span>
-        {event.secondaryPlayer && (
+        <span className={Styles.event_main}>{formattedMainPlayer}</span>
+        {formattedSecondaryPlayer && (
           <span className={Styles.event_secondary}>
-            {event.secondaryPlayer}
+            {formattedSecondaryPlayer}
           </span>
         )}
       </div>
@@ -31,10 +37,12 @@ export const EventRow = ({ event, isUserHome }: Props) => {
 
   return (
     <div className={`${Styles.event_row} ${Styles.event_right}`}>
-      {event.secondaryPlayer && (
-        <span className={Styles.event_secondary}>{event.secondaryPlayer}</span>
+      {formattedSecondaryPlayer && (
+        <span className={Styles.event_secondary}>
+          {formattedSecondaryPlayer}
+        </span>
       )}
-      <span className={Styles.event_main}>{event.mainPlayer}</span>
+      <span className={Styles.event_main}>{formattedMainPlayer}</span>
       <span className={Styles.event_icon}>
         <EventIcon type={event.type} />
       </span>

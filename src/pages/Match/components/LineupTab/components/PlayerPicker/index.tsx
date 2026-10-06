@@ -1,5 +1,6 @@
 import { Players } from "../../../../../../common/interfaces/playersInfo/players";
 import { usePlayerSearch } from "./hooks/usePlayerSearch";
+import { formatPlayerName } from "../../../../../../common/utils/formatPlayerName";
 import Styles from "./PlayerPicker.module.css";
 
 type PlayerPickerProps = {
@@ -56,7 +57,7 @@ export const PlayerPicker = ({
             onClick={() => onSelect(player)}
             type="button"
           >
-            <span className={Styles.picker_name}>{player.name}</span>
+            <span className={Styles.picker_name}>{formatPlayerName(player.name)}</span>
             <div className={Styles.picker_meta}>
               <span className={Styles.picker_pos}>{player.position}</span>
               <span className={Styles.picker_shirt_number}>

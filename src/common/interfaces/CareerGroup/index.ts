@@ -1,4 +1,5 @@
 import { Career } from "../Career";
+import { OpponentPlayer } from "../OpponentPlayer";
 
 export interface CareerGroup {
   id: string;
@@ -8,6 +9,7 @@ export interface CareerGroup {
   createdAt: Date;
   updatedAt?: number;
   stadiums?: string[];
+  opponentPlayers?: OpponentPlayer[];
 }
 
 export type BoardItem =

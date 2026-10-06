@@ -14,6 +14,7 @@ export const buildMatchPayload = (
   formValues: Record<string, string>,
   booleanValues: Record<string, boolean>,
   isUserHome: boolean,
+  playerMap?: Map<string, string> | Record<string, string>,
 ): MatchPayloadResult => {
   const homeScoreNum = Number(formValues.homeScore) || 0;
   const awayScoreNum = Number(formValues.awayScore) || 0;
@@ -41,6 +42,7 @@ export const buildMatchPayload = (
     opponentOwnGoalCountNum,
     formValues,
     booleanValues,
+    playerMap,
   );
 
   const { yellowCards, redCards } = countOpponentCards(opponentEvents.cards);
@@ -69,11 +71,20 @@ export const buildMatchPayload = (
   };
 
   if (formValues.opponentMvpName && formValues.opponentMvpName.trim() !== "") {
-    updatedMatch.opponentMvpName = formValues.opponentMvpName.trim();
+    const trimmedMvp = formValues.opponentMvpName.trim();
+    updatedMatch.opponentMvpName = trimmedMvp;
     updatedMatch.opponentMvpRating = Number(formValues.opponentMvpRating) || 0;
+    const normalized = trimmedMvp.toLowerCase();
+    const mvpId = playerMap instanceof Map
+      ? playerMap.get(normalized)
+      : playerMap?.[normalized];
+    if (mvpId) {
+      updatedMatch.opponentMvpPlayerId = mvpId;
+    }
   } else {
     updatedMatch.opponentMvpName = "";
     updatedMatch.opponentMvpRating = 0;
+    delete updatedMatch.opponentMvpPlayerId;
   }
 
   if (hasPenalties) {

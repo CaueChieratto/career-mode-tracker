@@ -5,6 +5,7 @@ import Styles from "./StatCard.module.css";
 import { CgCopy } from "react-icons/cg";
 import { Copy } from "../../../../../../../common/utils/Copy";
 import { AggregatedPlayerStats } from "../../../../../../../common/interfaces/AggregatedPlayerStats/AggregatedPlayerStats";
+import { formatPlayerName } from "../../../../../../../common/utils/formatPlayerName";
 
 type StatCardProps = {
   title: string;
@@ -52,7 +53,9 @@ export const StatCard = ({
           ? rawValue
           : rawValue.toFixed(1);
 
-      textLines.push(`${index + 1}º ${statItem.player.name} - ${displayValue}`);
+      textLines.push(
+        `${index + 1}º ${formatPlayerName(statItem.player.name)} - ${displayValue}`,
+      );
     });
 
     const textToCopy = textLines.join("\n");

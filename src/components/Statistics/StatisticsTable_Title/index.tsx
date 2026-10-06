@@ -198,20 +198,20 @@ const StatisticsTable_Title = ({
             className={Styles.container_league}
             onTouchMove={(e) => e.stopPropagation()}
           >
-            <div
-              ref={leagueRef}
-              className={`${Styles.league_container} ${
-                isOverflowing ? Styles.marquee : ""
-              }`}
-            >
-              <div className={Styles.league_image_container}>
-                <img
-                  src={leagueImage}
-                  alt={leagueName}
-                  className={Styles.league_image}
-                />
-              </div>
-              <span className={`${Styles.league_name} ${Styles.no_wrap}`}>
+            <div className={Styles.league_image_container}>
+              <img
+                src={leagueImage}
+                alt={leagueName}
+                className={Styles.league_image}
+              />
+            </div>
+            <div className={Styles.league_name_container}>
+              <span
+                ref={leagueRef}
+                className={`${Styles.league_name} ${Styles.no_wrap} ${
+                  isOverflowing ? Styles.marquee : ""
+                }`}
+              >
                 {leagueName}
               </span>
             </div>

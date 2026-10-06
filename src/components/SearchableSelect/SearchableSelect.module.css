@@ -10,6 +10,7 @@
 
 .custom_select_container {
   width: 100%;
+  min-width: 0;
 }
 
 .custom_select_container.disabled {
@@ -26,6 +27,9 @@
   padding: 14px;
   background-color: var(--card-background);
   cursor: text;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .search_input {

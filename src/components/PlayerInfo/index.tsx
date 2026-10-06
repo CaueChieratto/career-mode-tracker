@@ -3,6 +3,7 @@ import CaptainArmbandIcon from "../../ui/CaptainArmbandIcon";
 import { PlayerCircle } from "../../pages/Match/components/LineupTab/layouts/Section/components/SlotButton/components/PlayerDetails/PlayerCircle";
 import { OverflowText } from "../OverflowText";
 import { toSingular } from "../../pages/Academy/layouts/AcademyContent/components/FeedItem/helpers/toSingular";
+import { formatPlayerName } from "../../common/utils/formatPlayerName";
 
 type PlayerInfoProps = {
   name: string;
@@ -43,7 +44,7 @@ export const PlayerInfo = ({
                 className={Styles.data_title}
                 disableDynamicMinWidth={true}
                 style={{ minWidth: "auto" }}
-                text={name}
+                text={formatPlayerName(name)}
               />
             </div>
             <span className={Styles.data}>{position}</span>
@@ -55,15 +56,15 @@ export const PlayerInfo = ({
                 />
               </span>
             )}
+          </div>
+          <div className={Styles.player_info_bottom}>
+            <div className={Styles.data}>{age} anos</div>
+            <div className={Styles.data}>{nation}</div>
             {captain && (
               <div className={Styles.icon_wrapper}>
                 <CaptainArmbandIcon />
               </div>
             )}
-          </div>
-          <div className={Styles.player_info_bottom}>
-            <div className={Styles.data}>{age} anos</div>
-            <div className={Styles.data}>{nation}</div>
           </div>
         </div>
       </div>
