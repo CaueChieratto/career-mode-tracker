@@ -19,6 +19,7 @@ export const EmptySlotRow = ({
     <Row data-slot-id={slotId}>
       <button
         type="button"
+        data-bench-add-button="true"
         className={`${Styles.empty_avatar} ${
           isActive ? Styles.empty_avatar_active : ""
         }`}

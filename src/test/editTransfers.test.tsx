@@ -1603,19 +1603,53 @@ describe("PlayersContractService - Edição e Reversão de Fim de Empréstimo Re
 });
 
 describe("scheduleLineupSlotScroll e EmptySlotRow comportamentos de Scroll", () => {
-  it("scheduleLineupSlotScroll rola diretamente até o elemento com data-slot-id para banco e campo", async () => {
+  it("ao adicionar jogador no banco com espaço restante, rola até o botão de adicionar mais jogadores", async () => {
+    vi.useFakeTimers();
+    const { scheduleLineupSlotScroll } = await import(
+      "../pages/Match/components/LineupTab/services/scheduleLineupSlotScroll"
+    );
+
+    const scrollIntoViewButtonMock = vi.fn();
+    const scrollIntoViewSlotMock = vi.fn();
+
+    const mockBenchSlot = document.createElement("div");
+    mockBenchSlot.setAttribute("data-slot-id", "bench-0");
+    mockBenchSlot.scrollIntoView = scrollIntoViewSlotMock;
+
+    const mockAddButton = document.createElement("button");
+    mockAddButton.setAttribute("data-bench-add-button", "true");
+    mockAddButton.scrollIntoView = scrollIntoViewButtonMock;
+
+    document.body.appendChild(mockBenchSlot);
+    document.body.appendChild(mockAddButton);
+
+    scheduleLineupSlotScroll("bench-0");
+    vi.advanceTimersByTime(160);
+
+    expect(scrollIntoViewButtonMock).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
+    expect(scrollIntoViewSlotMock).not.toHaveBeenCalled();
+
+    document.body.removeChild(mockBenchSlot);
+    document.body.removeChild(mockAddButton);
+    vi.useRealTimers();
+  });
+
+  it("ao adicionar jogador no banco sem mais espaço (banco cheio), rola até o último jogador adicionado", async () => {
     vi.useFakeTimers();
     const { scheduleLineupSlotScroll } = await import(
       "../pages/Match/components/LineupTab/services/scheduleLineupSlotScroll"
     );
 
     const scrollIntoViewMock = vi.fn();
-    const mockBenchEl = document.createElement("div");
-    mockBenchEl.setAttribute("data-slot-id", "bench-0");
-    mockBenchEl.scrollIntoView = scrollIntoViewMock;
-    document.body.appendChild(mockBenchEl);
+    const mockBenchSlot = document.createElement("div");
+    mockBenchSlot.setAttribute("data-slot-id", "bench-8");
+    mockBenchSlot.scrollIntoView = scrollIntoViewMock;
+    document.body.appendChild(mockBenchSlot);
 
-    scheduleLineupSlotScroll("bench-0");
+    scheduleLineupSlotScroll("bench-8");
     vi.advanceTimersByTime(160);
 
     expect(scrollIntoViewMock).toHaveBeenCalledWith({
@@ -1623,7 +1657,41 @@ describe("scheduleLineupSlotScroll e EmptySlotRow comportamentos de Scroll", () 
       block: "center",
     });
 
-    document.body.removeChild(mockBenchEl);
+    document.body.removeChild(mockBenchSlot);
+    vi.useRealTimers();
+  });
+
+  it("ao adicionar titular, rola diretamente até a posição em campo", async () => {
+    vi.useFakeTimers();
+    const { scheduleLineupSlotScroll } = await import(
+      "../pages/Match/components/LineupTab/services/scheduleLineupSlotScroll"
+    );
+
+    const scrollIntoViewStarterMock = vi.fn();
+    const scrollIntoViewButtonMock = vi.fn();
+
+    const mockStarterSlot = document.createElement("div");
+    mockStarterSlot.setAttribute("data-slot-id", "slot-mid-0");
+    mockStarterSlot.scrollIntoView = scrollIntoViewStarterMock;
+
+    const mockAddButton = document.createElement("button");
+    mockAddButton.setAttribute("data-bench-add-button", "true");
+    mockAddButton.scrollIntoView = scrollIntoViewButtonMock;
+
+    document.body.appendChild(mockStarterSlot);
+    document.body.appendChild(mockAddButton);
+
+    scheduleLineupSlotScroll("slot-mid-0");
+    vi.advanceTimersByTime(160);
+
+    expect(scrollIntoViewStarterMock).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
+    expect(scrollIntoViewButtonMock).not.toHaveBeenCalled();
+
+    document.body.removeChild(mockStarterSlot);
+    document.body.removeChild(mockAddButton);
     vi.useRealTimers();
   });
 
