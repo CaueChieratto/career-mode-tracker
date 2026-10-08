@@ -1,11 +1,9 @@
 import { Players } from "../../../../common/interfaces/playersInfo/players";
-import { formatDisplayValue } from "../../../../common/utils/FormatValue";
-import { Match } from "../../../../common/interfaces/Match";
-import { calculateTotalStats } from "../../../../layout/SectionView/features/ClubTabs/StatsTab_Club/components/PlayerStatsList/utils/calculateTotalStats";
 import {
   PlayerStatsDisplay,
   AugmentedCareer,
 } from "../../../../common/interfaces/ComparePlayers";
+import { aggregateSinglePlayerStats } from "../../../../common/stats";
 
 export const getAggregatedStats = (
   player: Players | null,
@@ -13,174 +11,111 @@ export const getAggregatedStats = (
   seasonId: string | undefined,
   compareMode: "season" | "total" | "none",
 ): PlayerStatsDisplay | null => {
-  if (!player || !augmentedCareer || compareMode === "none") return null;
+  const consolidated = aggregateSinglePlayerStats(
+    player,
+    augmentedCareer,
+    seasonId,
+    compareMode,
+  );
 
-  const normalizedName = player.name.trim().toLowerCase();
-  const normalizedNation = player.nation.trim().toLowerCase();
+  if (!consolidated) return null;
 
-  const matchesToProcess: { match: Match; seasonPlayers: Players[] }[] = [];
-  let seasonsAtClub = 0;
-
-  if (compareMode === "total") {
-    augmentedCareer.clubData.forEach((s) => {
-      s.matches?.forEach((m) =>
-        matchesToProcess.push({ match: m, seasonPlayers: s.players }),
-      );
-
-      const playedInSeason = s.players.some(
-        (p) =>
-          p.name.trim().toLowerCase() === normalizedName &&
-          p.nation.trim().toLowerCase() === normalizedNation,
-      );
-      if (playedInSeason) seasonsAtClub++;
-    });
-  } else {
-    const season = augmentedCareer.clubData.find(
-      (s) => String(s.id) === String(seasonId),
-    );
-    if (season) {
-      season.matches?.forEach((m) =>
-        matchesToProcess.push({ match: m, seasonPlayers: season.players }),
-      );
-    }
-  }
-
-  let distanceKm = 0;
-  let maxDistanceKmInGame = 0;
-  let yellowCards = 0;
-  let redCards = 0;
-  let totalPasses = 0;
-  let passesMissed = 0;
-  let totalFinishings = 0;
-  let finishingsMissed = 0;
-  let totalDribbles = 0;
-  let dribblesMissed = 0;
-  let keyPasses = 0;
-  let ballsRecovered = 0;
-  let ballsLost = 0;
-  let ownGoals = 0;
-
-  matchesToProcess.forEach(({ match, seasonPlayers }) => {
-    if (match.status !== "FINISHED") return;
-
-    match.playerStats?.forEach((pStat) => {
-      const sPlayer = seasonPlayers.find(
-        (p) => String(p.id) === String(pStat.playerId),
-      );
-      if (!sPlayer) return;
-
-      const isSamePlayer =
-        compareMode === "total"
-          ? sPlayer.name.trim().toLowerCase() === normalizedName &&
-            sPlayer.nation.trim().toLowerCase() === normalizedNation
-          : String(sPlayer.id) === String(player.id);
-
-      if (isSamePlayer) {
-        const matchDistance = pStat.distanceKm || 0;
-        distanceKm += matchDistance;
-
-        if (matchDistance > maxDistanceKmInGame) {
-          maxDistanceKmInGame = matchDistance;
-        }
-
-        if (pStat.yellowCard) yellowCards += 1;
-        if (pStat.redCard) redCards += 1;
-        totalPasses += pStat.totalPasses || 0;
-        passesMissed += pStat.passesMissed || 0;
-        totalFinishings += pStat.totalFinishings || 0;
-        finishingsMissed += pStat.finishingsMissed || 0;
-        totalDribbles += pStat.totalDribbles || 0;
-        dribblesMissed += pStat.dribblesMissed || 0;
-        keyPasses += pStat.keyPasses || 0;
-        ballsRecovered += pStat.ballsRecovered || 0;
-        ballsLost += pStat.ballsLost || 0;
-        ownGoals += pStat.ownGoals || 0;
-      }
-    });
-  });
-
-  const coreStats = calculateTotalStats(player);
-  const minutes = coreStats.minutesPlayed > 0 ? coreStats.minutesPlayed : 1;
-  const multiplier90 = 90 / minutes;
-
-  const goals = coreStats.goals;
-  const assists = coreStats.assists;
-  const goalParticipations = goals + assists;
+  const fmtDec2 = (n: number) => n.toFixed(2);
+  const fmtDec1 = (n: number) => n.toFixed(1);
 
   return {
-    age: `${player.age} anos`,
-    position: player.position,
-    marketValue: formatDisplayValue(
-      player.playerValue,
-      augmentedCareer.currency,
-    ),
-    salary: formatDisplayValue(player.salary, augmentedCareer.currency),
-    seasonsAtClub: compareMode === "total" ? seasonsAtClub : undefined,
+    age: String(consolidated.age ?? ""),
+    position: String(consolidated.position ?? ""),
+    marketValue: String(consolidated.marketValue ?? ""),
+    salary: String(consolidated.salary ?? ""),
+    seasonsAtClub: consolidated.seasonsAtClub,
 
-    games: coreStats.games,
+    games: consolidated.games,
     rating:
-      coreStats.averageRating > 0 ? coreStats.averageRating.toFixed(2) : "-",
-    goalParticipations,
-    goals,
-    assists,
-    defenses: coreStats.defenses,
+      consolidated.avgRating > 0 ? consolidated.avgRating.toFixed(2) : "-",
+    goalParticipations: consolidated.goalParticipations,
+    goalParticipationsPerGame: fmtDec2(consolidated.goalParticipationsPerGame),
+    goalParticipationsPer90: fmtDec2(consolidated.goalParticipationsPer90),
+    goals: consolidated.goals,
+    goalsPerGame: fmtDec2(consolidated.goalsPerGame),
+    goalsPer90: fmtDec2(consolidated.goalsPer90),
+    assists: consolidated.assists,
+    assistsPerGame: fmtDec2(consolidated.assistsPerGame),
+    assistsPer90: fmtDec2(consolidated.assistsPer90),
+    defenses: consolidated.defenses,
+    defensesPerGame: fmtDec2(consolidated.defensesPerGame),
+    defensesPer90: fmtDec2(consolidated.defensesPer90),
 
     goalFrequency:
-      goals > 0 ? `${Math.round(coreStats.minutesPlayed / goals)}'` : "-",
+      consolidated.goals > 0
+        ? `${Math.round(consolidated.minutesPlayed / consolidated.goals)}'`
+        : "-",
     assistFrequency:
-      assists > 0 ? `${Math.round(coreStats.minutesPlayed / assists)}'` : "-",
+      consolidated.assists > 0
+        ? `${Math.round(consolidated.minutesPlayed / consolidated.assists)}'`
+        : "-",
     participationFrequency:
-      goalParticipations > 0
-        ? `${Math.round(coreStats.minutesPlayed / goalParticipations)}'`
+      consolidated.goalParticipations > 0
+        ? `${Math.round(consolidated.minutesPlayed / consolidated.goalParticipations)}'`
         : "-",
-    totalFinishings,
-    finishingsPer90: (totalFinishings * multiplier90).toFixed(1),
-    finishingsOnTarget: totalFinishings - finishingsMissed,
-    finishingsOnTargetPer90: (
-      (totalFinishings - finishingsMissed) *
-      multiplier90
-    ).toFixed(1),
-    finishingsMissed,
-    finishingsMissedPer90: (finishingsMissed * multiplier90).toFixed(1),
 
-    totalPasses,
-    passesPer90: (totalPasses * multiplier90).toFixed(1),
-    passesCompleted: totalPasses - passesMissed,
-    passesCompletedPer90: ((totalPasses - passesMissed) * multiplier90).toFixed(
-      1,
-    ),
-    passesMissed,
-    passesMissedPer90: (passesMissed * multiplier90).toFixed(1),
-    keyPasses,
-    keyPassesPer90: (keyPasses * multiplier90).toFixed(1),
-    totalDribbles,
-    dribblesPer90: (totalDribbles * multiplier90).toFixed(1),
-    dribblesCompleted: totalDribbles - dribblesMissed,
-    dribblesCompletedPer90: (
-      (totalDribbles - dribblesMissed) *
-      multiplier90
-    ).toFixed(1),
-    dribblesMissed,
-    dribblesMissedPer90: (dribblesMissed * multiplier90).toFixed(1),
+    totalFinishings: consolidated.totalFinishings,
+    finishingsPerGame: fmtDec1(consolidated.finishingsPerGame),
+    finishingsPer90: fmtDec1(consolidated.finishingsPer90),
+    finishingsOnTarget: consolidated.finishingsOnTarget,
+    finishingsOnTargetPerGame: fmtDec1(consolidated.finishingsOnTargetPerGame),
+    finishingsOnTargetPer90: fmtDec1(consolidated.finishingsOnTargetPer90),
+    finishingsMissed: consolidated.finishingsMissed,
+    finishingsMissedPerGame: fmtDec1(consolidated.finishingsMissedPerGame),
+    finishingsMissedPer90: fmtDec1(consolidated.finishingsMissedPer90),
 
-    cleanSheets: coreStats.cleanSheets,
-    ballsRecovered,
-    ballsRecoveredPer90: (ballsRecovered * multiplier90).toFixed(1),
-    ballsLost,
-    ballsLostPer90: (ballsLost * multiplier90).toFixed(1),
+    totalPasses: consolidated.totalPasses,
+    passesPerGame: fmtDec1(consolidated.passesPerGame),
+    passesPer90: fmtDec1(consolidated.passesPer90),
+    passesCompleted: consolidated.passesCompleted,
+    passesCompletedPerGame: fmtDec1(consolidated.passesCompletedPerGame),
+    passesCompletedPer90: fmtDec1(consolidated.passesCompletedPer90),
+    passesMissed: consolidated.passesMissed,
+    passesMissedPerGame: fmtDec1(consolidated.passesMissedPerGame),
+    passesMissedPer90: fmtDec1(consolidated.passesMissedPer90),
+    keyPasses: consolidated.keyPasses,
+    keyPassesPerGame: fmtDec1(consolidated.keyPassesPerGame),
+    keyPassesPer90: fmtDec1(consolidated.keyPassesPer90),
 
-    minutesPlayed: coreStats.minutesPlayed,
+    totalDribbles: consolidated.totalDribbles,
+    dribblesPerGame: fmtDec1(consolidated.dribblesPerGame),
+    dribblesPer90: fmtDec1(consolidated.dribblesPer90),
+    dribblesCompleted: consolidated.dribblesCompleted,
+    dribblesCompletedPerGame: fmtDec1(consolidated.dribblesCompletedPerGame),
+    dribblesCompletedPer90: fmtDec1(consolidated.dribblesCompletedPer90),
+    dribblesMissed: consolidated.dribblesMissed,
+    dribblesMissedPerGame: fmtDec1(consolidated.dribblesMissedPerGame),
+    dribblesMissedPer90: fmtDec1(consolidated.dribblesMissedPer90),
+
+    cleanSheets: consolidated.cleanSheets,
+    cleanSheetsPerGame: fmtDec2(consolidated.cleanSheetsPerGame),
+    ballsRecovered: consolidated.ballsRecovered,
+    ballsRecoveredPerGame: fmtDec1(consolidated.ballsRecoveredPerGame),
+    ballsRecoveredPer90: fmtDec1(consolidated.ballsRecoveredPer90),
+    ballsLost: consolidated.ballsLost,
+    ballsLostPerGame: fmtDec1(consolidated.ballsLostPerGame),
+    ballsLostPer90: fmtDec1(consolidated.ballsLostPer90),
+
+    minutesPlayed: consolidated.minutesPlayed,
     minutesPerGame:
-      coreStats.games > 0
-        ? `${Math.round(coreStats.minutesPlayed / coreStats.games)}'`
+      consolidated.games > 0
+        ? `${Math.round(consolidated.minutesPlayed / consolidated.games)}'`
         : "-",
-    maxDistanceKmInGame: `${maxDistanceKmInGame.toFixed(1)}km`,
-    distanceKmPer90: `${(distanceKm * multiplier90).toFixed(1)}km`,
-    distanceKm: `${distanceKm.toFixed(1)}km`,
-    yellowCards,
-    yellowCardsPer90: (yellowCards * multiplier90).toFixed(1),
-    redCards,
-    redCardsPer90: (redCards * multiplier90).toFixed(1),
-    ownGoals,
+    maxDistanceKmInGame: `${consolidated.maxDistanceKmInGame.toFixed(1)}km`,
+    distanceKm: `${consolidated.distanceKm.toFixed(1)}km`,
+    distanceKmPerGame: `${consolidated.distanceKmPerGame.toFixed(1)}km`,
+    distanceKmPer90: `${consolidated.distanceKmPer90.toFixed(1)}km`,
+    yellowCards: consolidated.yellowCards,
+    yellowCardsPerGame: fmtDec2(consolidated.yellowCardsPerGame),
+    yellowCardsPer90: fmtDec2(consolidated.yellowCardsPer90),
+    redCards: consolidated.redCards,
+    redCardsPerGame: fmtDec2(consolidated.redCardsPerGame),
+    redCardsPer90: fmtDec2(consolidated.redCardsPer90),
+    ownGoals: consolidated.ownGoals,
   };
 };

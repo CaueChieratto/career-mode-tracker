@@ -1,6 +1,7 @@
 export interface HighlightItem {
   label: string;
   value: string;
+  group?: string;
 }
 
 export interface TimelineEvent {

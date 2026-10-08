@@ -1,5 +1,6 @@
 import { getTopN } from "..";
 import { CuriositiesData } from "../../../../../../../../../common/interfaces/Curiosities";
+import { isCuriosityGroupEnabled } from "../../../../../../../../../common/stats";
 import { CuriositiesState } from "../../helpers/createCuriositiesState";
 import { HighlightItem } from "../../types";
 
@@ -18,6 +19,7 @@ export const buildRankings = (
     topPlayerAssistMinutes: getTopN(state.playerAssistMinutes),
     topOpponentScorers: getTopN(state.opponentScorers),
     topTeamDuos: getTopN(state.teamDuos),
+    topBestDuos: getTopN(state.bestDuos),
     topOpponentDuos: getTopN(state.opponentDuos),
     topReincidents: reincidents,
     topScores: getTopN(state.scoreFrequency),
@@ -48,42 +50,48 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
     (a, b) => b[1].losses - a[1].losses,
   )[0];
 
-  const highlights = [
+  const highlights: HighlightItem[] = [
     {
       label: "🏆 Maior Sequência de Vitórias",
       value: `${state.maxWinStreak} jogos`,
+      group: "general",
     },
     {
       label: "🛡️ Maior Série Invicta",
       value: `${state.maxUnbeaten} jogos`,
+      group: "general",
     },
     {
       label: "⚽ Maior Sequência Marcando",
       value: `${state.maxScoringStreak} jogos`,
+      group: "goals",
     },
     {
       label: "🥅 Sequência Sem Sofrer Gols",
       value: `${state.maxCleanSheetStreak} jogos`,
+      group: "defense",
     },
     {
       label: "⚠️ Sequência Sofrendo Gols",
       value: `${state.maxConcedingStreak} jogos`,
+      group: "defense",
     },
 
     ...(state.fastestGoal.min !== 999
-      ? [{ label: "⚡ Gol Relâmpago", value: state.fastestGoal.text }]
+      ? [{ label: "⚡ Gol Relâmpago", value: state.fastestGoal.text, group: "goals" }]
       : []),
     ...(state.latestWinGoal.min !== 0
-      ? [{ label: "🏆 Vitória Mais Tardia", value: state.latestWinGoal.text }]
+      ? [{ label: "🏆 Vitória Mais Tardia", value: state.latestWinGoal.text, group: "goals" }]
       : []),
     ...(state.latestDrawGoal.min !== 0
-      ? [{ label: "🤝 Empate Salvo no Fim", value: state.latestDrawGoal.text }]
+      ? [{ label: "🤝 Empate Salvo no Fim", value: state.latestDrawGoal.text, group: "goals" }]
       : []),
     ...(state.biggestComebackWin.deficit > 0
       ? [
           {
             label: "🔄 Maior Virada Conquistada",
             value: state.biggestComebackWin.text,
+            group: "general",
           },
         ]
       : []),
@@ -92,25 +100,32 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
           {
             label: "💔 Maior Virada Sofrida",
             value: state.biggestComebackLoss.text,
+            group: "general",
           },
         ]
       : []),
 
     {
       label: "⏱️ Faro de Gol (Tempos)",
-      value: `${state.goalsFirstHalf} no 1ºT | ${state.goalsSecondHalf} no 2ºT`,
+      value:
+        state.goalsExtraTime > 0
+          ? `${state.goalsFirstHalf} no 1ºT | ${state.goalsSecondHalf} no 2ºT | ${state.goalsExtraTime} na Prorrogação`
+          : `${state.goalsFirstHalf} no 1ºT | ${state.goalsSecondHalf} no 2ºT`,
+      group: "goals",
     },
     {
       label: "💚 Adversário Favorito",
       value: favoriteOpponent
         ? `${favoriteOpponent[0]} (${favoriteOpponent[1].wins} vitórias)`
         : "-",
+      group: "general",
     },
     {
       label: "👟 Pedra no Sapato",
       value: worstOpponent
         ? `${worstOpponent[0]} (${worstOpponent[1].losses} derrotas)`
         : "-",
+      group: "general",
     },
     {
       label: "🤝 Rei do Empate",
@@ -118,6 +133,7 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
         mostDrawnOpponent && mostDrawnOpponent[1] > 0
           ? `${mostDrawnOpponent[0]} (${mostDrawnOpponent[1]} empates)`
           : "-",
+      group: "general",
     },
     {
       label: "🔥 Invicto Quando Marca Primeiro",
@@ -125,6 +141,7 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
         state.scoredFirstGamesCount > 0
           ? `${state.unbeatenWhenScoringFirstCount} jogos sem perder (${state.scoredFirstGamesCount} abrindo placar)`
           : "-",
+      group: "goals",
     },
     {
       label: "⚡ Virador Oficial",
@@ -132,6 +149,7 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
         state.comebackWinsCount > 0
           ? `${state.comebackWinsCount} vitórias após sair perdendo`
           : "-",
+      group: "general",
     },
     {
       label: "🎯 Precisão",
@@ -139,6 +157,7 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
         state.precisionMatchesCount > 0
           ? `Marcou nos 2 tempos em ${state.precisionMatchesCount} partidas`
           : "-",
+      group: "goals",
     },
     {
       label: "💥 Explosão Ofensiva",
@@ -146,6 +165,7 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
         state.explosiveMatchesCount > 0
           ? `${state.explosiveMatchesCount} jogos com 3+ gols`
           : "-",
+      group: "goals",
     },
     {
       label: "🚫 Dia Sem Inspiração",
@@ -153,6 +173,7 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
         state.blankMatchesCount > 0
           ? `Passou em branco em ${state.blankMatchesCount} jogos`
           : "-",
+      group: "goals",
     },
     {
       label: "🚀 Começo Avassalador",
@@ -160,6 +181,7 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
         state.overwhelmingStartsCount > 0
           ? `Gol nos primeiros 15' em ${state.overwhelmingStartsCount} jogos`
           : "-",
+      group: "goals",
     },
     {
       label: "😱 Final Dramático",
@@ -167,31 +189,32 @@ export const buildHighlights = (state: CuriositiesState): HighlightItem[] => {
         state.dramaticEndsCount > 0
           ? `Sofreu gols após 75' em ${state.dramaticEndsCount} jogos`
           : "-",
+      group: "goals",
     },
 
     {
       label: "💪 Massacre Histórico",
       value: state.biggestWin.text,
+      group: "general",
     },
     {
       label: "🎢 Jogo Mais Maluco",
       value: state.craziestMatch.text,
+      group: "general",
     },
     {
       label: "📊 Maior Posse de Bola",
       value: state.highestPossession.text,
+      group: "general",
     },
   ].filter(
     (h) =>
       h.value !== "-" &&
       h.value !== "0 jogos" &&
-      h.value !== "0 no 1ºT | 0 no 2ºT",
+      h.value !== "0 no 1ºT | 0 no 2ºT" &&
+      h.value !== "0 no 1ºT | 0 no 2ºT | 0 na Prorrogação" &&
+      isCuriosityGroupEnabled(h.group),
   );
 
-  return highlights.filter(
-    (h) =>
-      h.value !== "-" &&
-      h.value !== "0 jogos" &&
-      h.value !== "0 no 1ºT | 0 no 2ºT",
-  );
+  return highlights;
 };

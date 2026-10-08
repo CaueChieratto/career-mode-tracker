@@ -17,6 +17,7 @@ export interface CuriositiesRankings {
   topPlayerAssistMinutes: RankingItem[];
   topOpponentScorers: RankingItem[];
   topTeamDuos: RankingItem[];
+  topBestDuos: RankingItem[];
   topOpponentDuos: RankingItem[];
   topReincidents: RankingItem[];
   topScores: RankingItem[];

@@ -1,6 +1,7 @@
 import { Career } from "../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../common/interfaces/club/clubData";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
+import { AggregatedPlayerStats } from "../../../../../common/interfaces/AggregatedPlayerStats/AggregatedPlayerStats";
 import { ContainerClubContent } from "../../../../../components/ContainerClubContent";
 import NoStatsMessage from "../../../../../components/NoStatsMessage";
 import { statConfigs } from "../../ClubTabs/BestPlayersTab/constants/statConfigs";
@@ -51,12 +52,21 @@ const PlayerDetailedStatsTab = ({
     );
   }
 
+  const activePlayer = playerStats.player || player;
+  const fullPlayerStats = (
+    activePlayer ? { ...playerStats, player: activePlayer } : playerStats
+  ) as AggregatedPlayerStats;
+
   return (
     <ContainerClubContent>
       <Card className={Styles.card}>
         <h2 className={Styles.title}>Estatísticas Detalhadas</h2>
         <div className={Styles.grid}>
           {statConfigs.map((config) => {
+            if (config.filter && !config.filter(fullPlayerStats)) {
+              return null;
+            }
+
             const rawValue = playerStats[config.key] as number;
 
             if (

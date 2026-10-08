@@ -52,6 +52,16 @@ const PlayerStats = ({
   });
 
   const handleDeleteLeagueAndSync = async (leagueName: string) => {
+    const targetLeague = ((player as unknown as { aggregatedLeagues?: Array<{ leagueName: string; source: string }> }).aggregatedLeagues || []).find(
+      (l) => l.leagueName === leagueName,
+    );
+    if (targetLeague?.source === "matches") {
+      alert(
+        `As estatísticas da competição "${leagueName}" são calculadas automaticamente a partir de partidas finalizadas e não podem ser excluídas por aqui. Para alterá-las ou removê-las, acesse a aba Partidas.`,
+      );
+      return;
+    }
+
     const ok = await handleDeleteLeague(leagueName);
     if (ok) {
       const manualBase = player.manualStatsLeagues ?? player.statsLeagues;

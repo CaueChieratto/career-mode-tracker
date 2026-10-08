@@ -142,15 +142,16 @@ export const ServiceMatches = {
     return Promise.all(
       snapshot.docs.map(async (matchDoc) => {
         const match = matchDoc.data() as Match;
+        const matchesId = match.matchesId || matchDoc.id;
 
         if (match._playerStatsVersion === 1) {
-          return match;
+          return { ...match, matchesId };
         }
 
         const statsSnap = await getDocs(
           collection(matchDoc.ref, "playerStats"),
         );
-        if (statsSnap.empty) return match;
+        if (statsSnap.empty) return { ...match, matchesId };
 
         const statsMap = new Map<string, PlayerMatchStat>();
         (match.playerStats || []).forEach((s) => statsMap.set(s.playerId, s));
@@ -158,7 +159,7 @@ export const ServiceMatches = {
           statsMap.set(d.id, d.data() as PlayerMatchStat),
         );
 
-        return { ...match, playerStats: Array.from(statsMap.values()) };
+        return { ...match, matchesId, playerStats: Array.from(statsMap.values()) };
       }),
     );
   },

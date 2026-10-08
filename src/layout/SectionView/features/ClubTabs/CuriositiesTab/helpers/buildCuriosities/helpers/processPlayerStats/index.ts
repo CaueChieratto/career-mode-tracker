@@ -1,6 +1,6 @@
 import { Match } from "../../../../../../../../../common/interfaces/Match";
 import { TimelineEvent } from "../../types";
-import { parseMinute } from "../../utils";
+import { parseMinute, getGoalPeriod } from "../../utils";
 import { CuriositiesState } from "../createCuriositiesState";
 
 interface ProcessPlayerStatsParams {
@@ -38,17 +38,30 @@ export const processPlayerStats = ({
           strMin: strMinute,
         });
 
-        if (minNumber <= 45) {
+        const period = getGoalPeriod(minNumber, strMinute, m);
+
+        if (period === "1T") {
           state.goalsFirstHalf++;
           matchGoals1H++;
-        } else {
+        } else if (period === "2T") {
           state.goalsSecondHalf++;
           matchGoals2H++;
+        } else {
+          state.goalsExtraTime++;
         }
 
-        if (minNumber <= 15) hasOverwhelmingStart = true;
+        if (period === "1T" && minNumber <= 15) {
+          hasOverwhelmingStart = true;
+        }
 
-        if (strMinute.includes("90+") || minNumber >= 90) {
+        const stoppage2 = m.stoppage2T || 0;
+        const isStoppage90 =
+          (!m.hasExtraTime && (strMinute.includes("90+") || minNumber >= 90)) ||
+          (Boolean(m.hasExtraTime) &&
+            (strMinute.includes("90+") ||
+              (minNumber > 90 && minNumber <= 90 + stoppage2)));
+
+        if (isStoppage90) {
           state.stoppageTimeExperts[playerName] =
             (state.stoppageTimeExperts[playerName] || 0) + 1;
         }
@@ -90,8 +103,16 @@ export const processPlayerStats = ({
         }
 
         if (targetName) {
+          // Conexões Diretas (item original renomeado e mantido)
           const duoKey = `${targetName} (Ass: ${playerName})`;
           state.teamDuos[duoKey] = (state.teamDuos[duoKey] || 0) + 1;
+
+          // Melhores Duplas (novo ranking: soma total de participações independente de quem deu a assistência)
+          const [p1, p2] = [targetName, playerName].sort((a, b) =>
+            a.localeCompare(b),
+          );
+          const bestDuoKey = `${p1} & ${p2}`;
+          state.bestDuos[bestDuoKey] = (state.bestDuos[bestDuoKey] || 0) + 1;
         }
 
         if (diff > 0) {

@@ -10,14 +10,12 @@ import { ButtonsSwitch } from "../../../../../components/ButtonsSwitch";
 import { buildPlayersCopyText } from "./helpers/buildPlayersCopyText";
 import { sortPlayersList } from "./helpers/sortPlayersList";
 import { usePersistedSortOption } from "./hooks/usePersistedSortOption";
-import { SORTS_OPTIONS } from "./constants/SORTS_OPTIONS";
+import { getVisibleSortOptions } from "./constants/SORTS_OPTIONS";
 import { Copy } from "../../../../../common/utils/Copy";
-import { useAggregatedPlayers } from "../../../../../common/hooks/Players/UseAggregatedPlayers";
-import { augmentSeasonWithMatchStats } from "../../../helpers/mergeMatchStats";
+import { useClubPlayerStatsAggregation } from "./hooks/useClubPlayerStatsAggregation";
 import { SectionScreen } from "../../../config/screens";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
 import { GroupCareerContext } from "../../../../../pages/GroupCareerPage/contexts/GroupCareerContext";
-import { isSamePlayerId } from "../../../../../common/utils/playerIdentity";
 
 type StatsTab_ClubProps = {
   season: ClubData;
@@ -40,44 +38,33 @@ export const StatsTab_Club = ({
   const { sortOption, setSortOption, isReversed } =
     usePersistedSortOption(storageKeySuffix);
 
-  const careerAggregatedPlayers = useAggregatedPlayers(career);
+  const visibleSortOptions = useMemo(() => getVisibleSortOptions(), []);
 
-  const playersToDisplay = useMemo(() => {
-    if (isGroup && groupContext?.groupPlayers && groupContext.groupPlayers.length > 0) {
-      return groupContext.groupPlayers;
-    }
-    const basePlayers = isGeralPage
-      ? careerAggregatedPlayers
-      : augmentSeasonWithMatchStats(season, career.clubName).players;
+  const effectiveSortOption = visibleSortOptions.includes(sortOption)
+    ? sortOption
+    : visibleSortOptions[0] || "Ordenar por padrão";
 
-    return basePlayers.filter((p) => {
-      const isSuperseded = basePlayers.some((other) => {
-        if (other.id === p.id) return false;
-        if (other.playedWithUs === p.id) return true;
-        if (!other.sell && p.sell && isSamePlayerId(other, p)) return true;
-        if (
-          Boolean(other.playedWithUs) &&
-          isSamePlayerId(other, p) &&
-          (!other.sell || (other.overall || 0) >= (p.overall || 0))
-        ) {
-          return true;
-        }
-        return false;
-      });
-      return !isSuperseded;
-    });
-  }, [isGroup, groupContext?.groupPlayers, isGeralPage, careerAggregatedPlayers, season, career.clubName]);
+  const playersToDisplay = useClubPlayerStatsAggregation({
+    season,
+    career,
+    isGeralPage,
+    isGroup,
+    groupPlayers: groupContext?.groupPlayers,
+  });
 
-  const playersWithStats = useSortedPlayersWithStats(playersToDisplay);
+  const playersWithStats = useSortedPlayersWithStats(
+    playersToDisplay,
+    season.matches,
+  );
 
   const sortedPlayerList = useMemo(() => {
     return sortPlayersList(
       playersWithStats,
-      sortOption,
+      effectiveSortOption,
       isGeralPage,
       isReversed,
     );
-  }, [playersWithStats, sortOption, isGeralPage, isReversed]);
+  }, [playersWithStats, effectiveSortOption, isGeralPage, isReversed]);
 
   const copyList = async () => {
     if (!sortedPlayerList.length) return;
@@ -98,8 +85,8 @@ export const StatsTab_Club = ({
   return (
     <ContainerClubContent>
       <ButtonsSwitch
-        selectOptions={SORTS_OPTIONS}
-        selectValue={sortOption}
+        selectOptions={visibleSortOptions}
+        selectValue={effectiveSortOption}
         onSelectChange={setSortOption}
         onClickCopy={copyList}
       />

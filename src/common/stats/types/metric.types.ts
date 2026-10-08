@@ -1,9 +1,26 @@
-import { Players } from "../playersInfo/players";
+import { Players } from "../../interfaces/playersInfo/players";
 
-export type AggregatedPlayerStats = {
+export type MetricScreen =
+  | "bestPlayers"
+  | "comparePlayers"
+  | "playerDetailed"
+  | "curiosities"
+  | "statsTabClub"
+  | "matchStatsCard";
+
+export type MetricCategoryName =
+  | "Jogador"
+  | "Geral"
+  | "Ataque"
+  | "Distribuição"
+  | "Defesa"
+  | "Disciplina & Presença";
+
+export interface ConsolidatedPlayerStats {
   player: Players;
   games: number;
   avgRating: number;
+  ratingSum: number;
   goals: number;
   goalsPerGame: number;
   goalsPer90: number;
@@ -16,11 +33,11 @@ export type AggregatedPlayerStats = {
   goalFrequency: number;
   assistFrequency: number;
   participationFrequency: number;
-  defenses?: number;
-  defensesPerGame?: number;
-  defensesPer90?: number;
-  cleanSheets?: number;
-  cleanSheetsPerGame?: number;
+  defenses: number;
+  defensesPerGame: number;
+  defensesPer90: number;
+  cleanSheets: number;
+  cleanSheetsPerGame: number;
   totalFinishings: number;
   finishingsPerGame: number;
   finishingsPer90: number;
@@ -69,5 +86,45 @@ export type AggregatedPlayerStats = {
   maxDistanceKmInGame: number;
   minutesPlayed: number;
   minutesPerGame: number;
-  ownGoals?: number;
-};
+  ownGoals: number;
+
+  // Bio & metadata extras
+  age?: number | string;
+  position?: string;
+  marketValue?: string;
+  salary?: string;
+  seasonsAtClub?: number;
+
+  [key: string]: unknown;
+}
+
+export interface MetricDefinition {
+  id: string;
+  category: MetricCategoryName;
+  labels: {
+    default: string;
+    bestPlayers?: string;
+    comparePlayers?: string;
+    playerDetailed?: string;
+    matchStatsCard?: string;
+  };
+  getValue: (stats: ConsolidatedPlayerStats) => string | number | undefined;
+  format?: (value: string | number) => string | number;
+  isRating?: boolean;
+  isAscending?: boolean;
+  enabled: boolean;
+  screens: {
+    bestPlayers: boolean;
+    comparePlayers: boolean;
+    playerDetailed?: boolean;
+    curiosities?: boolean;
+    statsTabClub?: boolean;
+    matchStatsCard?: boolean;
+  };
+  group?: "goals" | "assists" | "cards" | "distance" | "general" | "defense" | "distribution" | "finishing" | "bio";
+  onlyCompareMode?: "total" | "season";
+  order?: {
+    bestPlayers?: number;
+    comparePlayers?: number;
+  };
+}

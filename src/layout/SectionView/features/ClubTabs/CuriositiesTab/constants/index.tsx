@@ -10,23 +10,26 @@ import {
   CuriositiesRankings,
   RankingType,
 } from "../../../../../../common/interfaces/Curiosities";
+import { isCuriosityGroupEnabled } from "../../../../../../common/stats";
 
-interface RankingCardConfig {
+export interface RankingCardConfig {
   key: keyof CuriositiesRankings;
   title: string;
   icon: React.ReactNode;
   type: RankingType;
   accentColor: string;
   isMinuteLabel?: boolean;
+  group?: "goals" | "assists" | "general" | "defense" | string;
 }
 
-export const rankingCards: RankingCardConfig[] = [
+export const allRankingCards: RankingCardConfig[] = [
   {
     key: "topDecisivePlayers",
     title: "Jogadores Decisivos (Gols da Vitória)",
     icon: <MdOutlineStarBorder />,
     type: "goals",
     accentColor: "#eab308",
+    group: "goals",
   },
   {
     key: "topOpeners",
@@ -34,6 +37,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdSportsSoccer />,
     type: "goals",
     accentColor: "#f97316",
+    group: "goals",
   },
   {
     key: "topWinAssistants",
@@ -41,6 +45,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdPeopleOutline />,
     type: "assists",
     accentColor: "#3b82f6",
+    group: "assists",
   },
   {
     key: "topStoppageTimeExperts",
@@ -48,13 +53,23 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdTimer />,
     type: "goals",
     accentColor: "#8b5cf6",
+    group: "goals",
   },
   {
     key: "topTeamDuos",
-    title: "Duplas Dinâmicas",
+    title: "Conexões Diretas (Gol & Passe)",
     icon: <MdPeopleOutline />,
     type: "goals",
     accentColor: "#8b5cf6",
+    group: "goals",
+  },
+  {
+    key: "topBestDuos",
+    title: "Melhores Duplas",
+    icon: <MdPeopleOutline />,
+    type: "participations",
+    accentColor: "#6366f1",
+    group: "goals",
   },
   {
     key: "topPlayerGoalMinutes",
@@ -62,6 +77,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdOutlineStarBorder />,
     type: "goals",
     accentColor: "#10b981",
+    group: "goals",
   },
   {
     key: "topPlayerAssistMinutes",
@@ -69,6 +85,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdPeopleOutline />,
     type: "assists",
     accentColor: "#3b82f6",
+    group: "assists",
   },
   {
     key: "topScoringMinutes",
@@ -77,6 +94,7 @@ export const rankingCards: RankingCardConfig[] = [
     type: "goals",
     isMinuteLabel: true,
     accentColor: "#10b981",
+    group: "goals",
   },
   {
     key: "dangerousIntervals",
@@ -84,6 +102,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdOutlineWarning />,
     type: "goals",
     accentColor: "#f43f5e",
+    group: "goals",
   },
   {
     key: "topConcedingMinutes",
@@ -92,6 +111,7 @@ export const rankingCards: RankingCardConfig[] = [
     type: "goals",
     isMinuteLabel: true,
     accentColor: "#ef4444",
+    group: "goals",
   },
   {
     key: "topOpponents",
@@ -99,6 +119,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdPeopleOutline />,
     type: "times",
     accentColor: "#eab308",
+    group: "general",
   },
   {
     key: "topVictims",
@@ -106,6 +127,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdOutlineStarBorder />,
     type: "goals",
     accentColor: "#22c55e",
+    group: "goals",
   },
   {
     key: "topPunchingBags",
@@ -113,6 +135,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdOutlineStarBorder />,
     type: "goals",
     accentColor: "#14b8a6",
+    group: "goals",
   },
   {
     key: "topOpponentTeamsScorers",
@@ -120,6 +143,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdOutlineWarning />,
     type: "goals",
     accentColor: "#ef4444",
+    group: "goals",
   },
   {
     key: "topOpponentParticipations",
@@ -127,6 +151,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdOutlineWarning />,
     type: "participations",
     accentColor: "#ef4444",
+    group: "goals",
   },
   {
     key: "topOpponentScorers",
@@ -134,6 +159,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdOutlineWarning />,
     type: "goals",
     accentColor: "#f59e0b",
+    group: "goals",
   },
   {
     key: "topReincidents",
@@ -141,6 +167,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdOutlineWarning />,
     type: "times",
     accentColor: "#f97316",
+    group: "general",
   },
   {
     key: "topOpponentDuos",
@@ -148,6 +175,7 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdPeopleOutline />,
     type: "goals",
     accentColor: "#ef4444",
+    group: "goals",
   },
   {
     key: "topScores",
@@ -155,5 +183,10 @@ export const rankingCards: RankingCardConfig[] = [
     icon: <MdOutlineStarBorder />,
     type: "times",
     accentColor: "#3b82f6",
+    group: "general",
   },
 ];
+
+export const rankingCards: RankingCardConfig[] = allRankingCards.filter(
+  (card) => isCuriosityGroupEnabled(card.group),
+);

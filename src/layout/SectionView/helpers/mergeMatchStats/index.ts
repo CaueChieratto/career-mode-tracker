@@ -9,6 +9,8 @@ import {
   isSamePlayerId,
 } from "../../../../common/utils/playerIdentity";
 
+import { getResilientMatchKey } from "../../features/ClubTabs/StatsTab_Club/helpers/aggregateSeasonClubStats";
+
 const getUnifiedPlayerLeagueStats = (
   player: Players,
   matches: Match[],
@@ -18,9 +20,12 @@ const getUnifiedPlayerLeagueStats = (
   const manualStats = player.statsLeagues || [];
   const matchStatsMap: Record<string, LeagueStats & { ratingSum: number }> = {};
 
-  const uniqueMatches = Array.from(
-    new Map(matches.map((m) => [m.matchesId, m])).values(),
-  );
+  const uniqueMatchesMap = new Map<string, Match>();
+  (matches || []).forEach((m, idx) => {
+    const key = getResilientMatchKey(m, idx);
+    uniqueMatchesMap.set(key, m);
+  });
+  const uniqueMatches = Array.from(uniqueMatchesMap.values());
 
   uniqueMatches.forEach((match) => {
     if (match.status !== "FINISHED") return;
@@ -104,7 +109,12 @@ const getUnifiedPlayerLeagueStats = (
 
 type AugmentedClubData = ClubData & { _isAugmented?: boolean };
 type AugmentedPlayer = Players & { _isAugmented?: boolean };
-type MaybeAugmentedPlayer = Players & { _isAugmented?: boolean };
+type MaybeAugmentedPlayer = Players & {
+  _isAugmented?: boolean;
+  manualStatsLeagues?: LeagueStats[];
+  aggregatedLeagues?: unknown;
+  hasAnyStats?: unknown;
+};
 
 export const toRawPlayer = (player: Players): Players => {
   const clean = { ...player } as MaybeAugmentedPlayer;
@@ -112,7 +122,9 @@ export const toRawPlayer = (player: Players): Players => {
   clean.statsLeagues = player.manualStatsLeagues ?? player.statsLeagues ?? [];
   delete clean._isAugmented;
   delete clean.manualStatsLeagues;
-  return clean;
+  delete clean.aggregatedLeagues;
+  delete clean.hasAnyStats;
+  return clean as Players;
 };
 
 export const augmentSeasonWithMatchStats = (
@@ -120,10 +132,9 @@ export const augmentSeasonWithMatchStats = (
   clubName: string,
 ): ClubData => {
   const currentSeason = season as AugmentedClubData;
-
   if (currentSeason._isAugmented) return season;
 
-  const augmentedPlayers = season.players.map((player) => {
+  const augmentedPlayers = (season.players || []).map((player) => {
     const currentPlayer = player as AugmentedPlayer;
     if (currentPlayer._isAugmented) return player;
 

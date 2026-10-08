@@ -15,7 +15,9 @@ export const useSortedPlayersWithStats = (
         match.playerStats?.some((stat) => stat.playerId === player.id),
       );
 
-      return hasLeagueStats || hasMatchStats;
+      const hasAnyStats = Boolean((player as unknown as { hasAnyStats?: boolean }).hasAnyStats);
+
+      return hasLeagueStats || hasMatchStats || hasAnyStats;
     });
     return sortPlayersWithStatsByPosition(filtered);
   }, [players, matches]);

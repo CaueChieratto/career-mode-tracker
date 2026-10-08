@@ -6,49 +6,61 @@ import { CgCopy } from "react-icons/cg";
 import { Copy } from "../../../../../../../common/utils/Copy";
 import { AggregatedPlayerStats } from "../../../../../../../common/interfaces/AggregatedPlayerStats/AggregatedPlayerStats";
 import { formatPlayerName } from "../../../../../../../common/utils/formatPlayerName";
+import { UnifiedTabConfig } from "../../constants/statConfigs";
 
 type StatCardProps = {
+  id: string;
   title: string;
+  tabs: UnifiedTabConfig[];
   data: AggregatedPlayerStats[];
-  accessor: keyof AggregatedPlayerStats;
-  isRating?: boolean;
-  isAscending?: boolean;
-  formatValue?: (val: number) => string | number;
+  clubColor?: string;
+  filter?: (stat: AggregatedPlayerStats) => boolean;
 };
 
 export const StatCard = ({
   title,
+  tabs,
   data,
-  accessor,
-  isRating,
-  isAscending,
-  formatValue,
+  clubColor,
+  filter,
 }: StatCardProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [activeTabId, setActiveTabId] = useState<string>(() => {
+    const defaultTab = tabs.find((t) => t.id === "totals");
+    return defaultTab ? defaultTab.id : tabs[0].id;
+  });
+
+  const activeTab = useMemo(() => {
+    const match = tabs.find((t) => t.id === activeTabId);
+    return match || tabs[0];
+  }, [tabs, activeTabId]);
 
   const sortedAndFilteredData = useMemo(() => {
     return data
       .filter((d) => {
-        const val = d[accessor] as number;
-        if (title.includes("Frequência") && d.goals === 0) return false;
-        return val > 0;
+        if (filter && !filter(d)) return false;
+        if (activeTab.filter && !activeTab.filter(d)) return false;
+        const val = d[activeTab.key] as number;
+        return typeof val === "number" && !isNaN(val) && val > 0;
       })
       .sort((a, b) => {
-        const valA = a[accessor] as number;
-        const valB = b[accessor] as number;
-        return isAscending ? valA - valB : valB - valA;
+        const valA = (a[activeTab.key] as number) || 0;
+        const valB = (b[activeTab.key] as number) || 0;
+        return activeTab.isAscending ? valA - valB : valB - valA;
       });
-  }, [data, accessor, title, isAscending]);
+  }, [data, activeTab, filter]);
 
   const copyStats = async () => {
     if (sortedAndFilteredData.length === 0) return;
 
-    const textLines = [`*${title}*`, ""];
+    const headerLabel =
+      tabs.length > 1 ? `${title} (${activeTab.label})` : title;
+    const textLines = [`*${headerLabel}*`, ""];
 
     sortedAndFilteredData.forEach((statItem, index) => {
-      const rawValue = statItem[accessor] as number;
-      const displayValue = formatValue
-        ? formatValue(rawValue)
+      const rawValue = statItem[activeTab.key] as number;
+      const displayValue = activeTab.format
+        ? activeTab.format(rawValue)
         : Number.isInteger(rawValue)
           ? rawValue
           : rawValue.toFixed(1);
@@ -62,8 +74,6 @@ export const StatCard = ({
     await Copy(textToCopy, "Estatísticas copiadas com sucesso!");
   };
 
-  if (sortedAndFilteredData.length === 0) return null;
-
   const displayData = expanded
     ? sortedAndFilteredData
     : sortedAndFilteredData.slice(0, 3);
@@ -71,45 +81,86 @@ export const StatCard = ({
   return (
     <Card className={Styles.card}>
       <header className={Styles.header}>
-        <div className={Styles.wrapper}>
-          <h3 className={Styles.title}>{title}</h3>
-          <span
-            className={Styles.copy}
-            onClick={copyStats}
-            style={{ cursor: "pointer" }}
-            title="Copiar estatísticas"
-          >
-            <CgCopy />
-          </span>
+        <div className={Styles.titleRow}>
+          <div className={Styles.wrapper}>
+            <h3 className={Styles.title}>{title}</h3>
+            <span
+              className={Styles.copy}
+              onClick={copyStats}
+              style={{ cursor: "pointer" }}
+              title="Copiar estatísticas"
+            >
+              <CgCopy />
+            </span>
+          </div>
+          {sortedAndFilteredData.length > 3 && (
+            <button
+              className={Styles.verTudo}
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? "Ver menos" : "Ver tudo"}
+            </button>
+          )}
         </div>
-        {sortedAndFilteredData.length > 3 && (
-          <button
-            className={Styles.verTudo}
-            onClick={() => setExpanded(!expanded)}
-          >
-            {expanded ? "Ver menos" : "Ver tudo"}
-          </button>
+
+        {tabs.length > 1 && (
+          <div className={Styles.tabContainer}>
+            {tabs.map((tab) => {
+              const isActive = tab.id === activeTab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  className={`${Styles.tabBtn} ${isActive ? Styles.tabBtnActive : ""}`}
+                  style={
+                    isActive
+                      ? {
+                          backgroundColor: clubColor || "#3b82f6",
+                          color: "#ffffff",
+                        }
+                      : undefined
+                  }
+                  onClick={() => setActiveTabId(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         )}
       </header>
-      <div className={Styles.list}>
-        {displayData.map((statItem, index) => {
-          const rawValue = statItem[accessor] as number;
-          const displayValue = formatValue
-            ? formatValue(rawValue)
-            : Number.isInteger(rawValue)
-              ? rawValue
-              : rawValue.toFixed(1);
 
-          return (
-            <PlayerStatRow
-              key={`${statItem.player.id}-${index}`}
-              player={statItem.player}
-              value={displayValue}
-              isRating={isRating}
-            />
-          );
-        })}
-      </div>
+      {sortedAndFilteredData.length === 0 ? (
+        <p className={Styles.emptyMessage}>
+          Nenhum jogador pontuou nesta métrica.
+        </p>
+      ) : (
+        <div className={Styles.list}>
+          {displayData.map((statItem, index) => {
+            const rawValue = statItem[activeTab.key] as number;
+            const parts = activeTab.formatParts
+              ? activeTab.formatParts(rawValue)
+              : undefined;
+            const displayValue = parts
+              ? parts.value
+              : activeTab.format
+                ? activeTab.format(rawValue)
+                : Number.isInteger(rawValue)
+                  ? rawValue
+                  : rawValue.toFixed(1);
+
+            return (
+              <PlayerStatRow
+                key={`${statItem.player.id}-${index}`}
+                player={statItem.player}
+                value={displayValue}
+                description={parts?.description}
+                isRating={activeTab.isRating}
+              />
+            );
+          })}
+        </div>
+      )}
     </Card>
   );
 };

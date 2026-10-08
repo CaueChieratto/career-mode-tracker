@@ -4,7 +4,7 @@ import {
   OpponentAssist,
 } from "../../../../../../../../../common/interfaces/OpponentEventsMatches";
 import { TimelineEvent } from "../../types";
-import { parseMinute, getInterval } from "../../utils";
+import { parseMinute, getInterval, getGoalPeriod } from "../../utils";
 import { CuriositiesState } from "../createCuriositiesState";
 
 interface ProcessOpponentEventsParams {
@@ -48,17 +48,19 @@ export const processOpponentEvents = ({
 
     const minNumber = parseMinute(goal.minute);
     if (!Number.isNaN(minNumber)) {
+      const strMin = String(goal.minute);
       events.push({
         minute: minNumber,
         isMine: false,
         player: goal.player || "Desconhecido",
-        strMin: String(goal.minute),
+        strMin,
       });
 
       state.concededGoalsMinute[minNumber] =
         (state.concededGoalsMinute[minNumber] || 0) + 1;
 
-      const interval = getInterval(minNumber);
+      const period = getGoalPeriod(minNumber, strMin, m);
+      const interval = getInterval(minNumber, period);
       state.dangerousIntervals[interval] =
         (state.dangerousIntervals[interval] || 0) + 1;
 

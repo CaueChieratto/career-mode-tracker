@@ -5,6 +5,7 @@
   justify-content: space-between;
   border-bottom: 1px solid #cdcdcd;
   padding: 10px 0;
+  gap: 8px;
 }
 
 .player:last-of-type {
@@ -15,13 +16,43 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.stat_content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  text-align: right;
+  gap: 4px;
 }
 
 .data_title_stat {
-  color: var(--blackColor);
   font-size: 16px;
   font-weight: 700;
   margin: 0;
+  text-align: right;
+  line-height: 1.2;
+}
+
+.stat_number {
+  color: var(--blackColor);
+  font-weight: 600;
+}
+
+.stat_unit {
+  color: var(--color-tertiary);
+  font-weight: 600;
+}
+
+.stat_description {
+  color: var(--color-tertiary);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: right;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .ratingBadge {

@@ -34,6 +34,7 @@ export const createCuriositiesState = () => ({
 
   goalsFirstHalf: 0,
   goalsSecondHalf: 0,
+  goalsExtraTime: 0,
   craziestMatch: { goals: 0, text: "-" },
 
   unbeatenWhenScoringFirstCount: 0,
@@ -56,6 +57,7 @@ export const createCuriositiesState = () => ({
   concededGoalsMinute: {} as Record<number, number>,
   opponentScorers: {} as Record<string, number>,
   teamDuos: {} as Record<string, number>,
+  bestDuos: {} as Record<string, number>,
   opponentDuos: {} as Record<string, number>,
   playerGoalMinutes: {} as Record<string, number>,
   playerAssistMinutes: {} as Record<string, number>,
