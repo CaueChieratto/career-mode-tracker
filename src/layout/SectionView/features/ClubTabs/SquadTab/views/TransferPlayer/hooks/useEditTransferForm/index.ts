@@ -17,7 +17,10 @@ import { getSeasonDateRange } from "../../../../../../../../../common/utils/GetS
 import { notifyCareersUpdated } from "../../../../../../../../../common/hooks/Career/UseCareer";
 import { updateCachedCareer } from "../../../../../../../../../common/helpers/Getters";
 
-import { checkIsSpecialTransfer } from "../../constants/buildEditTransferFormSections";
+import {
+  checkIsSpecialTransfer,
+  checkIsIncomingLoanExit,
+} from "../../constants/buildEditTransferFormSections";
 import { Contract } from "../../../../../../../../../common/interfaces/playersInfo/contract";
 
 export type UseEditTransferFormProps = {
@@ -58,22 +61,34 @@ export const applyRevertToCareer = (
     if (direction === "exit") {
       const currentContract = contracts[idx];
       const finalContracts = [...contracts];
+      const isIncomingReturn = checkIsIncomingLoanExit(
+        targetPlayer,
+        currentContract,
+        "exit",
+      );
 
-      if (currentContract?.dataArrival || currentContract?.fromClub) {
+      if (isIncomingReturn) {
         finalContracts[idx] = {
           ...currentContract,
           leftClub: "",
           dataExit: null,
           sellValue: 0,
-          isLoan: false,
-          loanDuration: undefined,
-          wagePercentage: undefined,
-          buyOptionValue: undefined,
+          isLoan: true,
         };
+
+        const updatedPlayer: Players = {
+          ...targetPlayer,
+          sell: false,
+          loan: false,
+          incomingLoan: true,
+          contract: finalContracts,
+        };
+
+        newPlayers = newPlayers.map((p) =>
+          p.id === playerId ? updatedPlayer : p,
+        );
       } else {
-        if (contracts.length > 1) {
-          finalContracts.splice(idx, 1);
-        } else if (currentContract) {
+        if (currentContract?.dataArrival || currentContract?.fromClub) {
           finalContracts[idx] = {
             ...currentContract,
             leftClub: "",
@@ -84,23 +99,57 @@ export const applyRevertToCareer = (
             wagePercentage: undefined,
             buyOptionValue: undefined,
           };
+        } else {
+          if (contracts.length > 1) {
+            finalContracts.splice(idx, 1);
+          } else if (currentContract) {
+            finalContracts[idx] = {
+              ...currentContract,
+              leftClub: "",
+              dataExit: null,
+              sellValue: 0,
+              isLoan: false,
+              loanDuration: undefined,
+              wagePercentage: undefined,
+              buyOptionValue: undefined,
+            };
+          }
         }
+
+        const updatedPlayer: Players = {
+          ...targetPlayer,
+          sell: false,
+          loan: false,
+          contract: finalContracts,
+        };
+
+        newPlayers = newPlayers.map((p) =>
+          p.id === playerId ? updatedPlayer : p,
+        );
       }
-
-      const updatedPlayer: Players = {
-        ...targetPlayer,
-        sell: false,
-        loan: false,
-        contract: finalContracts,
-      };
-
-      newPlayers = newPlayers.map((p) =>
-        p.id === playerId ? updatedPlayer : p,
-      );
     } else {
       // Arrivals
       if (contracts.length <= 1) {
-        newPlayers = newPlayers.filter((p) => p.id !== playerId);
+        if (contracts[0]?.fromClub === "Fim de Empréstimo") {
+          const updatedPlayer: Players = {
+            ...targetPlayer,
+            loan: true,
+            sell: false,
+            buy: false,
+            contract: [
+              {
+                ...contracts[0],
+                fromClub: "",
+                dataArrival: null,
+              },
+            ],
+          };
+          newPlayers = newPlayers.map((p) =>
+            p.id === playerId ? updatedPlayer : p,
+          );
+        } else {
+          newPlayers = newPlayers.filter((p) => p.id !== playerId);
+        }
       } else {
         const finalContracts = [...contracts];
         finalContracts.splice(idx, 1);
@@ -174,7 +223,24 @@ export const applyEditToCareer = (
       currentContract.dataExit = updatedFields.date;
       if (updatedFields.clubName)
         currentContract.leftClub = updatedFields.clubName;
-      if (updatedFields.transferType === "Venda") {
+
+      const isIncomingReturn =
+        checkIsIncomingLoanExit(
+          targetPlayer,
+          currentContract as Contract,
+          "exit",
+        ) || updatedFields.transferType === "Fim de Empréstimo";
+
+      if (isIncomingReturn) {
+        currentContract.sellValue = 0;
+        currentContract.isLoan = true;
+        delete currentContract.loanDuration;
+        delete currentContract.wagePercentage;
+        delete currentContract.buyOptionValue;
+        finalPlayer.sell = true;
+        finalPlayer.loan = false;
+        finalPlayer.incomingLoan = false;
+      } else if (updatedFields.transferType === "Venda") {
         currentContract.sellValue = updatedFields.transferValue;
         currentContract.isLoan = false;
         delete currentContract.loanDuration;
@@ -272,7 +338,9 @@ export const useEditTransferForm = ({
         transferType: isLoanArrival ? "Empréstimo" : "Compra",
         fromClub: contract.fromClub || "",
         buyValue:
-          contract.buyValue && !isLoanArrival
+          contract.buyValue !== undefined &&
+          contract.buyValue !== null &&
+          !isLoanArrival
             ? formatDisplayValue(contract.buyValue as number, career.currency)
             : "",
         loanDuration: contract.loanDuration
@@ -287,12 +355,31 @@ export const useEditTransferForm = ({
       };
       return res;
     } else {
+      const isIncomingLoanReturnExit = checkIsIncomingLoanExit(
+        player,
+        contract,
+        "exit",
+      );
+
+      if (isIncomingLoanReturnExit) {
+        return {
+          transferType: "Fim de Empréstimo",
+          toClub: contract.leftClub || contract.fromClub || "",
+          sellValue: "0",
+          dateExit: contract.dataExit
+            ? brasilDatePlaceholderShort(new Date(contract.dataExit))
+            : "",
+        };
+      }
+
       const isLoanExit = Boolean(contract.isLoan || player.loan);
       const res: Record<string, string> = {
         transferType: isLoanExit ? "Emprestar" : "Venda",
         toClub: contract.leftClub || "",
         sellValue:
-          contract.sellValue && !isLoanExit
+          contract.sellValue !== undefined &&
+          contract.sellValue !== null &&
+          !isLoanExit
             ? formatDisplayValue(contract.sellValue as number, career.currency)
             : "",
         loanDuration: contract.loanDuration
@@ -307,7 +394,7 @@ export const useEditTransferForm = ({
       };
       return res;
     }
-  }, [career.currency, contract, direction, player.incomingLoan, player.loan]);
+  }, [career.currency, contract, direction, player]);
 
   const [formValues, setFormValues] =
     useState<Record<string, string>>(initialValues);
@@ -365,6 +452,83 @@ export const useEditTransferForm = ({
         ? endDate.getFullYear()
         : startDate.getFullYear();
     const parsedDate = parseBrasilDate(date, year) || new Date();
+
+    const isIncomingLoanReturnExit = checkIsIncomingLoanExit(
+      player,
+      contract,
+      direction,
+    );
+
+    if (isIncomingLoanReturnExit) {
+      const clubName =
+        formValues.toClub || contract.leftClub || contract.fromClub;
+
+      if (!clubName || !clubName.trim()) {
+        alert("Por favor, informe o clube.");
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        await ServicePlayers.editTransferInSeason({
+          careerId: career.id,
+          seasonId: season.id,
+          playerId: player.id,
+          contractIndex,
+          direction,
+          transferType: "Fim de Empréstimo",
+          clubName: clubName.trim(),
+          transferValue: "0",
+          date,
+        });
+
+        const updatedCareer = applyEditToCareer(
+          career,
+          season.id,
+          player.id,
+          contractIndex,
+          direction,
+          {
+            clubName: clubName.trim(),
+            transferValue: 0,
+            transferType: "Fim de Empréstimo",
+            date: parsedDate,
+          },
+        );
+
+        const updatedSeason = updatedCareer.clubData.find(
+          (s) => s.id === season.id,
+        );
+        if (updatedSeason) {
+          season.players = updatedSeason.players;
+        }
+        career.clubData = updatedCareer.clubData;
+        career.updatedAt = updatedCareer.updatedAt;
+
+        const updatedPlayer = updatedSeason?.players.find(
+          (p) => p.id === player.id,
+        );
+        if (updatedPlayer) {
+          Object.assign(player, updatedPlayer);
+        }
+
+        updateCachedCareer(updatedCareer);
+        notifyCareersUpdated((prev) =>
+          prev.map((c) => (c.id === career.id ? updatedCareer : c)),
+        );
+
+        onClose();
+      } catch (error: unknown) {
+        alert(
+          error instanceof Error
+            ? error.message
+            : "Erro ao salvar a transferência.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
 
     if (isSpecial) {
       setIsLoading(true);
@@ -434,21 +598,22 @@ export const useEditTransferForm = ({
       transferType === "Emprestar" || transferType === "Empréstimo";
 
     const clubName = isArrival ? formValues.fromClub : formValues.toClub;
-    const transferValue = isArrival
+    const rawTransferValue = isArrival
       ? formValues.buyValue
       : formValues.sellValue;
+    const transferValue =
+      rawTransferValue !== undefined &&
+      rawTransferValue !== null &&
+      rawTransferValue.trim() !== ""
+        ? rawTransferValue.trim()
+        : "0";
 
     if (!clubName || !clubName.trim()) {
       alert("Por favor, informe o clube.");
       return;
     }
 
-    if (!isLoan) {
-      if (!transferValue || !transferValue.trim()) {
-        alert("Por favor, informe o valor da transferência.");
-        return;
-      }
-    } else {
+    if (isLoan) {
       if (!formValues.loanDuration || Number(formValues.loanDuration) <= 0) {
         alert("Por favor, informe a duração do empréstimo.");
         return;

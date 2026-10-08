@@ -1,4 +1,7 @@
 import { Players } from "../../../../interfaces/playersInfo/players";
+import { Contract } from "../../../../interfaces/playersInfo/contract";
+import { Career } from "../../../../interfaces/Career";
+import { getSeasonDateRange } from "../../../../utils/GetSeasonDateRange";
 import { parseBrasilDate } from "../../../../utils/Date";
 import { parseValue } from "../../../../utils/FormatValue";
 
@@ -187,4 +190,152 @@ export const buildReturnContractHistory = (
   }
 
   return { contractHistory, parsedDate };
+};
+
+export const checkIsIncomingLoanExit = (
+  player?: Partial<Players> | null,
+  contract?: NonNullable<Players["contract"]>[number] | null,
+  direction: "arrivals" | "exit" = "exit",
+): boolean => {
+  if (direction !== "exit" || !contract) return false;
+
+  if (contract.leftClub === "Fim de Empréstimo") return true;
+
+  if (player?.incomingLoan && Boolean(contract.leftClub)) return true;
+
+  if (
+    contract.fromClub &&
+    contract.leftClub &&
+    contract.fromClub !== "Base" &&
+    contract.fromClub === contract.leftClub &&
+    contract.isLoan
+  ) {
+    return true;
+  }
+
+  if (
+    contract.isLoan &&
+    contract.fromClub &&
+    contract.fromClub !== "Base" &&
+    Boolean(contract.leftClub) &&
+    !player?.loan
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+export const checkIsLoanReturnArrival = (
+  player?: Partial<Players> | null,
+  contract?: NonNullable<Players["contract"]>[number] | null,
+  contractIndex?: number,
+  career?: Career | null,
+  currentSeasonNumber?: number,
+): boolean => {
+  if (!contract) return false;
+  if (contract.fromClub === "Base" || contract.fromClub === "Passes Livres") return false;
+  if (contract.isLoan) return false;
+
+  const rawBuy =
+    typeof contract.buyValue === "string"
+      ? parseValue(contract.buyValue)
+      : typeof contract.buyValue === "number"
+      ? contract.buyValue
+      : 0;
+  if (rawBuy > 0) return false;
+
+  if (contract.fromClub === "Fim de Empréstimo") return true;
+
+  // 1. Check contracts history on player (both fullContractHistory and contract)
+  const contractsList = player?.fullContractHistory || player?.contract || [];
+  if (contractsList.length > 0) {
+    const idx = contractIndex ?? contractsList.indexOf(contract as Contract);
+
+    // If there is an immediately preceding contract that was a loan
+    if (idx > 0) {
+      const prev = contractsList[idx - 1];
+      if (prev?.isLoan && prev?.leftClub) {
+        return true;
+      }
+    }
+
+    // Check if any contract in history had a loan out to this club
+    const hadLoanOutToSameClub = contractsList.some(
+      (c) =>
+        c.isLoan &&
+        c.leftClub &&
+        contract.fromClub &&
+        c.leftClub.trim().toLowerCase() === contract.fromClub.trim().toLowerCase(),
+    );
+    if (hadLoanOutToSameClub) return true;
+
+    // Check if any contract had isLoan: true and leftClub
+    const hadAnyLoanOut = contractsList.some(
+      (c) => c.isLoan && Boolean(c.leftClub) && c.leftClub !== "Fim de Empréstimo",
+    );
+    if (hadAnyLoanOut && contract.fromClub) {
+      const matchedClub = contractsList.some(
+        (c) =>
+          c.isLoan &&
+          c.leftClub &&
+          (c.leftClub.trim().toLowerCase() === contract.fromClub!.trim().toLowerCase() ||
+            contract.fromClub === "Fim de Empréstimo"),
+      );
+      if (matchedClub) return true;
+    }
+  }
+
+  // 2. Check career.clubData to see what happened in previous seasons
+  if (career?.clubData && player?.id) {
+    let seasonNum = currentSeasonNumber;
+    if (seasonNum === undefined && contract.dataArrival && career.createdAt) {
+      const arrDate = new Date(contract.dataArrival).getTime();
+      const matchedSeason = career.clubData.find((s) => {
+        const { startDate, endDate } = getSeasonDateRange(
+          s.seasonNumber,
+          career.createdAt,
+          career.nation,
+        );
+        return arrDate >= startDate.getTime() && arrDate <= endDate.getTime();
+      });
+      if (matchedSeason) seasonNum = matchedSeason.seasonNumber;
+    }
+
+    // Look at previous seasons in career (seasons prior to seasonNum)
+    const previousSeasons = career.clubData
+      .filter((s) => seasonNum === undefined || s.seasonNumber < seasonNum)
+      .sort((a, b) => b.seasonNumber - a.seasonNumber);
+
+    for (const prevSeason of previousSeasons) {
+      const prevPlayer = prevSeason.players?.find((p) => p.id === player.id);
+      if (prevPlayer) {
+        // If the player was marked as loaned in that season
+        if (prevPlayer.loan) {
+          return true;
+        }
+
+        // Did prevPlayer have any loan contract in that season?
+        const hadLoanContract = prevPlayer.contract?.some(
+          (c) =>
+            c.isLoan &&
+            c.leftClub &&
+            (!contract.fromClub ||
+              c.leftClub.trim().toLowerCase() === contract.fromClub.trim().toLowerCase() ||
+              contract.fromClub === "Fim de Empréstimo"),
+        );
+        if (hadLoanContract) return true;
+
+        // Found player in most recent previous season and was not on loan
+        break;
+      }
+    }
+  }
+
+  // 3. In the current season: if player.loan is currently true
+  if (player?.loan && contract.fromClub) {
+    return true;
+  }
+
+  return false;
 };

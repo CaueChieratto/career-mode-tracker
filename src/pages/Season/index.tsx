@@ -85,6 +85,8 @@ const Season = () => {
         transferType={transferType}
         playersToShow={playersToShow}
         currency={career.currency}
+        career={career}
+        season={season}
         onTransferClick={handleTransferClick}
       />
       {activeModal === ModalType.NONE && !hasOpenScreen && <BottomMenu />}

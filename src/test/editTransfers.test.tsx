@@ -1089,5 +1089,636 @@ describe("applyRevertToCareer (atualização síncrona sem necessidade de F5)", 
 
     expect(updatedCareer.clubData[0].players).toHaveLength(0);
   });
+
+  it("reverte saída de fim de empréstimo recebido restaurando incomingLoan: true e mantendo isLoan: true", async () => {
+    const { applyRevertToCareer } = await import(
+      "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/hooks/useEditTransferForm"
+    );
+
+    const initialCareer: Career = {
+      id: "c1",
+      clubData: [
+        {
+          id: "s1",
+          seasonNumber: 1,
+          players: [
+            {
+              id: "p-loan-return-exit",
+              name: "Endrick",
+              sell: true,
+              loan: false,
+              incomingLoan: false,
+              contract: [
+                {
+                  fromClub: "Real Madrid",
+                  leftClub: "Real Madrid",
+                  buyValue: 0,
+                  sellValue: 0,
+                  isLoan: true,
+                  loanDuration: 1,
+                  wagePercentage: 50,
+                  dataArrival: new Date("2024-01-01"),
+                  dataExit: new Date("2024-06-30"),
+                },
+              ],
+            } as unknown as Players,
+          ],
+        } as unknown as ClubData,
+      ],
+    } as unknown as Career;
+
+    const updatedCareer = applyRevertToCareer(
+      initialCareer,
+      "s1",
+      "p-loan-return-exit",
+      0,
+      "exit",
+    );
+
+    const revertedPlayer = updatedCareer.clubData[0].players.find(
+      (p) => p.id === "p-loan-return-exit",
+    )!;
+    expect(revertedPlayer.sell).toBe(false);
+    expect(revertedPlayer.loan).toBe(false);
+    expect(revertedPlayer.incomingLoan).toBe(true);
+    expect(revertedPlayer.contract[0].leftClub).toBe("");
+    expect(revertedPlayer.contract[0].dataExit).toBeNull();
+    expect(revertedPlayer.contract[0].isLoan).toBe(true);
+  });
 });
+
+describe("buildEditTransferFormSections para Custo Zero e Fim de Empréstimo em Saídas", () => {
+  it("trata chegada a custo zero de um clube como transferência normal editável", () => {
+    const zeroCostArrivalContract = {
+      fromClub: "Santos",
+      leftClub: "",
+      buyValue: 0,
+      sellValue: 0,
+      isLoan: false,
+      dataArrival: new Date("2024-07-01"),
+    } as unknown as NonNullable<Players["contract"]>[number];
+
+    const sections = buildEditTransferFormSections(
+      "arrivals",
+      "Compra",
+      ["Santos"],
+      zeroCostArrivalContract,
+    );
+
+    expect(sections).toHaveLength(3);
+    expect(sections[0].title).toBe("Tipo de Transferência");
+    expect(sections[0].fields[0][0].options).toEqual(["Compra", "Empréstimo"]);
+
+    const detailFieldIds = sections[1].fields.flat().map((f) => f.id);
+    expect(detailFieldIds).toContain("fromClub");
+    expect(detailFieldIds).toContain("buyValue");
+    expect(detailFieldIds).toContain("dateArrival");
+
+    expect(sections[2].title).toBe("Manutenção");
+    expect(sections[2].fields[0][0].id).toBe("revertTransfer");
+  });
+
+  it("trata saída a custo zero para um clube como transferência normal editável", () => {
+    const zeroCostExitContract = {
+      fromClub: "",
+      leftClub: "Coritiba",
+      buyValue: 0,
+      sellValue: 0,
+      isLoan: false,
+      dataArrival: new Date("2024-01-01"),
+      dataExit: new Date("2024-08-01"),
+    } as unknown as NonNullable<Players["contract"]>[number];
+
+    const sections = buildEditTransferFormSections(
+      "exit",
+      "Venda",
+      ["Coritiba"],
+      zeroCostExitContract,
+    );
+
+    expect(sections).toHaveLength(3);
+    expect(sections[0].title).toBe("Tipo de Transferência");
+    expect(sections[0].fields[0][0].options).toEqual(["Venda", "Emprestar"]);
+
+    const detailFieldIds = sections[1].fields.flat().map((f) => f.id);
+    expect(detailFieldIds).toContain("toClub");
+    expect(detailFieldIds).toContain("sellValue");
+    expect(detailFieldIds).toContain("dateExit");
+
+    expect(sections[2].title).toBe("Manutenção");
+    expect(sections[2].fields[0][0].id).toBe("revertTransfer");
+  });
+
+  it("gera seções específicas para fim de empréstimo recebido em saídas sem opções de venda/empréstimo", () => {
+    const incomingLoanExitContract = {
+      fromClub: "Real Madrid",
+      leftClub: "Real Madrid",
+      buyValue: 0,
+      sellValue: 0,
+      isLoan: true,
+      dataArrival: new Date("2024-01-01"),
+      dataExit: new Date("2024-06-30"),
+    } as unknown as NonNullable<Players["contract"]>[number];
+
+    const player = {
+      id: "p-incoming-exit",
+      name: "Endrick",
+      incomingLoan: false,
+      sell: true,
+      contract: [incomingLoanExitContract],
+    } as unknown as Players;
+
+    const sections = buildEditTransferFormSections(
+      "exit",
+      "Fim de Empréstimo",
+      ["Real Madrid"],
+      incomingLoanExitContract,
+      player,
+    );
+
+    // Deve ter apenas 2 seções: Detalhes da Transferência e Manutenção (sem Tipo de Transferência)
+    expect(sections).toHaveLength(2);
+    expect(sections[0].title).toBe("Detalhes da Transferência");
+
+    const detailFieldIds = sections[0].fields.flat().map((f) => f.id);
+    expect(detailFieldIds).toContain("toClub");
+    expect(detailFieldIds).toContain("dateExit");
+    expect(detailFieldIds).not.toContain("sellValue");
+    expect(detailFieldIds).not.toContain("loanDuration");
+    expect(detailFieldIds).not.toContain("wagePercentage");
+
+    expect(sections[1].title).toBe("Manutenção");
+    expect(sections[1].fields[0][0].id).toBe("revertTransfer");
+  });
+});
+
+describe("TransfersPanel rótulo Custo Zero vs Fim do Empréstimo em Chegadas", () => {
+  it("exibe rótulo 'Custo Zero' para compra a custo zero vinda de um clube real", () => {
+    cleanup();
+    const zeroCostBoughtPlayer = {
+      id: "p-free-buy",
+      name: "Ganso",
+      buy: true,
+      contract: [
+        {
+          fromClub: "Santos",
+          buyValue: 0,
+          dataArrival: new Date("2024-07-15"),
+        },
+      ],
+    } as unknown as Players;
+
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        players={[zeroCostBoughtPlayer]}
+        currency="€"
+        onTransferClick={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Custo Zero")).toBeDefined();
+    expect(screen.queryByText("Fim do Empréstimo")).toBeNull();
+  });
+
+  it("exibe rótulo 'Fim do Empréstimo' para jogador que de fato retornou de empréstimo concedido", () => {
+    cleanup();
+    const loanReturnPlayer = {
+      id: "p-loan-return",
+      name: "Reinier",
+      buy: false,
+      loan: false,
+      contract: [
+        {
+          fromClub: "Flamengo",
+          leftClub: "Girona",
+          isLoan: true,
+          dataArrival: new Date("2023-01-01"),
+          dataExit: new Date("2024-06-30"),
+        },
+        {
+          fromClub: "Girona",
+          buyValue: 0,
+          dataArrival: new Date("2024-07-01"),
+        },
+      ],
+    } as unknown as Players;
+
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        players={[loanReturnPlayer]}
+        currency="€"
+        onTransferClick={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Fim do Empréstimo")).toBeDefined();
+  });
+
+  it("exibe rótulo 'Fim do Empréstimo' para jogador que possui buy: true e retornou de empréstimo", () => {
+    cleanup();
+    const boughtAndLoanedPlayer = {
+      id: "p-bought-and-loaned",
+      name: "Vitor Roque",
+      buy: true,
+      loan: false,
+      contract: [
+        {
+          fromClub: "Athletico-PR",
+          buyValue: 40000000,
+          leftClub: "Betis",
+          isLoan: true,
+          dataArrival: new Date("2024-01-01"),
+          dataExit: new Date("2024-06-30"),
+        },
+        {
+          fromClub: "Betis",
+          buyValue: 0,
+          dataArrival: new Date("2024-07-01"),
+        },
+      ],
+    } as unknown as Players;
+
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        players={[boughtAndLoanedPlayer]}
+        currency="€"
+        onTransferClick={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Fim do Empréstimo")).toBeDefined();
+    expect(screen.queryByText("Custo Zero")).toBeNull();
+  });
+
+  it("exibe rótulo 'Fim do Empréstimo' quando player.contract foi filtrado mas fullContractHistory contém o empréstimo", () => {
+    cleanup();
+    const loanContract = {
+      fromClub: "Athletico-PR",
+      leftClub: "Betis",
+      isLoan: true,
+      dataExit: new Date("2024-06-30"),
+    };
+    const arrivalContract = {
+      fromClub: "Betis",
+      buyValue: 0,
+      dataArrival: new Date("2024-07-01"),
+    };
+
+    const playerWithFilteredContract = {
+      id: "p-filtered-history",
+      name: "Vitor Roque",
+      buy: true,
+      contract: [arrivalContract],
+      fullContractHistory: [loanContract, arrivalContract],
+    } as unknown as Players;
+
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        players={[playerWithFilteredContract]}
+        currency="€"
+        onTransferClick={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Fim do Empréstimo")).toBeDefined();
+    expect(screen.queryByText("Custo Zero")).toBeNull();
+  });
+
+  it("exibe rótulo 'Fim do Empréstimo' quando o jogador estava emprestado na temporada anterior no histórico do Career", () => {
+    cleanup();
+    const arrivalContract = {
+      fromClub: "Betis",
+      buyValue: 0,
+      dataArrival: new Date("2024-07-01"),
+    };
+
+    const returningPlayer = {
+      id: "p-season-history",
+      name: "Vitor Roque",
+      buy: false,
+      contract: [arrivalContract],
+    } as unknown as Players;
+
+    const mockCareer = {
+      id: "c-1",
+      createdAt: new Date("2023-07-01"),
+      nation: "Espanha",
+      currency: "€",
+      clubData: [
+        {
+          id: "s-1",
+          seasonNumber: 1,
+          players: [
+            {
+              id: "p-season-history",
+              name: "Vitor Roque",
+              loan: true,
+              contract: [
+                {
+                  leftClub: "Betis",
+                  isLoan: true,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: "s-2",
+          seasonNumber: 2,
+          players: [returningPlayer],
+        },
+      ],
+    } as unknown as Career;
+
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        players={[returningPlayer]}
+        currency="€"
+        career={mockCareer}
+        season={mockCareer.clubData[1]}
+        onTransferClick={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Fim do Empréstimo")).toBeDefined();
+    expect(screen.queryByText("Custo Zero")).toBeNull();
+  });
+
+  it("exibe 'Custo Zero' quando empréstimo ocorreu em temporada antiga mas na temporada anterior o jogador já não estava emprestado", () => {
+    cleanup();
+    const arrivalContract = {
+      fromClub: "Santos",
+      buyValue: 0,
+      dataArrival: new Date("2025-07-01"),
+    };
+
+    const arrivingPlayer = {
+      id: "p-past-loan",
+      name: "Neymar",
+      buy: false,
+      loan: false,
+      contract: [arrivalContract],
+    } as unknown as Players;
+
+    const mockCareer = {
+      id: "c-1",
+      createdAt: new Date("2023-07-01"),
+      nation: "Espanha",
+      currency: "€",
+      clubData: [
+        {
+          id: "s-1",
+          seasonNumber: 1,
+          players: [
+            {
+              id: "p-past-loan",
+              name: "Neymar",
+              loan: true,
+              contract: [{ leftClub: "Santos", isLoan: true }],
+            },
+          ],
+        },
+        {
+          id: "s-2",
+          seasonNumber: 2,
+          players: [
+            {
+              id: "p-past-loan",
+              name: "Neymar",
+              loan: false,
+              contract: [{ leftClub: "", isLoan: false }],
+            },
+          ],
+        },
+        {
+          id: "s-3",
+          seasonNumber: 3,
+          players: [arrivingPlayer],
+        },
+      ],
+    } as unknown as Career;
+
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        players={[arrivingPlayer]}
+        currency="€"
+        career={mockCareer}
+        season={mockCareer.clubData[2]}
+        onTransferClick={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Custo Zero")).toBeDefined();
+    expect(screen.queryByText("Fim do Empréstimo")).toBeNull();
+  });
+});
+
+describe("PlayersContractService - Edição e Reversão de Fim de Empréstimo Recebido", () => {
+  it("ao editar data de saída de fim de empréstimo recebido, preserva isLoan e não torna o jogador nosso ativo", async () => {
+    const incomingPlayer = {
+      id: "p-endrick-loan",
+      name: "Endrick",
+      sell: true,
+      loan: false,
+      buy: false,
+      incomingLoan: false,
+      contract: [
+        {
+          fromClub: "Real Madrid",
+          leftClub: "Real Madrid",
+          buyValue: 0,
+          sellValue: 0,
+          isLoan: true,
+          dataArrival: new Date("2024-01-01"),
+          dataExit: new Date("2024-06-30"),
+        },
+      ],
+    } as Players;
+
+    mockCareer.clubData[0].players.push(incomingPlayer);
+
+    await PlayersContractService.editTransferInSeason({
+      careerId: "career-1",
+      seasonId: "season-1",
+      playerId: "p-endrick-loan",
+      contractIndex: 0,
+      direction: "exit",
+      transferType: "Fim de Empréstimo",
+      clubName: "Real Madrid CF",
+      transferValue: "0",
+      date: "15/07",
+    });
+
+    expect(incomingPlayer.sell).toBe(true);
+    expect(incomingPlayer.loan).toBe(false);
+    expect(incomingPlayer.incomingLoan).toBe(false);
+    expect(incomingPlayer.contract![0].isLoan).toBe(true);
+    expect(incomingPlayer.contract![0].leftClub).toBe("Real Madrid CF");
+  });
+
+  it("ao reverter saída de fim de empréstimo recebido, restaura incomingLoan: true no jogador", async () => {
+    const incomingPlayer = {
+      id: "p-endrick-revert",
+      name: "Endrick",
+      sell: true,
+      loan: false,
+      buy: false,
+      incomingLoan: false,
+      contract: [
+        {
+          fromClub: "Real Madrid",
+          leftClub: "Real Madrid",
+          buyValue: 0,
+          sellValue: 0,
+          isLoan: true,
+          dataArrival: new Date("2024-01-01"),
+          dataExit: new Date("2024-06-30"),
+        },
+      ],
+    } as Players;
+
+    mockCareer.clubData[0].players.push(incomingPlayer);
+
+    await PlayersContractService.revertTransferInSeason({
+      careerId: "career-1",
+      seasonId: "season-1",
+      playerId: "p-endrick-revert",
+      contractIndex: 0,
+      direction: "exit",
+    });
+
+    expect(incomingPlayer.sell).toBe(false);
+    expect(incomingPlayer.loan).toBe(false);
+    expect(incomingPlayer.incomingLoan).toBe(true);
+    expect(incomingPlayer.contract![0].isLoan).toBe(true);
+    expect(incomingPlayer.contract![0].leftClub).toBe("");
+    expect(incomingPlayer.contract![0].dataExit).toBeNull();
+  });
+});
+
+describe("scheduleLineupSlotScroll e EmptySlotRow comportamentos de Scroll", () => {
+  it("scheduleLineupSlotScroll rola diretamente até o elemento com data-slot-id para banco e campo", async () => {
+    vi.useFakeTimers();
+    const { scheduleLineupSlotScroll } = await import(
+      "../pages/Match/components/LineupTab/services/scheduleLineupSlotScroll"
+    );
+
+    const scrollIntoViewMock = vi.fn();
+    const mockBenchEl = document.createElement("div");
+    mockBenchEl.setAttribute("data-slot-id", "bench-0");
+    mockBenchEl.scrollIntoView = scrollIntoViewMock;
+    document.body.appendChild(mockBenchEl);
+
+    scheduleLineupSlotScroll("bench-0");
+    vi.advanceTimersByTime(160);
+
+    expect(scrollIntoViewMock).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    document.body.removeChild(mockBenchEl);
+    vi.useRealTimers();
+  });
+
+  it("EmptySlotRow renderiza sem disparar scrollIntoView de forma invasiva na montagem/atualização", async () => {
+    cleanup();
+    const { EmptySlotRow } = await import(
+      "../pages/Match/components/LineupTab/layouts/Bottom/components/EmptySlotRow"
+    );
+
+    const scrollIntoViewSpy = vi.fn();
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoViewSpy;
+
+    const { rerender } = render(
+      <EmptySlotRow slotId="bench-0" isActive={false} onSelect={vi.fn()} />,
+    );
+
+    expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+
+    rerender(
+      <EmptySlotRow slotId="bench-1" isActive={false} onSelect={vi.fn()} />,
+    );
+
+    expect(scrollIntoViewSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("Impedir edição de transferências na tela Geral", () => {
+  it("TransfersPanel não permite clique de edição quando onTransferClick não é fornecido (ex: tela Geral)", () => {
+    cleanup();
+    const player = {
+      id: "p-geral-player",
+      name: "Rodrygo",
+      contract: [
+        {
+          fromClub: "Santos",
+          buyValue: 45000000,
+          dataArrival: new Date("2024-07-01"),
+        },
+      ],
+    } as unknown as Players;
+
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        players={[player]}
+        currency="€"
+      />,
+    );
+
+    const playerNameEl = screen.getByText("Rodrygo");
+    const itemEl = playerNameEl.closest("li");
+    expect(itemEl).toBeDefined();
+    expect(itemEl?.style.cursor).toBe("default");
+
+    // Clicking should not error or attempt to call undefined callback
+    fireEvent.click(itemEl!);
+  });
+
+  it("TransfersPanel permite clique de edição quando onTransferClick é fornecido (ex: tela Season)", () => {
+    cleanup();
+    const player = {
+      id: "p-season-player",
+      name: "Rodrygo",
+      contract: [
+        {
+          fromClub: "Santos",
+          buyValue: 45000000,
+          dataArrival: new Date("2024-07-01"),
+        },
+      ],
+    } as unknown as Players;
+
+    const onTransferClickMock = vi.fn();
+
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        players={[player]}
+        currency="€"
+        onTransferClick={onTransferClickMock}
+      />,
+    );
+
+    const playerNameEl = screen.getByText("Rodrygo");
+    const itemEl = playerNameEl.closest("li");
+    expect(itemEl).toBeDefined();
+    expect(itemEl?.style.cursor).toBe("pointer");
+
+    fireEvent.click(itemEl!);
+    expect(onTransferClickMock).toHaveBeenCalledTimes(1);
+    expect(onTransferClickMock).toHaveBeenCalledWith(
+      expect.objectContaining({ player, contractIndex: 0 }),
+      "arrivals",
+    );
+  });
+});
+
 

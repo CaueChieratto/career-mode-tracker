@@ -8,6 +8,8 @@ import {
   buildSellContractHistory,
   buildLoanContractHistory,
   buildReturnContractHistory,
+  checkIsIncomingLoanExit,
+  checkIsLoanReturnArrival,
 } from "./helpers/contractHelpers";
 
 import { parseBrasilDate } from "../../utils/Date";
@@ -236,10 +238,27 @@ export const PlayersContractService = {
       currentContract.fromClub &&
       specialClubs.includes(currentContract.fromClub);
 
+    const isIncomingReturn =
+      checkIsIncomingLoanExit(player, currentContract, direction) ||
+      transferType === "Fim de Empréstimo";
+
     if (direction === "exit") {
       currentContract.dataExit = parsedDate;
 
-      if (!isSpecialExit) {
+      if (isIncomingReturn) {
+        if (clubName) currentContract.leftClub = clubName;
+        currentContract.sellValue = 0;
+        currentContract.isLoan = true;
+        delete currentContract.loanDuration;
+        delete currentContract.wagePercentage;
+        delete currentContract.buyOptionValue;
+        finalPlayer = {
+          ...finalPlayer,
+          sell: true,
+          loan: false,
+          incomingLoan: false,
+        };
+      } else if (!isSpecialExit) {
         if (clubName) currentContract.leftClub = clubName;
 
         if (transferType === "Venda") {
@@ -356,21 +375,25 @@ export const PlayersContractService = {
     }
 
     if (direction === "exit") {
-      player.sell = false;
-      player.loan = false;
+      const isIncomingReturn = checkIsIncomingLoanExit(
+        player,
+        currentContract,
+        "exit",
+      );
 
-      if (currentContract.dataArrival || currentContract.fromClub) {
+      if (isIncomingReturn) {
         currentContract.leftClub = "";
         currentContract.dataExit = null;
         currentContract.sellValue = 0;
-        currentContract.isLoan = false;
-        delete currentContract.loanDuration;
-        delete currentContract.wagePercentage;
-        delete currentContract.buyOptionValue;
+        currentContract.isLoan = true;
+        player.sell = false;
+        player.loan = false;
+        player.incomingLoan = true;
       } else {
-        if (contracts.length > 1) {
-          contracts.splice(idx, 1);
-        } else {
+        player.sell = false;
+        player.loan = false;
+
+        if (currentContract.dataArrival || currentContract.fromClub) {
           currentContract.leftClub = "";
           currentContract.dataExit = null;
           currentContract.sellValue = 0;
@@ -378,6 +401,18 @@ export const PlayersContractService = {
           delete currentContract.loanDuration;
           delete currentContract.wagePercentage;
           delete currentContract.buyOptionValue;
+        } else {
+          if (contracts.length > 1) {
+            contracts.splice(idx, 1);
+          } else {
+            currentContract.leftClub = "";
+            currentContract.dataExit = null;
+            currentContract.sellValue = 0;
+            currentContract.isLoan = false;
+            delete currentContract.loanDuration;
+            delete currentContract.wagePercentage;
+            delete currentContract.buyOptionValue;
+          }
         }
       }
 
@@ -395,16 +430,40 @@ export const PlayersContractService = {
     } else {
       // Arrivals
       if (contracts.length <= 1) {
-        const playerRef = doc(
-          db,
-          `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/players`,
-          playerId,
+        const isLoanReturn = checkIsLoanReturnArrival(
+          player,
+          currentContract,
+          idx,
+          career,
+          seasonToUpdate.seasonNumber,
         );
-        await deleteDoc(playerRef);
-        seasonToUpdate.players = seasonToUpdate.players.filter(
-          (p) => p.id !== playerId,
-        );
-        await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
+        if (isLoanReturn || currentContract.fromClub === "Fim de Empréstimo") {
+          currentContract.fromClub = "";
+          currentContract.dataArrival = null;
+          player.loan = true;
+          player.sell = false;
+          player.buy = false;
+          const playerRef = doc(
+            db,
+            `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/players`,
+            playerId,
+          );
+          await setDoc(playerRef, player);
+          await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
+          const targetInSeason = seasonToUpdate.players.find((p) => p.id === playerId);
+          if (targetInSeason) Object.assign(targetInSeason, player);
+        } else {
+          const playerRef = doc(
+            db,
+            `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/players`,
+            playerId,
+          );
+          await deleteDoc(playerRef);
+          seasonToUpdate.players = seasonToUpdate.players.filter(
+            (p) => p.id !== playerId,
+          );
+          await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
+        }
       } else {
         contracts.splice(idx, 1);
         player.contract = contracts;

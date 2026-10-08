@@ -57,6 +57,7 @@ export default function EditTransferScreen({
     formValues.transferType,
     filteredTeamOptions,
     contract,
+    player,
   );
 
   return (

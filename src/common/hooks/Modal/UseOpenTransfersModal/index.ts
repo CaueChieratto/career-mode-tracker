@@ -36,6 +36,7 @@ export const useOpenTransfersModal = (career?: Career, season?: ClubData) => {
           .filter((p) => p.contract?.some((c) => c.fromClub))
           .map((p) => ({
             ...p,
+            fullContractHistory: p.contract,
             contract: p.contract.filter((c) => c.fromClub),
           }));
       } else {
@@ -43,6 +44,7 @@ export const useOpenTransfersModal = (career?: Career, season?: ClubData) => {
           .filter((p) => p.contract?.some((c) => c.leftClub))
           .map((p) => ({
             ...p,
+            fullContractHistory: p.contract,
             contract: p.contract.filter((c) => c.leftClub),
           }));
       }
@@ -67,6 +69,7 @@ export const useOpenTransfersModal = (career?: Career, season?: ClubData) => {
           })
           .map((p) => ({
             ...p,
+            fullContractHistory: p.contract,
             contract: p.contract.filter((c) => {
               if (!c.fromClub) return false;
               const arrivalDate = c.dataArrival || career.createdAt;
@@ -89,6 +92,7 @@ export const useOpenTransfersModal = (career?: Career, season?: ClubData) => {
           })
           .map((p) => ({
             ...p,
+            fullContractHistory: p.contract,
             contract: p.contract.filter((c) => {
               if (!c.leftClub) return false;
               const exitDate = c.dataExit || career.createdAt;

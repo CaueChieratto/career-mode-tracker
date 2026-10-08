@@ -1,4 +1,3 @@
-import { useRef, useEffect } from "react";
 import { UI_TEXT } from "../../constants/uiText";
 import { Row } from "../Row";
 import Styles from "./EmptySlotRow.module.css";
@@ -14,21 +13,11 @@ export const EmptySlotRow = ({
   isActive,
   onSelect,
 }: EmptySlotRowProps) => {
-  const buttonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    buttonRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-    });
-  }, [slotId]);
-
   const handleSelect = () => onSelect(slotId);
 
   return (
     <Row data-slot-id={slotId}>
       <button
-        ref={buttonRef}
         type="button"
         className={`${Styles.empty_avatar} ${
           isActive ? Styles.empty_avatar_active : ""

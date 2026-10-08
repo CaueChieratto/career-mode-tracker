@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { Career } from "../common/interfaces/Career";
 import { Players } from "../common/interfaces/playersInfo/players";
 import { Contract } from "../common/interfaces/playersInfo/contract";
 import {
@@ -487,5 +488,326 @@ describe("buildTransferCopyText - Formato exato solicitado pelo usuário", () =>
     expect(exitText).toBe(
       "Base 2, ATA, 17 anos, GHA, foi emprestado ao AJ Auxerre por 1 ano.",
     );
+  });
+
+  it("gera texto correto para contratação a custo zero de um clube específico (chegada a custo zero)", () => {
+    const player: Players = {
+      id: "p-free-club",
+      name: "Marcos Leonardo",
+      position: "ATA",
+      age: 21,
+      nation: "BRA",
+      contractTime: 3,
+      salary: 50000,
+      buy: true,
+      sell: false,
+      loan: false,
+      incomingLoan: false,
+      contract: [],
+    } as unknown as Players;
+
+    const contract: Contract = {
+      fromClub: "Santos",
+      leftClub: "",
+      buyValue: 0,
+      sellValue: 0,
+      dataArrival: new Date("2024-07-01"),
+      dataExit: null,
+    };
+
+    const text = buildTransferCopyText({
+      player,
+      contract,
+      direction: "arrivals",
+      currency: "EUR",
+    });
+
+    expect(text).toBe(
+      "Marcos Leonardo, ATA, 21 anos, BRA, 3 anos de contrato com um salario semanal de 50 mil, foi contratado do Santos a custo zero.",
+    );
+  });
+
+  it("gera texto correto para retorno de empréstimo concedido (Loan Out Return)", () => {
+    const player: Players = {
+      id: "p-loan-out-return",
+      name: "Reinier",
+      position: "MEI",
+      age: 22,
+      nation: "BRA",
+      contractTime: 2,
+      salary: 40000,
+      buy: false,
+      sell: false,
+      loan: false,
+      incomingLoan: false,
+      contract: [
+        {
+          fromClub: "Flamengo",
+          buyValue: 30000000,
+          leftClub: "Girona",
+          sellValue: 0,
+          isLoan: true,
+          dataArrival: new Date("2023-01-01"),
+          dataExit: new Date("2024-06-30"),
+        },
+      ],
+    } as unknown as Players;
+
+    const contract: Contract = {
+      fromClub: "Girona",
+      leftClub: "",
+      buyValue: 0,
+      sellValue: 0,
+      dataArrival: new Date("2024-07-01"),
+      dataExit: null,
+    };
+
+    const text = buildTransferCopyText({
+      player,
+      contract,
+      direction: "arrivals",
+      currency: "EUR",
+    });
+
+    expect(text).toBe("Reinier, MEI, 22 anos, BRA, retornou de empréstimo do Girona.");
+  });
+
+  it("gera texto correto de retorno de empréstimo para jogador que tem buy: true", () => {
+    const player: Players = {
+      id: "p-bought-and-loaned",
+      name: "Reinier",
+      position: "MEI",
+      age: 22,
+      nation: "BRA",
+      contractTime: 3,
+      salary: 30000,
+      sector: "Meio-Campo",
+      shirtNumber: "19",
+      overall: 76,
+      playerValue: 12000000,
+      buy: true,
+      captain: false,
+      sell: false,
+      loan: false,
+      incomingLoan: false,
+      contract: [
+        {
+          fromClub: "Flamengo",
+          buyValue: 30000000,
+          leftClub: "Girona",
+          sellValue: 0,
+          isLoan: true,
+          dataArrival: new Date("2023-01-01"),
+          dataExit: new Date("2024-06-30"),
+        },
+      ],
+    } as unknown as Players;
+
+    const contract: Contract = {
+      fromClub: "Girona",
+      leftClub: "",
+      buyValue: 0,
+      sellValue: 0,
+      dataArrival: new Date("2024-07-01"),
+      dataExit: null,
+    };
+
+    const text = buildTransferCopyText({
+      player,
+      contract,
+      direction: "arrivals",
+      currency: "EUR",
+    });
+
+    expect(text).toBe("Reinier, MEI, 22 anos, BRA, retornou de empréstimo do Girona.");
+  });
+
+  it("gera texto de retorno de empréstimo quando prior loan está em fullContractHistory", () => {
+    const loanContract: Contract = {
+      fromClub: "Flamengo",
+      buyValue: 30000000,
+      leftClub: "Girona",
+      sellValue: 0,
+      isLoan: true,
+      dataArrival: new Date("2023-01-01"),
+      dataExit: new Date("2024-06-30"),
+    };
+    const arrivalContract: Contract = {
+      fromClub: "Girona",
+      leftClub: "",
+      buyValue: 0,
+      sellValue: 0,
+      dataArrival: new Date("2024-07-01"),
+      dataExit: null,
+    };
+
+    const player = {
+      id: "p-filtered",
+      name: "Reinier",
+      position: "MEI",
+      age: 22,
+      nation: "BRA",
+      contractTime: 3,
+      salary: 30000,
+      sector: "Meio-Campo",
+      shirtNumber: "19",
+      overall: 76,
+      playerValue: 12000000,
+      buy: true,
+      captain: false,
+      sell: false,
+      loan: false,
+      incomingLoan: false,
+      contract: [arrivalContract],
+      fullContractHistory: [loanContract, arrivalContract],
+    } as unknown as Players;
+
+    const text = buildTransferCopyText({
+      player,
+      contract: arrivalContract,
+      direction: "arrivals",
+      currency: "EUR",
+    });
+
+    expect(text).toBe("Reinier, MEI, 22 anos, BRA, retornou de empréstimo do Girona.");
+  });
+
+  it("gera texto de retorno de empréstimo quando o jogador estava emprestado na temporada anterior no Career", () => {
+    const arrivalContract: Contract = {
+      fromClub: "Girona",
+      leftClub: "",
+      buyValue: 0,
+      sellValue: 0,
+      dataArrival: new Date("2024-07-01"),
+      dataExit: null,
+    };
+
+    const player = {
+      id: "p-interseason",
+      name: "Reinier",
+      position: "MEI",
+      age: 22,
+      nation: "BRA",
+      contractTime: 3,
+      salary: 30000,
+      sector: "Meio-Campo",
+      shirtNumber: "19",
+      overall: 76,
+      playerValue: 12000000,
+      buy: false,
+      contract: [arrivalContract],
+    } as unknown as Players;
+
+    const mockCareer = {
+      id: "c-1",
+      createdAt: new Date("2023-07-01"),
+      nation: "Espanha",
+      currency: "€",
+      clubData: [
+        {
+          id: "s-1",
+          seasonNumber: 1,
+          players: [
+            {
+              id: "p-interseason",
+              name: "Reinier",
+              loan: true,
+              contract: [{ leftClub: "Girona", isLoan: true }],
+            },
+          ],
+        },
+        {
+          id: "s-2",
+          seasonNumber: 2,
+          players: [player],
+        },
+      ],
+    } as unknown as Career;
+
+    const text = buildTransferCopyText({
+      player,
+      contract: arrivalContract,
+      direction: "arrivals",
+      currency: "EUR",
+      career: mockCareer,
+      season: mockCareer.clubData[1],
+    });
+
+    expect(text).toBe("Reinier, MEI, 22 anos, BRA, retornou de empréstimo do Girona.");
+  });
+
+  it("gera texto correto para fim de empréstimo recebido (Incoming Loan Return Exit)", () => {
+    const player: Players = {
+      id: "p-incoming-loan-return-exit",
+      name: "Endrick",
+      position: "ATA",
+      age: 18,
+      nation: "BRA",
+      contractTime: 1,
+      salary: 100000,
+      buy: false,
+      sell: true,
+      loan: false,
+      incomingLoan: false,
+      contract: [
+        {
+          fromClub: "Real Madrid",
+          buyValue: 0,
+          leftClub: "Real Madrid",
+          sellValue: 0,
+          isLoan: true,
+          dataArrival: new Date("2024-07-01"),
+          dataExit: new Date("2025-06-30"),
+        },
+      ],
+    } as unknown as Players;
+
+    const contract = player.contract![0];
+
+    const text = buildTransferCopyText({
+      player,
+      contract,
+      direction: "exit",
+      currency: "EUR",
+    });
+
+    expect(text).toBe(
+      "Endrick, ATA, 18 anos, BRA, retornou ao Real Madrid após o fim do empréstimo.",
+    );
+  });
+
+  it("gera texto correto para saída a custo zero para um clube específico", () => {
+    const player: Players = {
+      id: "p-exit-free",
+      name: "Veterano",
+      position: "VOL",
+      age: 33,
+      nation: "BRA",
+      contractTime: 1,
+      salary: 20000,
+      buy: false,
+      sell: true,
+      loan: false,
+      incomingLoan: false,
+      contract: [],
+    } as unknown as Players;
+
+    const contract: Contract = {
+      fromClub: "",
+      leftClub: "Coritiba",
+      buyValue: 0,
+      sellValue: 0,
+      dataArrival: null,
+      dataExit: new Date("2024-08-01"),
+    };
+
+    const text = buildTransferCopyText({
+      player,
+      contract,
+      direction: "exit",
+      currency: "EUR",
+    });
+
+    expect(text).toBe("Veterano, VOL, 33 anos, BRA, foi transferido ao Coritiba a custo zero.");
   });
 });

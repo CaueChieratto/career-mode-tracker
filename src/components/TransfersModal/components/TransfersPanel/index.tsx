@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import { FaRegCopy } from "react-icons/fa";
+import { Career } from "../../../../common/interfaces/Career";
+import { ClubData } from "../../../../common/interfaces/club/clubData";
 import { Players } from "../../../../common/interfaces/playersInfo/players";
 import { formatDisplayValue } from "../../../../common/utils/FormatValue";
+import {
+  checkIsIncomingLoanExit,
+  checkIsLoanReturnArrival,
+} from "../../../../common/services/ServicePlayers/helpers/contractHelpers";
 import {
   sortTransfersByValue,
   TransferEvent,
@@ -16,6 +22,8 @@ type TransfersPanelProps = {
   title: string;
   players: Players[];
   currency?: string;
+  career?: Career;
+  season?: ClubData;
   onTransferClick?: (
     event: TransferEvent,
     direction: "arrivals" | "exit",
@@ -26,6 +34,8 @@ const TransfersPanel = ({
   title,
   players,
   currency,
+  career,
+  season,
   onTransferClick,
 }: TransfersPanelProps) => {
   const isArrival = title === "Chegadas";
@@ -55,7 +65,14 @@ const TransfersPanel = ({
           : !!contract.dataExit || !!contract.leftClub;
 
         if (isValidForTab) {
-          events.push({ player, contract, contractIndex: contractIdx });
+          const realIndex = player.fullContractHistory
+            ? player.fullContractHistory.indexOf(contract)
+            : contractIdx;
+          events.push({
+            player,
+            contract,
+            contractIndex: realIndex >= 0 ? realIndex : contractIdx,
+          });
         }
       });
     });
@@ -81,6 +98,14 @@ const TransfersPanel = ({
             let displayValue = formatDisplayValue(value as number, currency);
 
             if (isArrival) {
+              const isLoanReturn = checkIsLoanReturnArrival(
+                player,
+                contract,
+                contractIndex,
+                career,
+                season?.seasonNumber,
+              );
+
               if (value && (value as number) > 0) {
                 displayValue = formatDisplayValue(value as number, currency);
               } else if (contract.fromClub === "Base") {
@@ -89,18 +114,16 @@ const TransfersPanel = ({
                 displayValue = "Custo Zero";
               } else if (contract.isLoan || player.incomingLoan) {
                 displayValue = "Empréstimo";
-              } else if (contract.fromClub) {
+              } else if (isLoanReturn) {
                 displayValue = "Fim do Empréstimo";
+              } else if (contract.fromClub) {
+                displayValue = "Custo Zero";
               }
             } else {
-              const isIncomingLoanReturn = Boolean(
-                contract.leftClub === "Fim de Empréstimo" ||
-                (player.incomingLoan && contract.leftClub) ||
-                (contract.fromClub &&
-                  contract.leftClub &&
-                  contract.fromClub !== "Base" &&
-                  contract.fromClub === contract.leftClub &&
-                  contract.isLoan),
+              const isIncomingLoanReturn = checkIsIncomingLoanExit(
+                player,
+                contract,
+                "exit",
               );
 
               if (value && (value as number) > 0) {
@@ -129,18 +152,22 @@ const TransfersPanel = ({
               contract,
               direction: transferType,
               currency,
+              career,
+              season,
             });
 
             const isPromotedFromAcademy =
               isArrival && contract.fromClub === "Base";
+            const isClickable =
+              Boolean(onTransferClick) && !isPromotedFromAcademy;
 
             return (
               <li
                 key={`${player.id}-${date}-${index}`}
                 className={Styles.item}
-                style={isPromotedFromAcademy ? { cursor: "default" } : undefined}
+                style={{ cursor: isClickable ? "pointer" : "default" }}
                 onClick={() => {
-                  if (isPromotedFromAcademy) return;
+                  if (!isClickable) return;
                   onTransferClick?.(
                     { player, contract, contractIndex },
                     transferType,

@@ -24,6 +24,7 @@ export interface Players {
   incomingLoan?: boolean;
   contractTime: number;
   contract: Contract[];
+  fullContractHistory?: Contract[];
   statsLeagues: LeagueStats[];
   manualStatsLeagues?: LeagueStats[];
   isAcademy?: boolean;

@@ -8,6 +8,10 @@ import { Field } from "../../../../../../../../../components/FormSection";
 import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
 import { ModalType } from "../../../../../../../../../common/types/enums/ModalType";
 
+import { checkIsIncomingLoanExit } from "../../../../../../../../../common/services/ServicePlayers/helpers/contractHelpers";
+
+export { checkIsIncomingLoanExit };
+
 export interface EditTransferSection {
   title: string;
   fields: Field[][];
@@ -19,26 +23,13 @@ export const checkIsSpecialTransfer = (
 ): boolean => {
   if (!contract) return false;
   if (direction === "arrivals") {
-    if (contract.fromClub === "Base" || contract.fromClub === "Passes Livres") {
-      return true;
-    }
-    if (contract.fromClub && !contract.buyValue && !contract.isLoan) {
-      return true;
-    }
-    return false;
+    return contract.fromClub === "Base";
   } else {
-    if (
+    return (
       contract.leftClub === "Aposentou" ||
       contract.leftClub === "Aposentadoria" ||
-      contract.leftClub === "Passes Livres" ||
       contract.leftClub === "Fim de Contrato"
-    ) {
-      return true;
-    }
-    if (contract.leftClub && !contract.sellValue && !contract.isLoan) {
-      return true;
-    }
-    return false;
+    );
   }
 };
 
@@ -54,10 +45,16 @@ export const buildEditTransferFormSections = (
   transferType: string,
   teamOptions: string[] = [],
   contract?: NonNullable<Players["contract"]>[number],
+  player?: Players,
 ): EditTransferSection[] => {
   const isArrival = direction === "arrivals";
   const isSpecial = checkIsSpecialTransfer(contract, direction);
   const isAcademy = checkIsPromotedFromAcademy(contract, direction);
+  const isIncomingLoanReturnExit = checkIsIncomingLoanExit(
+    player,
+    contract,
+    direction,
+  );
 
   const revertSection: EditTransferSection = {
     title: "Manutenção",
@@ -74,6 +71,35 @@ export const buildEditTransferFormSections = (
     ],
   };
 
+  if (isIncomingLoanReturnExit) {
+    const loanReturnDetailsSection: EditTransferSection = {
+      title: "Detalhes da Transferência",
+      fields: [
+        [
+          {
+            id: "toClub",
+            name: "Clube de retorno",
+            icon: <GiPoliceBadge />,
+            placeholder: "Ex: Barcelona",
+            inputType: "searchable-select",
+            options: teamOptions,
+          },
+        ],
+        [
+          {
+            id: "dateExit",
+            name: "Data da saída",
+            icon: <BsCalendar2Event />,
+            placeholder: "Ex: 11/07",
+            maxLength: 5,
+          },
+        ],
+      ],
+    };
+
+    return [loanReturnDetailsSection, revertSection];
+  }
+
   if (isSpecial) {
     let dateLabel = isArrival ? "Data da contratação" : "Data da saída";
     const dateId = isArrival ? "dateArrival" : "dateExit";
@@ -81,8 +107,6 @@ export const buildEditTransferFormSections = (
     if (isArrival) {
       if (contract?.fromClub === "Base") {
         dateLabel = "Data da promoção";
-      } else if (!contract?.buyValue && !contract?.isLoan) {
-        dateLabel = "Data de retorno";
       }
     } else {
       if (
@@ -90,10 +114,7 @@ export const buildEditTransferFormSections = (
         contract?.leftClub === "Aposentadoria"
       ) {
         dateLabel = "Data da aposentadoria";
-      } else if (
-        contract?.leftClub === "Passes Livres" ||
-        contract?.leftClub === "Fim de Contrato"
-      ) {
+      } else if (contract?.leftClub === "Fim de Contrato") {
         dateLabel = "Data do término de contrato";
       }
     }

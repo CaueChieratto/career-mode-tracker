@@ -1,6 +1,12 @@
+import { Career } from "../../../../../common/interfaces/Career";
+import { ClubData } from "../../../../../common/interfaces/club/clubData";
 import { Contract } from "../../../../../common/interfaces/playersInfo/contract";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
 import { parseValue } from "../../../../../common/utils/FormatValue";
+import {
+  checkIsIncomingLoanExit,
+  checkIsLoanReturnArrival,
+} from "../../../../../common/services/ServicePlayers/helpers/contractHelpers";
 
 const CURRENCY_DICTIONARY: Record<
   string,
@@ -156,6 +162,8 @@ export interface BuildTransferCopyTextOptions {
   contract: Contract;
   direction: "arrivals" | "exit";
   currency?: string;
+  career?: Career;
+  season?: ClubData;
 }
 
 export const buildTransferCopyText = ({
@@ -163,6 +171,8 @@ export const buildTransferCopyText = ({
   contract,
   direction,
   currency,
+  career,
+  season,
 }: BuildTransferCopyTextOptions): string => {
   const ageYears = player.age || 0;
   const ageText = `${ageYears} ${ageYears === 1 ? "ano" : "anos"}`;
@@ -195,10 +205,13 @@ export const buildTransferCopyText = ({
 
     // 3. Retorno de Empréstimo
     if (
-      contract.fromClub &&
-      !contract.buyValue &&
-      !contract.isLoan &&
-      contract.fromClub !== "Passes Livres"
+      checkIsLoanReturnArrival(
+        player,
+        contract,
+        undefined,
+        career,
+        season?.seasonNumber,
+      )
     ) {
       return `${prefix}, retornou de empréstimo do ${contract.fromClub}.`;
     }
@@ -244,15 +257,7 @@ export const buildTransferCopyText = ({
   }
 
   // 3. Fim de Empréstimo (jogador emprestado ao nosso clube retorna ao clube de origem)
-  const isIncomingLoanReturn = Boolean(
-    contract.leftClub === "Fim de Empréstimo" ||
-    (player.incomingLoan && contract.leftClub) ||
-    (contract.fromClub &&
-      contract.leftClub &&
-      contract.fromClub !== "Base" &&
-      contract.fromClub === contract.leftClub &&
-      contract.isLoan),
-  );
+  const isIncomingLoanReturn = checkIsIncomingLoanExit(player, contract, "exit");
 
   if (isIncomingLoanReturn) {
     return `${prefix}, retornou ao ${contract.leftClub} após o fim do empréstimo.`;
