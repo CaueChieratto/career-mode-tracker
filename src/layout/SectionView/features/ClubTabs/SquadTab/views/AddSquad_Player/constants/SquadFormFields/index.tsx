@@ -5,6 +5,7 @@ import {
   FaSignature,
   FaHandHoldingUsd,
   FaHistory,
+  FaUndo,
 } from "react-icons/fa";
 import { GiPodium, GiSoccerField } from "react-icons/gi";
 import { MdAttachMoney, MdNumbers } from "react-icons/md";
@@ -276,6 +277,17 @@ export const getSquadFormFields = (
             options: pastPlayerOptions,
             editOnly: true,
             isKnownPlayerOnly: true,
+          },
+        ],
+        [
+          {
+            id: "returnLoan",
+            name: "Retornar do empréstimo?",
+            icon: <FaUndo />,
+            checkbox: true,
+            action: ModalType.RETURN_LOAN_CONFIRM,
+            editOnly: true,
+            loanOnly: true,
           },
         ],
       ],
