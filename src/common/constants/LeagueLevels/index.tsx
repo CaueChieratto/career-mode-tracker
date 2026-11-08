@@ -1,6 +1,6 @@
 export const LeagueLevels: Record<string, number> = {
   // Liga nacional
-  "La Liga": 1,
+  LaLiga: 1,
   "Premier League": 1,
   Brasileirao: 1,
   Bundesliga: 1,
@@ -30,7 +30,7 @@ export const LeagueLevels: Record<string, number> = {
   "Scottish Cup": 3,
 
   // Supercopa nacional
-  Supercopa: 4,
+  "Supercopa de España": 4,
   Supercup: 4,
   Supercoppa: 4,
   "Super Cup": 4,
@@ -50,7 +50,7 @@ export const LeagueLevels: Record<string, number> = {
   "BSM Trophy": 15,
 
   // Outras divisões
-  "La Liga 2": 7,
+  "LaLiga 2": 7,
   "Bundesliga 2": 7,
   "3. Liga": 8,
   "EFL Championship": 7,

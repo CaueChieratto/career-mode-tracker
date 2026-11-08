@@ -34,24 +34,24 @@ export const leaguesByContinent: ContinentLeagues = {
     ],
     Espanha: [
       {
-        name: "La Liga",
+        name: "LaLiga",
         logo: "/images/leagues/spain/laliga.png",
         trophy: "/images/trophies/spain/laliga.png",
         league: true,
         isFirstDivision: true,
       },
       {
-        name: "Copa do Rey",
+        name: "Copa del Rey",
         logo: "/images/leagues/spain/copaDoRey.png",
         trophy: "/images/trophies/spain/copaDoRey.png",
       },
       {
-        name: "Supercopa",
+        name: "Supercopa de España",
         logo: "/images/leagues/spain/supercopa.png",
         trophy: "/images/trophies/spain/supercopa.png",
       },
       {
-        name: "La liga 2",
+        name: "LaLiga 2",
         logo: "/images/leagues/spain/laliga2.png",
         trophy: "/images/trophies/spain/laliga2.png",
         league: true,
