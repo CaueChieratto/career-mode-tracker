@@ -1,13 +1,13 @@
 import { useMemo, useState, useEffect } from "react";
 import { Career } from "../../../../../../../common/interfaces/Career";
 import { Players } from "../../../../../../../common/interfaces/playersInfo/players";
-import { getContinentByCountry } from "../../../../../../../common/services/GetContinentByCountry";
 import { Trophy } from "../../../../../../../common/interfaces/club/trophy";
 import { LeagueLevels } from "../../../../../../../common/constants/LeagueLevels";
-import { calculateTotalStats } from "../../../../ClubTabs/StatsTab_Club/components/PlayerStatsList/utils/calculateTotalStats";
+import { calculateTotalStats } from "../../../../../../../common/stats/helpers/calculateTotalStats";
+import { formatSeasonShortLabel } from "../../../../../../../common/utils/Date";
 import { SeasonCareerData } from "../../../SeasonsPlayerTab/hooks/useRenderableSeasons";
 import { PlayersGroupService } from "../../../../../../../common/services/ServicePlayers/PlayersGroupService";
-import { isSamePlayerId } from "../../../../../../../common/utils/playerIdentity";
+import { findPlayerInList } from "../../../../../../../common/utils/playerIdentity";
 
 export const useTotalPlayerTab = (
   career: Career,
@@ -43,16 +43,8 @@ export const useTotalPlayerTab = (
     if (!player || allSeasonsData.length === 0)
       return { allTrophiesWon: [], seasonsCount: 0 };
 
-    const normalizedName = player.name.trim().toLowerCase();
-    const normalizedNation = player.nation.trim().toLowerCase();
-
     const seasonsPlayerPlayed = allSeasonsData.filter(({ season }) => {
-      const playerInSeason = season.players.find(
-        (p) =>
-          isSamePlayerId(p, player) ||
-          (p.name.trim().toLowerCase() === normalizedName &&
-            p.nation.trim().toLowerCase() === normalizedNation),
-      );
+      const playerInSeason = findPlayerInList(season.players, player);
 
       if (!playerInSeason) return false;
 
@@ -68,32 +60,13 @@ export const useTotalPlayerTab = (
       );
     });
 
-    const getSeasonString = (
-      seasonNumber: number,
-      specificCareer: Career,
-    ): string => {
-      const dateVal: unknown = specificCareer.createdAt;
-      let createdDate = new Date();
-
-      if (dateVal && typeof dateVal === "object" && "seconds" in dateVal) {
-        createdDate = new Date((dateVal as { seconds: number }).seconds * 1000);
-      } else if (dateVal) {
-        createdDate = new Date(dateVal as string | Date | number);
-      }
-
-      const startYear = createdDate.getFullYear() + seasonNumber - 1;
-      const continent = getContinentByCountry(specificCareer.nation);
-
-      if (continent === "Europa") {
-        const endYear = (startYear + 1).toString().slice(-2);
-        return `${startYear.toString().slice(-2)}/${endYear}`;
-      } else {
-        return startYear.toString();
-      }
-    };
-
     const seasonsPlayerPlayedStrings = seasonsPlayerPlayed.map(
-      ({ season, career }) => getSeasonString(season.seasonNumber, career),
+      ({ season, career: specificCareer }) =>
+        formatSeasonShortLabel(
+          specificCareer.createdAt,
+          specificCareer.nation,
+          season.seasonNumber,
+        ),
     );
 
     const uniqueCareers = Array.from(

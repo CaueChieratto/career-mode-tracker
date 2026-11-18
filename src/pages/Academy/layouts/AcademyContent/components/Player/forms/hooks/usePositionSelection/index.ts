@@ -1,26 +1,37 @@
 import { useMemo, useState, useEffect } from "react";
-import { POSITION_DATA } from "../../../../../../../../../common/types/Positions";
+import {
+  SECTOR_OPTIONS,
+  positionOptionsBySector,
+} from "../../../../../../../../../common/types/Positions";
+
+const LEGACY_SECTOR_MAP: Record<string, string> = {
+  Atacantes: "Ataque",
+  Meias: "Meia",
+  Defensores: "Defesa",
+  Goleiros: "Goleiro",
+};
+
+const normalizeSector = (sec?: string): string => {
+  if (!sec) return SECTOR_OPTIONS[0];
+  return LEGACY_SECTOR_MAP[sec] || sec;
+};
 
 export const usePositionSelection = (
   initialSector?: string,
   initialPosition?: string,
 ) => {
   const sectorsList = useMemo(() => {
-    return POSITION_DATA.filter((sector) => sector.key !== "loaned").map(
-      (sector) => sector.name,
-    );
+    return [...SECTOR_OPTIONS] as string[];
   }, []);
 
-  const [sector, setSector] = useState<string>(
-    initialSector || POSITION_DATA[0]?.name || "",
+  const [sector, setSector] = useState<string>(() =>
+    normalizeSector(initialSector),
   );
 
-  const availablePositions = useMemo(() => {
-    const selectedSector = POSITION_DATA.find((item) => item.name === sector);
-    if (!selectedSector) {
-      return [];
-    }
-    return selectedSector.sortOrder ?? selectedSector.positions;
+  const availablePositions = useMemo<string[]>(() => {
+    const norm = normalizeSector(sector) as keyof typeof positionOptionsBySector;
+    const positions = positionOptionsBySector[norm];
+    return positions ? [...positions] : [];
   }, [sector]);
 
   const [position, setPosition] = useState<string>(initialPosition || "");
@@ -38,10 +49,14 @@ export const usePositionSelection = (
     }
   }, [availablePositions]);
 
+  const handleSetSector = (newSector: string) => {
+    setSector(normalizeSector(newSector));
+  };
+
   return {
     sectorsList,
     sector,
-    setSector,
+    setSector: handleSetSector,
     availablePositions,
     position,
     setPosition,

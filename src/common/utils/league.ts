@@ -366,3 +366,156 @@ export const continentalLeagueByCountry: Record<string, string | undefined> = {
   Argentina: "Conmebol",
   Arabia: "AFC",
 };
+
+const NATION_KEY_ALIASES: Record<string, string> = {
+  esp: "Espanha",
+  spain: "Espanha",
+  espanha: "Espanha",
+  eng: "Inglaterra",
+  england: "Inglaterra",
+  inglaterra: "Inglaterra",
+  ita: "Itália",
+  italy: "Itália",
+  italia: "Itália",
+  ger: "Alemanha",
+  deu: "Alemanha",
+  germany: "Alemanha",
+  alemanha: "Alemanha",
+  fra: "França",
+  france: "França",
+  franca: "França",
+  por: "Portugal",
+  portugal: "Portugal",
+  ned: "Holanda",
+  netherlands: "Holanda",
+  holanda: "Holanda",
+  bel: "Bélgica",
+  belgium: "Bélgica",
+  belgica: "Bélgica",
+  tur: "Turquia",
+  turkey: "Turquia",
+  turquia: "Turquia",
+  sco: "Escócia",
+  scotland: "Escócia",
+  escocia: "Escócia",
+  bra: "Brasil",
+  brazil: "Brasil",
+  brasil: "Brasil",
+  arg: "Argentina",
+  argentina: "Argentina",
+  sau: "Arábia Saudita",
+  arabia: "Arábia Saudita",
+  "saudi arabia": "Arábia Saudita",
+  usa: "Estados Unidos",
+  "united states": "Estados Unidos",
+};
+
+export const getContinentByCountry = (country: string): string | null => {
+  if (!country) return null;
+  const normalizedCountry =
+    NATION_KEY_ALIASES[country.trim().toLowerCase()] || country;
+  for (const continent in leaguesByContinent) {
+    if (
+      leaguesByContinent[continent][normalizedCountry] ||
+      leaguesByContinent[continent][country]
+    ) {
+      return continent;
+    }
+  }
+  return null;
+};
+
+export const getAllLeaguesFlat = (): League[] => {
+  return Object.values(leaguesByContinent).flatMap((continent) =>
+    Object.values(continent).flat(),
+  );
+};
+
+const normalizeNationLookup = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+export const getAvailableLeaguesByNation = (nation?: string): League[] => {
+  const trimmedNation = nation?.trim();
+
+  if (trimmedNation) {
+    const normalized = normalizeNationLookup(trimmedNation);
+    const aliasedNation = NATION_KEY_ALIASES[normalized] || trimmedNation;
+
+    for (const countries of Object.values(leaguesByContinent)) {
+      const directMatch = countries[aliasedNation] || countries[trimmedNation];
+      const matchedCountryKey = directMatch
+        ? countries[aliasedNation]
+          ? aliasedNation
+          : trimmedNation
+        : Object.keys(countries).find(
+            (key) => normalizeNationLookup(key) === normalized,
+          );
+
+      if (!matchedCountryKey) continue;
+
+      const nationalLeagues = countries[matchedCountryKey];
+      const continentalKey = continentalLeagueByCountry[matchedCountryKey];
+
+      return [
+        ...nationalLeagues,
+        ...(continentalKey ? (countries[continentalKey] ?? []) : []),
+      ];
+    }
+  }
+
+  const seen = new Set<string>();
+  return getAllLeaguesFlat().filter((league) => {
+    const key = league.name.trim().toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+export const getAvailableLeagueNamesByNation = (nation?: string): string[] => {
+  const seen = new Set<string>();
+  const names: string[] = [];
+
+  for (const league of getAvailableLeaguesByNation(nation)) {
+    const trimmed = league.name.trim();
+    const key = trimmed.toLowerCase();
+    if (trimmed && !seen.has(key)) {
+      seen.add(key);
+      names.push(trimmed);
+    }
+  }
+
+  return names;
+};
+
+export const isContinentalOrCupCompetition = (leagueName: string): boolean => {
+  if (!leagueName) return false;
+  const normalized = leagueName.trim().toLowerCase();
+  const found = getAllLeaguesFlat().find(
+    (l) => l.name.trim().toLowerCase() === normalized,
+  );
+  return found ? !found.league : false;
+};
+
+export const contributesToLeagueStandings = (
+  leagueName?: string,
+  seasonLeaguesOrNation?: League[] | string,
+): boolean => {
+  if (!leagueName) return false;
+  const normalized = leagueName.trim().toLowerCase();
+  if (
+    Array.isArray(seasonLeaguesOrNation) &&
+    seasonLeaguesOrNation.some(
+      (l) => l.name.trim().toLowerCase() === normalized && l.league === true,
+    )
+  ) {
+    return true;
+  }
+  return getAllLeaguesFlat().some(
+    (l) => l.name.trim().toLowerCase() === normalized && l.league === true,
+  );
+};

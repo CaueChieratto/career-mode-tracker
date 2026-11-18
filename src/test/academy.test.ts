@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildPromotedPlayer } from "../pages/Academy/layouts/AcademyContent/services/AcademyService/helpers/buildPromotedPlayer";
 import { buildPlayerAcademyTournaments } from "../pages/Academy/layouts/AcademyContent/services/AcademyService/helpers/buildPlayerAcademyTournaments";
 import { AcademyService } from "../pages/Academy/layouts/AcademyContent/services/AcademyService";
-import type { AcademyTournaments } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
+import type { AcademyTournaments } from "../common/interfaces/AcademyData";
 import { academyPlayer, career, deepFreeze, player, season } from "./factories/domain";
 import { getSuggestedLineup } from "../pages/Academy/layouts/AcademyContent/components/Tournament/features/Match/components/ManageMatchView/helpers/getSuggestedLineup";
 import { calculatePlayerStats } from "../pages/Academy/layouts/AcademyContent/components/Player/components/PlayerPerformance/helpers/calculatePlayerStats";
-import type { AcademyMatches } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import type { AcademyMatches } from "../common/interfaces/AcademyData";
 import { auth } from "./mocks/firebaseClient";
 import {
   getDoc,
@@ -100,6 +100,28 @@ describe("helpers da promoção", () => {
     expect(result.academyData).toMatchObject({ id: "a1", potential: "80-90" });
     expect(result.academyData).not.toHaveProperty("name");
     expect(result.academyData).not.toHaveProperty("evolutionHistory");
+  });
+
+  it("promove jogador preenchendo atributos com numeração e potencial vazios", () => {
+    const source = deepFreeze(
+      academyPlayer({
+        birthDate: "15/04/2007",
+        height: 182,
+        weight: 74,
+        potential: "82-94",
+        shirtNumber: 10,
+      }),
+    );
+    const result = buildPromotedPlayer(source, "03/08/2024", [], "Base FC");
+    expect(result.potential).toBeUndefined();
+    expect(result.height).toBe("182");
+    expect(result.weight).toBe("74");
+    expect(result.birthDate).toBe("15/04/2007");
+    expect(result.shirtNumber).toBe("");
+    expect(result.name).toBe(source.name);
+    expect(result.nation).toBe(source.nationality);
+    expect(result.overall).toBe(source.overall);
+    expect(result.academyData).toMatchObject({ potential: "82-94" });
   });
 
   it("seleciona só partidas do atleta e preserva pênaltis zero", () => {
@@ -841,6 +863,164 @@ describe("getSuggestedLineup", () => {
     const result = getSuggestedLineup([m1, destination], destination, [p1]);
     expect(result).toHaveLength(1);
     expect(result[0].playerId).toBe("p1");
+  });
+
+  describe("herança de escalação entre torneios", () => {
+    const playerA = academyPlayer({ id: "pa", name: "Atleta A", status: "academy" });
+    const playerB = academyPlayer({ id: "pb", name: "Atleta B", status: "academy" });
+    const playerC = academyPlayer({
+      id: "pc",
+      name: "Atleta C Promovido",
+      status: "promoted",
+      exitDate: "15/08/2024",
+    });
+
+    const tournamentA: AcademyTournaments = {
+      id: "tourn-a",
+      name: "Torneio Anterior",
+      date: "01/08/2024",
+      totalMatches: 2,
+      isChampion: false,
+      tournamentResult: "Eliminado",
+      matches: [
+        {
+          id: "ta-m1",
+          date: "02/08/2024",
+          opponentTeam: "Adv 1",
+          userGoals: 1,
+          opponentGoals: 0,
+          result: "FINISHED",
+          lineup: [
+            { playerId: "pa", playerName: "Atleta A", goals: 1, assists: 0, rating: 8, defesas: 0, cleanSheets: 0 },
+          ],
+        },
+        {
+          id: "ta-m2",
+          date: "10/08/2024",
+          opponentTeam: "Adv 2",
+          userGoals: 2,
+          opponentGoals: 1,
+          result: "FINISHED",
+          lineup: [
+            { playerId: "pa", playerName: "Atleta A", goals: 1, assists: 0, rating: 7, defesas: 0, cleanSheets: 0 },
+            { playerId: "pb", playerName: "Atleta B", goals: 1, assists: 1, rating: 8, defesas: 0, cleanSheets: 0 },
+            { playerId: "pc", playerName: "Atleta C Promovido", goals: 0, assists: 1, rating: 7, defesas: 0, cleanSheets: 0 },
+          ],
+        },
+      ],
+    };
+
+    it("Cenário A: primeira partida do Torneio B herda a escalação da última partida disputada do Torneio A", () => {
+      const matchB1: AcademyMatches = {
+        id: "tb-m1",
+        date: "12/08/2024",
+        opponentTeam: "Adv B1",
+        userGoals: 0,
+        opponentGoals: 0,
+        result: "SCHEDULED",
+        lineup: [],
+      };
+      const tournamentB: AcademyTournaments = {
+        id: "tourn-b",
+        name: "Torneio Novo",
+        date: "12/08/2024",
+        totalMatches: 1,
+        isChampion: false,
+        tournamentResult: "Em andamento",
+        matches: [matchB1],
+      };
+
+      const result = getSuggestedLineup(
+        tournamentB.matches,
+        matchB1,
+        [playerA, playerB, playerC],
+        [tournamentA, tournamentB],
+        "tourn-b",
+      );
+
+      expect(result).toHaveLength(3);
+      expect(result.map((p) => p.playerId)).toEqual(["pa", "pb", "pc"]);
+      result.forEach((stat) => {
+        expect(stat.goals).toBeNull();
+        expect(stat.assists).toBeNull();
+      });
+    });
+
+    it("Cenário B: atleta promovido/dispensado entre Torneio A e B é excluído da sugestão do Torneio B", () => {
+      const matchB1AfterExit: AcademyMatches = {
+        id: "tb-m1",
+        date: "20/08/2024",
+        opponentTeam: "Adv B1",
+        userGoals: 0,
+        opponentGoals: 0,
+        result: "SCHEDULED",
+        lineup: [],
+      };
+      const tournamentB: AcademyTournaments = {
+        id: "tourn-b",
+        name: "Torneio Novo",
+        date: "20/08/2024",
+        totalMatches: 1,
+        isChampion: false,
+        tournamentResult: "Em andamento",
+        matches: [matchB1AfterExit],
+      };
+
+      const result = getSuggestedLineup(
+        tournamentB.matches,
+        matchB1AfterExit,
+        [playerA, playerB, playerC],
+        [tournamentA, tournamentB],
+        "tourn-b",
+      );
+
+      expect(result).toHaveLength(2);
+      expect(result.map((p) => p.playerId)).toEqual(["pa", "pb"]);
+      expect(result.some((p) => p.playerId === "pc")).toBe(false);
+    });
+
+    it("Cenário C: segunda partida do Torneio B prioriza a escalação da primeira partida do Torneio B", () => {
+      const matchB1Played: AcademyMatches = {
+        id: "tb-m1",
+        date: "12/08/2024",
+        opponentTeam: "Adv B1",
+        userGoals: 1,
+        opponentGoals: 0,
+        result: "FINISHED",
+        lineup: [
+          { playerId: "pb", playerName: "Atleta B", goals: 1, assists: 0, rating: 9, defesas: 0, cleanSheets: 1 },
+        ],
+      };
+      const matchB2Scheduled: AcademyMatches = {
+        id: "tb-m2",
+        date: "15/08/2024",
+        opponentTeam: "Adv B2",
+        userGoals: 0,
+        opponentGoals: 0,
+        result: "SCHEDULED",
+        lineup: [],
+      };
+      const tournamentB: AcademyTournaments = {
+        id: "tourn-b",
+        name: "Torneio Novo",
+        date: "12/08/2024",
+        totalMatches: 2,
+        isChampion: false,
+        tournamentResult: "Em andamento",
+        matches: [matchB1Played, matchB2Scheduled],
+      };
+
+      const result = getSuggestedLineup(
+        tournamentB.matches,
+        matchB2Scheduled,
+        [playerA, playerB, playerC],
+        [tournamentA, tournamentB],
+        "tourn-b",
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].playerId).toBe("pb");
+    });
   });
 });
 

@@ -1,5 +1,5 @@
 import { POSITION_ORDER } from "../../../SquadTab/helpers/sortPlayers";
-import { calculateTotalStats } from "../../components/PlayerStatsList/utils/calculateTotalStats";
+import { calculateTotalStats } from "../../../../../../../common/stats/helpers/calculateTotalStats";
 import { sortedPlayers } from "../../components/PlayerStatsList/utils/sortedPlayers";
 import { sortPlayersByContributions } from "../../components/PlayerStatsList/utils/sortPlayersByContributions";
 

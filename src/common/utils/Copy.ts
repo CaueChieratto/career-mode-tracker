@@ -1,52 +1,47 @@
+import { toast } from "../services/ToastService";
+
 export const Copy = async (
   text: string,
   successMessage: string = "Copiado com sucesso!",
-) => {
-  if (navigator.clipboard && window.isSecureContext) {
+): Promise<boolean> => {
+  const isSecure =
+    typeof window !== "undefined" &&
+    (window.isSecureContext ?? true);
+
+  if (navigator?.clipboard?.writeText && isSecure) {
     try {
       await navigator.clipboard.writeText(text);
-      alert(successMessage);
-      return;
-    } catch (error) {
-      console.warn("Falha na Clipboard API, tentando fallback...", error);
+      toast.success(successMessage);
+      return true;
+    } catch (err) {
+      console.error("Erro ao copiar: ", err);
+      toast.error("Não foi possível copiar para a área de transferência.");
+      return false;
     }
   }
 
   const textArea = document.createElement("textarea");
   textArea.value = text;
-
-  textArea.style.top = "0";
-  textArea.style.left = "0";
   textArea.style.position = "fixed";
-
-  textArea.style.width = "2em";
-  textArea.style.height = "2em";
-  textArea.style.padding = "0";
-  textArea.style.border = "none";
-  textArea.style.outline = "none";
-  textArea.style.boxShadow = "none";
-  textArea.style.background = "transparent";
-
-  textArea.setAttribute("readonly", "false");
-  textArea.contentEditable = "true";
-
+  textArea.style.left = "-999999px";
+  textArea.style.top = "-999999px";
   document.body.appendChild(textArea);
-
   textArea.focus();
   textArea.select();
-  textArea.setSelectionRange(0, 999999);
 
   try {
-    const successful = document.execCommand("copy");
-    if (successful) {
-      alert(successMessage);
-    } else {
-      console.error("Fallback de cópia falhou (execCommand retornou false).");
+    const copied = document.execCommand("copy");
+    if (copied) {
+      toast.success(successMessage);
+      return true;
     }
+    toast.error("Não foi possível copiar para a área de transferência.");
+    return false;
   } catch (err) {
-    console.error("Erro ao copiar texto no fallback:", err);
+    console.error("Erro ao copiar usando fallback: ", err);
+    toast.error("Não foi possível copiar para a área de transferência.");
+    return false;
   } finally {
-    window.getSelection()?.removeAllRanges();
-    document.body.removeChild(textArea);
+    textArea.remove();
   }
 };

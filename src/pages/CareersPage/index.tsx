@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import classNames from "classnames";
 import Styles from "./CareersPage.module.css";
 import Button from "../../components/Button";
@@ -22,10 +22,64 @@ import { CareerGroupCard } from "./components/CareerGroupCard";
 import { ConfirmModal } from "./ui/ConfirmModal";
 import { CareerPageContext } from "./contexts/CareerPageContext";
 import { auth } from "../../common/services/Firebase";
+import type { CareersPageScreen } from "./config/screens";
+import AddSeasons from "./views/AddSeasons";
 
 const CareersPage = () => {
-  const navigate = useNavigate();
-  const buttons = useMemo(() => getCareerCardButtons(navigate), [navigate]);
+  const location = useLocation();
+  const locationState = location.state as {
+    addSeasonsCareerId?: string;
+  } | null;
+  const initialCareerId = locationState?.addSeasonsCareerId;
+
+  const [activeScreen, setActiveScreen] = useState<CareersPageScreen | null>(
+    () =>
+      initialCareerId
+        ? { key: "addSeasons", careerId: initialCareerId }
+        : null,
+  );
+
+  useEffect(() => {
+    if (locationState?.addSeasonsCareerId) {
+      setActiveScreen({
+        key: "addSeasons",
+        careerId: locationState.addSeasonsCareerId,
+      });
+    }
+  }, [locationState?.addSeasonsCareerId]);
+
+  const handleOpenAddSeasons = useCallback((career: Career) => {
+    setActiveScreen({ key: "addSeasons", careerId: career.id });
+  }, []);
+
+  const handleCloseAddSeasons = useCallback(() => {
+    setActiveScreen(null);
+  }, []);
+
+  useEffect(() => {
+    const currentState = window.history.state || {};
+    const currentUsr = currentState.usr || {};
+    const targetCareerId =
+      activeScreen?.key === "addSeasons" ? activeScreen.careerId : null;
+
+    if (currentUsr.addSeasonsCareerId !== targetCareerId) {
+      window.history.replaceState(
+        {
+          ...currentState,
+          usr: {
+            ...currentUsr,
+            addSeasonsCareerId: targetCareerId,
+          },
+        },
+        "",
+      );
+    }
+  }, [activeScreen]);
+
+  const buttons = useMemo(
+    () => getCareerCardButtons(handleOpenAddSeasons),
+    [handleOpenAddSeasons],
+  );
   const { careers, loading } = useCareers();
 
   const currentUserId = auth.currentUser?.uid;
@@ -51,7 +105,6 @@ const CareersPage = () => {
     pendingRemoval,
     confirmRemoval,
     cancelRemoval,
-    toastError,
     isProcessing,
   } = useCareerBoard(careers);
 
@@ -72,6 +125,17 @@ const CareersPage = () => {
     Styles.hidden;
 
   if (loading || isProcessing) return <Load />;
+
+  if (activeScreen?.key === "addSeasons") {
+    return (
+      <AddSeasons
+        careerId={activeScreen.careerId}
+        careers={careers}
+        loadingCareers={loading}
+        onClose={handleCloseAddSeasons}
+      />
+    );
+  }
 
   const contextValue = {
     onOpenModal,
@@ -141,8 +205,6 @@ const CareersPage = () => {
           offsetY={dragInfoRef.current?.offsetY ?? 20}
         />
       )}
-
-      {toastError && <div className={Styles.toastError}>{toastError}</div>}
 
       {pendingMerge && (
         <ConfirmModal

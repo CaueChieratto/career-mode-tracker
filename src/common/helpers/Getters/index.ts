@@ -1,12 +1,12 @@
-import { ServiceMatches } from "../../../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
-import { ServicePlayers } from "../../services/ServicePlayers";
-import { ServiceTable } from "../../../layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable";
+import { ServiceMatches } from "../../services/ServiceMatches";
+import { PlayersCrudService } from "../../services/ServicePlayers/PlayersCrudService";
+import { ServiceTable } from "../../services/ServiceTable";
 import { collection, onSnapshot, doc, getDoc, getDocs } from "firebase/firestore";
 import { db } from "../../services/Firebase";
 import { Career } from "../../interfaces/Career";
 import { ClubData } from "../../interfaces/club/clubData";
 import { mergeModernAndLegacy } from "../mergeModernAndLegacy";
-import { AcademyPlayers } from "../../../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../interfaces/AcademyData";
 
 const getAcademyPlayersBySeason = async (
   uid: string,
@@ -42,6 +42,67 @@ export const updateCachedCareer = (career: Career): void => {
   }
 };
 
+async function hydrateSeasonSubcollections(
+  uid: string,
+  careerId: string,
+  clubData: ClubData[],
+  failOnHydrationError = false,
+  includeAcademy = false,
+): Promise<ClubData[]> {
+  return Promise.all(
+    clubData.map(async (season) => {
+      try {
+        const [
+          subcollectionMatches,
+          subcollectionPlayers,
+          table,
+          academyPlayers,
+        ] = await Promise.all([
+          ServiceMatches.getMatchesBySeason(careerId, season.id),
+          PlayersCrudService.getPlayersBySeason(careerId, season.id),
+          ServiceTable.getTableBySeason(careerId, season.id),
+          includeAcademy
+            ? getAcademyPlayersBySeason(uid, careerId, season.id).catch((error) => {
+                console.error("Erro ao carregar jogadores da base: ", error);
+                return undefined;
+              })
+            : Promise.resolve(undefined),
+        ]);
+
+        const oldMatches = season.matches || [];
+        const combinedMatches = mergeModernAndLegacy(
+          subcollectionMatches,
+          oldMatches,
+          (m) => m.matchesId,
+        );
+
+        const oldPlayers = season.players || [];
+        const combinedPlayers = mergeModernAndLegacy(
+          subcollectionPlayers,
+          oldPlayers,
+          (p) => p.id,
+        );
+
+        return {
+          ...season,
+          matches: combinedMatches,
+          players: combinedPlayers,
+          table: table as unknown as ClubData["table"],
+          ...(academyPlayers !== undefined ? { academyPlayers } : {}),
+        };
+      } catch (error) {
+        if (failOnHydrationError) throw error;
+        console.error("Erro: ", error);
+        return {
+          ...season,
+          matches: season.matches || [],
+          players: season.players || [],
+        };
+      }
+    }),
+  );
+}
+
 export const getAllCareers = (
   uid: string,
   callback: (careers: Career[]) => void,
@@ -75,63 +136,21 @@ export const getAllCareers = (
           }
         }
 
-        const updatedClubData = await Promise.all(
-          career.clubData.map(async (season) => {
-            try {
-              const [
-                subcollectionMatches,
-                subcollectionPlayers,
-                table,
-                academyPlayers,
-              ] = await Promise.all([
-                ServiceMatches.getMatchesBySeason(career.id, season.id),
-                ServicePlayers.getPlayersBySeason(career.id, season.id),
-                ServiceTable.getTableBySeason(career.id, season.id),
-                getAcademyPlayersBySeason(
-                  uid,
-                  career.id,
-                  season.id,
-                ).catch((error) => {
-                  console.error(
-                    "Erro ao carregar jogadores da base: ",
-                    error,
-                  );
-                  return undefined;
-                }),
-              ]);
+        const rawClubData = career.clubData || [];
+        const seenSeasons = new Set<string>();
+        const uniqueClubData = rawClubData.filter((s) => {
+          const key = s.id || `season-${s.seasonNumber}`;
+          if (seenSeasons.has(key)) return false;
+          seenSeasons.add(key);
+          return true;
+        });
 
-              const oldMatches = season.matches || [];
-
-              const combinedMatches = mergeModernAndLegacy(
-                subcollectionMatches,
-                oldMatches,
-                (m) => m.matchesId,
-              );
-
-              const oldPlayers = season.players || [];
-
-              const combinedPlayers = mergeModernAndLegacy(
-                subcollectionPlayers,
-                oldPlayers,
-                (p) => p.id,
-              );
-
-              return {
-                ...season,
-                matches: combinedMatches,
-                players: combinedPlayers,
-                table: table as unknown as ClubData["table"],
-                ...(academyPlayers !== undefined ? { academyPlayers } : {}),
-              };
-            } catch (error) {
-              console.error("Erro: ", error);
-              return {
-                ...season,
-                matches: season.matches || [],
-                players: season.players || [],
-              };
-            }
-          }),
+        const updatedClubData = await hydrateSeasonSubcollections(
+          uid,
+          career.id,
+          uniqueClubData,
+          false,
+          true,
         );
         const hydratedCareer: Career = { ...career, clubData: updatedClubData };
         if (career.updatedAt) {
@@ -178,48 +197,22 @@ export const getCareerById = async (
   onReadStoredSeasons?.(careerData.clubData || []);
 
   if (careerData.clubData && careerData.clubData.length > 0) {
-    const updatedClubData = await Promise.all(
-      careerData.clubData.map(async (season) => {
-        try {
-          const [subcollectionMatches, subcollectionPlayers, table] =
-            await Promise.all([
-              ServiceMatches.getMatchesBySeason(careerId, season.id),
-              ServicePlayers.getPlayersBySeason(careerId, season.id),
-              ServiceTable.getTableBySeason(careerId, season.id),
-            ]);
+    const rawClubData = careerData.clubData || [];
+    const seenSeasons = new Set<string>();
+    const uniqueClubData = rawClubData.filter((s) => {
+      const key = s.id || `season-${s.seasonNumber}`;
+      if (seenSeasons.has(key)) return false;
+      seenSeasons.add(key);
+      return true;
+    });
 
-          const oldMatches = season.matches || [];
-          const combinedMatches = mergeModernAndLegacy(
-            subcollectionMatches,
-            oldMatches,
-            (m) => m.matchesId,
-          );
-
-          const oldPlayers = season.players || [];
-          const combinedPlayers = mergeModernAndLegacy(
-            subcollectionPlayers,
-            oldPlayers,
-            (p) => p.id,
-          );
-
-          return {
-            ...season,
-            matches: combinedMatches,
-            players: combinedPlayers,
-            table: table as unknown as ClubData["table"],
-          };
-        } catch (error) {
-          if (failOnHydrationError) throw error;
-          console.error("Erro: ", error);
-          return {
-            ...season,
-            matches: season.matches || [],
-            players: season.players || [],
-          };
-        }
-      }),
+    careerData.clubData = await hydrateSeasonSubcollections(
+      uid,
+      careerId,
+      uniqueClubData,
+      failOnHydrationError,
+      false,
     );
-    careerData.clubData = updatedClubData;
   }
 
   return careerData;

@@ -7,25 +7,30 @@ import AddClubColors from "./components/AddClubColors";
 import AddClubImg from "./components/AddClubImg";
 import EditInfoClub from "./components/EditInfoClub";
 import { useEditCareerModal } from "./hooks/useEditCareerModal";
+import { CareerModalMode } from "./hooks/useClubImgAndColor";
 import Styles from "./EditCareerModal.module.css";
+
+export type { CareerModalMode };
 
 type EditCareerModalProps = {
   closeModal: () => void;
-  edit: boolean;
-  selectedCareer: Career;
-  setSelectedCareer: Dispatch<SetStateAction<Career>>;
+  mode: CareerModalMode;
+  selectedCareer?: Career;
+  setSelectedCareer?: Dispatch<SetStateAction<Career>>;
 };
 
 export const EditCareerModal = ({
   closeModal,
   selectedCareer,
   setSelectedCareer,
-  edit,
+  mode,
 }: EditCareerModalProps) => {
   const {
     isLoading,
     clubName,
     setClubName,
+    nation,
+    setNation,
     managerName,
     setManagerName,
     createdAt,
@@ -39,8 +44,10 @@ export const EditCareerModal = ({
     setPrimaryColor,
     secondaryColor,
     setSecondaryColor,
+    availableClubs,
     handleSave,
   } = useEditCareerModal({
+    mode,
     selectedCareer,
     setSelectedCareer,
     closeModal,
@@ -49,19 +56,24 @@ export const EditCareerModal = ({
   return (
     <Form onSubmit={handleSave} className={Styles.form}>
       <div className={Styles.form_container}>
-        <AddClubImg
-          edit={edit}
-          file={file}
-          initialPreview={badge || null}
-          pickFile={pickFile}
-          onFileChange={onFileChange}
-          inputRef={inputRef}
-        />
+        {mode !== "create" && (
+          <AddClubImg
+            file={file}
+            initialPreview={badge || null}
+            pickFile={pickFile}
+            onFileChange={onFileChange}
+            inputRef={inputRef}
+          />
+        )}
 
-        {edit && (
+        {(mode === "create" || mode === "edit") && (
           <EditInfoClub
+            mode={mode}
             clubName={clubName}
             setClubName={setClubName}
+            clubOptions={availableClubs}
+            nation={nation}
+            setNation={setNation}
             managerName={managerName}
             setManagerName={setManagerName}
             createdAt={createdAt}
@@ -70,7 +82,6 @@ export const EditCareerModal = ({
         )}
 
         <AddClubColors
-          edit={edit}
           primaryColor={primaryColor}
           setPrimaryColor={setPrimaryColor}
           secondaryColor={secondaryColor}

@@ -3,33 +3,49 @@ import { PlayerMatchStat } from "../../../../../../../../common/interfaces/Playe
 import { LineupSlot } from "../../../../types";
 import { PlayerDetails } from "./components/PlayerDetails";
 import { useSlotDrag } from "./hooks/useSlotDrag";
+import { useLineupTabContext } from "../../../../contexts/context";
 import Styles from "./SlotButton.module.css";
 
 type SlotButtonProps = {
   slot: LineupSlot;
-  isSelecting: boolean;
-  onOpen: () => void;
-  onRemove: () => void;
-  onSwap: (targetId: string) => void;
-  onPlayerClick: (playerId: string) => void;
-  playerStats: PlayerMatchStat[];
-  mvpId: string | null;
+  isSelecting?: boolean;
+  onOpen?: () => void;
+  onRemove?: () => void;
+  onSwap?: (targetId: string) => void;
+  onPlayerClick?: (playerId: string) => void;
+  playerStats?: PlayerMatchStat[];
+  mvpId?: string | null;
   isFromGeral?: boolean;
 };
 
 export const SlotButton = ({
   slot,
-  isSelecting,
-  onOpen,
-  onRemove,
-  onSwap,
-  onPlayerClick,
-  mvpId,
-  playerStats,
-  isFromGeral,
+  isSelecting: propIsSelecting,
+  onOpen: propOnOpen,
+  onRemove: propOnRemove,
+  onSwap: propOnSwap,
+  onPlayerClick: propOnPlayerClick,
+  mvpId: propMvpId,
+  playerStats: propPlayerStats,
+  isFromGeral: propIsFromGeral,
 }: SlotButtonProps) => {
+  const ctx = useLineupTabContext();
+
+  const isSelecting = propIsSelecting ?? (ctx.selectingSlotId === slot.slotId);
+  const onOpen = propOnOpen ?? (() => ctx.openPlayerPicker(slot.slotId));
+  const onRemove = propOnRemove ?? (() => ctx.removePlayer(slot.slotId));
+  const onSwap =
+    propOnSwap ?? ((targetId: string) => ctx.swapPlayers(slot.slotId, targetId));
+  const isFromGeral = propIsFromGeral ?? ctx.isFromGeral;
+  const onPlayerClick =
+    propOnPlayerClick ??
+    (isFromGeral && ctx.onOpenModal ? ctx.onOpenModal : ctx.onPlayerClick);
+  const mvpId = propMvpId ?? ctx.mvpId;
+
   const stats = slot.player
-    ? playerStats.find((s) => s.playerId === slot.player!.id)
+    ? propPlayerStats
+      ? propPlayerStats.find((s) => s.playerId === slot.player!.id)
+      : ctx.playerStatsById.get(slot.player.id)
     : undefined;
   const ratingValue = stats?.rating;
   const backgroundColor = UseMatchRatingColor(ratingValue!);

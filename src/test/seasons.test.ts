@@ -22,23 +22,29 @@ import {
 } from "./factories/domain";
 import { loanPlayer, rosterScenarios } from "./fixtures/scenarios";
 
-vi.mock("../common/helpers/Getters", () => ({ getCareerById: vi.fn() }));
+vi.mock("../common/helpers/Getters", () => ({
+  getCareerById: vi.fn(),
+  updateCachedCareer: vi.fn(),
+}));
 vi.mock("../common/helpers/Setters", () => ({
   updateCareerFirestore: vi.fn(),
 }));
 
 const batchSet = vi.fn<(...args: unknown[]) => void>();
 const batchUpdate = vi.fn<(...args: unknown[]) => void>();
+const batchDelete = vi.fn<(...args: unknown[]) => void>();
 const commit = vi.fn<() => Promise<void>>();
 
 beforeEach(() => {
   auth.currentUser = { uid: "test-user" };
   batchSet.mockReset();
   batchUpdate.mockReset();
+  batchDelete.mockReset();
   commit.mockReset().mockResolvedValue(undefined);
   writeBatch.mockReset().mockReturnValue({
     set: batchSet,
     update: batchUpdate,
+    delete: batchDelete,
     commit,
   } as never);
   arrayUnion.mockClear();
@@ -327,6 +333,47 @@ describe("criação write-only de temporada", () => {
     expect(commit).toHaveBeenCalledTimes(2);
   });
 
+  it("não duplica temporadas ao notificar atualizações de carreira mesmo se a nova temporada já estiver no estado", async () => {
+    const useCareerModule = await import("../common/hooks/Career/UseCareer");
+    let capturedUpdater: ((prev: ReturnType<typeof career>[]) => ReturnType<typeof career>[]) | undefined;
+    const notifySpy = vi
+      .spyOn(useCareerModule, "notifyCareersUpdated")
+      .mockImplementation((updater) => {
+        capturedUpdater = updater as typeof capturedUpdater;
+      });
+
+    const input = career({
+      id: "c1",
+      clubData: [season({ id: "season-1", seasonNumber: 1 })],
+    });
+
+    await ServiceSeasons.addSeason(input);
+
+    expect(capturedUpdater).toBeDefined();
+
+    // Cenário: O snapshot do Firestore já emitiu season-2 para o estado local
+    const newSeasonData = season({
+      id: "season-2",
+      seasonNumber: 2,
+      players: [],
+      leagues: [],
+    });
+    const stateAlreadyWithSeason2 = [
+      career({
+        id: "c1",
+        clubData: [season({ id: "season-1", seasonNumber: 1 }), newSeasonData],
+      }),
+    ];
+
+    const result = capturedUpdater!(stateAlreadyWithSeason2);
+    expect(result[0].clubData).toHaveLength(2);
+    expect(
+      result[0].clubData.filter((s) => s.id === "season-2" || s.seasonNumber === 2),
+    ).toHaveLength(1);
+
+    notifySpy.mockRestore();
+  });
+
   it("falha do commit não publica estado local nem escrita separada", async () => {
     const input = deepFreeze(
       career({ clubData: [season({ players: [player()] })] }),
@@ -388,9 +435,81 @@ describe("regressão de exclusão de temporada", () => {
     });
 
     await ServiceSeasons.deleteSeason("c1", "s1");
-    expect(deleteDoc).toHaveBeenCalledTimes(7);
+    expect(batchDelete).toHaveBeenCalledTimes(8);
+    expect(deleteDoc).toHaveBeenCalledTimes(1);
     expect(updateCareerFirestore).toHaveBeenCalledWith("test-user", "c1", {
       clubData: [],
+      trophies: [],
+      updatedAt: expect.any(Number),
+    });
+  });
+
+  it("remove temporada dos troféus correspondentes ao deletar temporada mantendo outras temporadas", async () => {
+    const barcaCareer = career({
+      clubName: "FC Barcelona",
+      managerName: "Hansi Flick",
+      nation: "Espanha",
+      createdAt: new Date("2023-08-01T00:00:00Z"),
+      clubData: [
+        season({ id: "s1", seasonNumber: 1 }),
+        season({ id: "s2", seasonNumber: 2 }),
+      ],
+      trophies: [
+        {
+          leagueName: "La Liga",
+          leagueImage: "laliga.png",
+          seasons: ["23/24", "24/25"],
+        },
+      ],
+    });
+
+    vi.mocked(getCareerById).mockImplementation(async (_uid, _id, callback) => {
+      callback?.(barcaCareer.clubData);
+      return barcaCareer;
+    });
+
+    await ServiceSeasons.deleteSeason("c1", "s1");
+
+    expect(updateCareerFirestore).toHaveBeenCalledWith("test-user", "c1", {
+      clubData: expect.any(Array),
+      trophies: [
+        {
+          leagueName: "La Liga",
+          leagueImage: "laliga.png",
+          seasons: ["24/25"],
+        },
+      ],
+      updatedAt: expect.any(Number),
+    });
+  });
+
+  it("remove o troféu por completo se a temporada deletada era sua única conquista", async () => {
+    const barcaCareer = career({
+      clubName: "FC Barcelona",
+      managerName: "Hansi Flick",
+      nation: "Espanha",
+      createdAt: new Date("2023-08-01T00:00:00Z"),
+      clubData: [season({ id: "s1", seasonNumber: 1 })],
+      trophies: [
+        {
+          leagueName: "UEFA Champions League",
+          leagueImage: "ucl.png",
+          seasons: ["23/24"],
+        },
+      ],
+    });
+
+    vi.mocked(getCareerById).mockImplementation(async (_uid, _id, callback) => {
+      callback?.(barcaCareer.clubData);
+      return barcaCareer;
+    });
+
+    await ServiceSeasons.deleteSeason("c1", "s1");
+
+    expect(updateCareerFirestore).toHaveBeenCalledWith("test-user", "c1", {
+      clubData: [],
+      trophies: [],
+      updatedAt: expect.any(Number),
     });
   });
 
@@ -406,6 +525,7 @@ describe("regressão de exclusão de temporada", () => {
       "offline",
     );
     expect(deleteDoc).not.toHaveBeenCalled();
+    expect(batchDelete).not.toHaveBeenCalled();
     expect(updateCareerFirestore).not.toHaveBeenCalled();
   });
 });

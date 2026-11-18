@@ -4,7 +4,7 @@ import { auth, db } from "../Firebase";
 import { Career } from "../../interfaces/Career";
 import { CareerGroup } from "../../interfaces/CareerGroup";
 import { OpponentPlayer } from "../../interfaces/OpponentPlayer";
-import { normalizeOpponentEvents } from "../../../pages/Match/helpers/opponentCards";
+import { normalizeOpponentEvents } from "./helpers/opponentCards";
 
 const normalizePlayerName = (name: string): string =>
   name.trim().toLowerCase().replace(/\s+/g, " ");
@@ -26,6 +26,9 @@ export const sanitizeOpponentPlayer = (
   } else if (player.careerId) {
     sanitized.careerId = player.careerId;
   }
+  if (player.isFormerPlayer) {
+    sanitized.isFormerPlayer = true;
+  }
 
   return sanitized;
 };
@@ -41,27 +44,45 @@ export const extractOpponentPlayersFromCareer = (
       const isHome = match.homeTeam === careerData.clubName;
       const opponentTeam = isHome ? match.awayTeam : match.homeTeam;
 
-      const recordPlayer = (name?: string, existingId?: string) => {
+      const recordPlayer = (
+        name?: string,
+        existingId?: string,
+        isFormerPlayer?: boolean,
+      ) => {
         if (!name || !name.trim()) return;
         const normalized = normalizePlayerName(name);
-        if (!playerMap.has(normalized)) {
+        const mapKey = existingId || normalized;
+        if (!playerMap.has(mapKey)) {
           const raw: OpponentPlayer = {
             id: existingId || uuidv4(),
             name: name.trim(),
             createdAt: Date.now(),
             ...(opponentTeam ? { team: opponentTeam } : {}),
             ...(careerData.id ? { careerId: careerData.id } : {}),
+            ...(isFormerPlayer ? { isFormerPlayer: true } : {}),
           };
-          playerMap.set(normalized, sanitizeOpponentPlayer(raw));
+          playerMap.set(mapKey, sanitizeOpponentPlayer(raw));
         }
       };
 
-      oppEvents?.goals?.forEach((g) => recordPlayer(g.player, g.playerId));
-      oppEvents?.assists?.forEach((a) => recordPlayer(a.player, a.playerId));
-      oppEvents?.cards?.forEach((c) => recordPlayer(c.player, c.playerId));
-      oppEvents?.ownGoals?.forEach((og) => recordPlayer(og.player, og.playerId));
+      oppEvents?.goals?.forEach((g) =>
+        recordPlayer(g.player, g.playerId, g.isFormerPlayer),
+      );
+      oppEvents?.assists?.forEach((a) =>
+        recordPlayer(a.player, a.playerId, a.isFormerPlayer),
+      );
+      oppEvents?.cards?.forEach((c) =>
+        recordPlayer(c.player, c.playerId, c.isFormerPlayer),
+      );
+      oppEvents?.ownGoals?.forEach((og) =>
+        recordPlayer(og.player, og.playerId, og.isFormerPlayer),
+      );
       if (match.opponentMvpName) {
-        recordPlayer(match.opponentMvpName, match.opponentMvpPlayerId);
+        recordPlayer(
+          match.opponentMvpName,
+          match.opponentMvpPlayerId,
+          match.opponentMvpIsFormerPlayer,
+        );
       }
     });
   });
@@ -136,8 +157,14 @@ export const ServiceOpponentPlayers = {
 
   saveOpponentPlayers: async (
     careerId: string,
-    playersToSave: { name: string; team?: string; id?: string }[],
+    playersToSave: {
+      name: string;
+      team?: string;
+      id?: string;
+      isFormerPlayer?: boolean;
+    }[],
     groupId?: string | null,
+    options?: { skipCareerWrite?: boolean },
   ): Promise<OpponentPlayer[]> => {
     const user = auth.currentUser;
     if (!user) return [];
@@ -162,21 +189,54 @@ export const ServiceOpponentPlayers = {
 
       const playerMap = new Map<string, OpponentPlayer>();
       existingList.forEach((p) => {
-        playerMap.set(normalizePlayerName(p.name), sanitizeOpponentPlayer(p));
+        playerMap.set(p.id, sanitizeOpponentPlayer(p));
       });
 
       let hasNew = false;
       validNewPlayers.forEach((p) => {
+        if (p.id) {
+          const existingById = playerMap.get(p.id);
+          if (existingById) {
+            if (p.isFormerPlayer && !existingById.isFormerPlayer) {
+              existingById.isFormerPlayer = true;
+              hasNew = true;
+            }
+            if (p.team && p.team !== existingById.team) {
+              existingById.team = p.team.trim();
+              hasNew = true;
+            }
+          } else {
+            const newPlayer: OpponentPlayer = {
+              id: p.id,
+              name: p.name.trim(),
+              createdAt: Date.now(),
+              ...(p.team?.trim() ? { team: p.team.trim() } : {}),
+              ...(p.isFormerPlayer ? { isFormerPlayer: true } : {}),
+              ...(groupId ? { groupId } : careerId ? { careerId } : {}),
+            };
+            playerMap.set(p.id, sanitizeOpponentPlayer(newPlayer));
+            hasNew = true;
+          }
+          return;
+        }
+
         const normalized = normalizePlayerName(p.name);
-        if (!playerMap.has(normalized)) {
+        const existingByName = Array.from(playerMap.values()).find(
+          (item) => normalizePlayerName(item.name) === normalized,
+        );
+        if (!existingByName) {
           const newPlayer: OpponentPlayer = {
-            id: p.id || uuidv4(),
+            id: uuidv4(),
             name: p.name.trim(),
             createdAt: Date.now(),
             ...(p.team?.trim() ? { team: p.team.trim() } : {}),
+            ...(p.isFormerPlayer ? { isFormerPlayer: true } : {}),
             ...(groupId ? { groupId } : careerId ? { careerId } : {}),
           };
-          playerMap.set(normalized, sanitizeOpponentPlayer(newPlayer));
+          playerMap.set(newPlayer.id, sanitizeOpponentPlayer(newPlayer));
+          hasNew = true;
+        } else if (p.isFormerPlayer && !existingByName.isFormerPlayer) {
+          existingByName.isFormerPlayer = true;
           hasNew = true;
         }
       });
@@ -186,10 +246,14 @@ export const ServiceOpponentPlayers = {
       );
 
       if (hasNew) {
-        await updateDoc(targetRef, {
-          opponentPlayers: updatedList,
-          updatedAt: Date.now(),
-        });
+        if (!groupId && options?.skipCareerWrite) {
+          // Permite que o chamador persista opponentPlayers no mesmo writeBatch da partida
+        } else {
+          await updateDoc(targetRef, {
+            opponentPlayers: updatedList,
+            updatedAt: Date.now(),
+          });
+        }
       }
 
       return updatedList;

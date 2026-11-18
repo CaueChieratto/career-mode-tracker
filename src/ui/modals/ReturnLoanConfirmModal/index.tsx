@@ -6,6 +6,7 @@ import SellFormField from "../../../components/SellFormField";
 import { BsCalendar2Event } from "react-icons/bs";
 import Styles from "../DeleteConfirmModal/DeleteConfirmModal.module.css";
 import { formatDateInputShort } from "../../../common/utils/Date";
+import { toast } from "../../../common/services/ToastService";
 
 type ReturnLoanConfirmModalProps = {
   closeModal: () => void;
@@ -19,19 +20,25 @@ const ReturnLoanConfirmModal = ({
   isAcademy,
 }: ReturnLoanConfirmModalProps) => {
   const [returnDate, setReturnDate] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleReturn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!returnDate) {
-      alert("Por favor, preencha a data.");
+      toast.warning("Por favor, preencha a data.");
       return;
     }
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       await onConfirm(returnDate);
+      toast.success("Jogador retornado do empréstimo com sucesso!");
+      closeModal();
     } catch (error) {
       console.error("Erro ao retornar o jogador do empréstimo:", error);
+      toast.error("Erro ao retornar o jogador do empréstimo.");
     } finally {
-      closeModal();
+      setIsLoading(false);
     }
   };
 
@@ -71,9 +78,10 @@ const ReturnLoanConfirmModal = ({
           radius="square"
           typeButton="secondaryDelete"
           type="submit"
+          disabled={isLoading}
           style={{ backgroundColor: "#4CAF50", color: "#FFF" }}
         >
-          Confirmar
+          {isLoading ? "Confirmando..." : "Confirmar"}
         </Button>
       </ContainerButton>
     </Form>

@@ -20,4 +20,5 @@ export interface Career {
   stadiums?: string[];
   stages?: string[];
   opponentPlayers?: OpponentPlayer[];
+  customBonusObjectives?: Record<string, string[]>;
 }

@@ -1,6 +1,4 @@
 import {
-  collection,
-  getDocs,
   doc,
   setDoc,
   deleteDoc,
@@ -13,39 +11,18 @@ import { Players } from "../../interfaces/playersInfo/players";
 import { db } from "../Firebase";
 import { requireAuth } from "./helpers/authHelpers";
 import { mergeUpdatedContracts } from "./helpers/contractHelpers";
-import { parseFirestoreDate } from "./helpers/dateHelpers";
+import { getPlayersBySeason } from "./helpers/getPlayersBySeason";
+import { sanitizeFirestoreData } from "../../utils/sanitizeFirestore";
 
 export const PlayersCrudService = {
-  getPlayersBySeason: async (
-    careerId: string,
-    seasonId: string,
-  ): Promise<Players[]> => {
-    const user = requireAuth();
-    const playersRef = collection(
-      db,
-      `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/players`,
-    );
-    const snapshot = await getDocs(playersRef);
-
-    return snapshot.docs.map((doc) => {
-      const data = doc.data();
-      const parsedContracts = (data.contract || []).map(
-        (c: Record<string, unknown>) => ({
-          ...c,
-          dataArrival: parseFirestoreDate(c.dataArrival),
-          dataExit: parseFirestoreDate(c.dataExit),
-        }),
-      );
-      return { ...data, contract: parsedContracts } as Players;
-    });
-  },
+  getPlayersBySeason,
 
   addPlayerToSeason: async (
     careerId: string,
     seasonId: string,
     player: Omit<Players, "id">,
     globalId?: string,
-  ): Promise<void> => {
+  ): Promise<Players> => {
     const user = requireAuth();
     const career = await getCareerById(user.uid, careerId);
 
@@ -74,10 +51,33 @@ export const PlayersCrudService = {
       playedWithUs = existingPlayerId;
     }
 
+    const existingInCurrentSeason = career.clubData
+      .find((s) => s.id === seasonId)
+      ?.players.find((p) => p.id === existingPlayerId);
+
+    const existingContracts = existingInCurrentSeason?.contract || [];
+    const incomingContracts = (player.contract || []).filter(
+      (ic) =>
+        !existingContracts.some(
+          (ec) =>
+            ec.fromClub === ic.fromClub &&
+            ec.leftClub === ic.leftClub &&
+            ec.buyValue === ic.buyValue &&
+            ec.sellValue === ic.sellValue &&
+            ec.dataArrival?.toString() === ic.dataArrival?.toString() &&
+            ec.dataExit?.toString() === ic.dataExit?.toString(),
+        ),
+    );
+    const mergedContracts =
+      existingContracts.length > 0
+        ? [...existingContracts, ...incomingContracts]
+        : player.contract;
+
     const newPlayer: Players = {
       ...player,
       id: existingPlayerId || uuidv4(),
       ...(playedWithUs ? { playedWithUs } : {}),
+      ...(mergedContracts ? { contract: mergedContracts } : {}),
     };
     const playerRef = doc(
       db,
@@ -85,8 +85,21 @@ export const PlayersCrudService = {
       newPlayer.id,
     );
 
-    await setDoc(playerRef, newPlayer);
+    await setDoc(playerRef, sanitizeFirestoreData(newPlayer));
     await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
+
+    const currentSeason = career.clubData.find((s) => s.id === seasonId);
+    if (currentSeason) {
+      if (!currentSeason.players) currentSeason.players = [];
+      const idx = currentSeason.players.findIndex((p) => p.id === newPlayer.id);
+      if (idx >= 0) {
+        currentSeason.players[idx] = newPlayer;
+      } else {
+        currentSeason.players.push(newPlayer);
+      }
+    }
+
+    return newPlayer;
   },
 
   editPlayerInSeason: async (
@@ -110,12 +123,24 @@ export const PlayersCrudService = {
     };
 
     const firestoreData: Record<string, unknown> = { ...finalPlayer };
-    if (
-      "playedWithUs" in updatedPlayer &&
-      !updatedPlayer.playedWithUs
-    ) {
-      delete finalPlayer.playedWithUs;
-      firestoreData.playedWithUs = deleteField();
+    const optionalFields = [
+      "playedWithUs",
+      "playerValue",
+      "salary",
+      "contractTime",
+      "contractUntil",
+    ] as const;
+
+    for (const field of optionalFields) {
+      if (
+        field in updatedPlayer &&
+        (updatedPlayer[field] === undefined ||
+          updatedPlayer[field] === null ||
+          updatedPlayer[field] === "")
+      ) {
+        delete (finalPlayer as Record<string, unknown>)[field];
+        firestoreData[field] = deleteField();
+      }
     }
 
     const playerRef = doc(
@@ -123,7 +148,7 @@ export const PlayersCrudService = {
       `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/players`,
       playerId,
     );
-    await setDoc(playerRef, firestoreData, { merge: true });
+    await setDoc(playerRef, sanitizeFirestoreData(firestoreData), { merge: true });
     await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
   },
 

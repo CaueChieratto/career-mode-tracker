@@ -2,12 +2,21 @@ import { useEffect, useState } from "react";
 
 const DEFAULT_OPTION = "Ordenar por padrão";
 
-export const usePersistedSortOption = (seasonId: string) => {
-  const STORAGE_KEY = `playerSortOption_${seasonId}`;
-  const STORAGE_KEY_REVERSED = `playerSortReversed_${seasonId}`;
+export type SortStoragePrefix = "playerSort" | "squadSort";
+
+export const usePersistedSortOption = (
+  seasonId: string,
+  storagePrefix: SortStoragePrefix = "playerSort",
+) => {
+  const STORAGE_KEY = `${storagePrefix}Option_${seasonId}`;
+  const STORAGE_KEY_REVERSED =
+    storagePrefix === "squadSort"
+      ? `squadSortAsc_${seasonId}`
+      : `${storagePrefix}Reversed_${seasonId}`;
 
   const [sortOption, setSortOption] = useState<string>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === "Padrão") return DEFAULT_OPTION;
     return saved || DEFAULT_OPTION;
   });
 
@@ -25,10 +34,13 @@ export const usePersistedSortOption = (seasonId: string) => {
   }, [isReversed, STORAGE_KEY_REVERSED]);
 
   const handleSetSortOption = (newOption: string) => {
-    if (newOption === sortOption) {
+    const normalizedOption =
+      newOption === "Padrão" ? DEFAULT_OPTION : newOption;
+
+    if (normalizedOption === sortOption) {
       setIsReversed((prev) => !prev);
     } else {
-      setSortOption(newOption);
+      setSortOption(normalizedOption);
       setIsReversed(false);
     }
   };

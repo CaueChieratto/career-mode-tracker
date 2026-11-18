@@ -3,6 +3,7 @@ import { Career } from "../../interfaces/Career";
 import { db } from "../../services/Firebase";
 import { Trophy } from "../../interfaces/club/trophy";
 import { withFirestoreRetry } from "../../utils/firestoreRetry";
+import { sanitizeFirestoreData } from "../../utils/sanitizeFirestore";
 
 export const updateCareerFirestore = async (
   userId: string,
@@ -16,7 +17,9 @@ export const updateCareerFirestore = async (
     ...updates,
     updatedAt: updates.updatedAt ?? Date.now(),
   };
-  await withFirestoreRetry(() => updateDoc(careerRef, payload));
+  await withFirestoreRetry(() =>
+    updateDoc(careerRef, sanitizeFirestoreData(payload)),
+  );
 };
 
 export const updateCareerTrophies = async (
@@ -26,10 +29,12 @@ export const updateCareerTrophies = async (
 ) => {
   const careerRef = doc(db, `users/${userId}/careers/${careerId}`);
   await withFirestoreRetry(() =>
-    updateDoc(careerRef, {
-      trophies,
-      updatedAt: Date.now(),
-    }),
+    updateDoc(
+      careerRef,
+      sanitizeFirestoreData({
+        trophies,
+        updatedAt: Date.now(),
+      }),
+    ),
   );
 };
-

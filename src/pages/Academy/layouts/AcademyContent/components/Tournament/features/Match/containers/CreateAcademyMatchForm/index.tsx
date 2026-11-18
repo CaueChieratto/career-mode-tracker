@@ -5,7 +5,7 @@ import Button from "../../../../../../../../../../components/Button";
 import Modal from "../../../../../../../../../../components/Modal";
 import DeleteConfirmModal from "../../../../../../../../../../ui/modals/DeleteConfirmModal";
 import { useAcademyContext } from "../../../../../../../contexts/AcademyContext/hooks/useAcademyContext";
-import { AcademyMatches } from "../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import { AcademyMatches } from "../../../../../../../../../../common/interfaces/AcademyData";
 import { buildTeamOptions } from "./helpers/buildTeamOptions";
 import { useAcademyMatchMutations } from "./hooks/useAcademyMatchMutations";
 

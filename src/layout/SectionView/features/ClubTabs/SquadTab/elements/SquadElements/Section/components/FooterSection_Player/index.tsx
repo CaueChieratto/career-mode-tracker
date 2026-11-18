@@ -5,16 +5,18 @@ import { formatDisplayValue } from "../../../../../../../../../../common/utils/F
 import { getVisualContract } from "./utils/getVisualContract";
 import { Match } from "../../../../../../../../../../common/interfaces/Match";
 import { SeasonThemeContext } from "../../../../../../../../../../contexts/SeasonThemeContext";
-import { getContinentByCountry } from "../../../../../../../../../../common/services/GetContinentByCountry";
+import { getContinentByCountry } from "../../../../../../../../../../common/utils/league";
 
 type FooterSection_PlayerProps = {
-  playerValue: number;
-  salary: number;
-  contractTime: number;
-  matches: Match[];
+  playerValue?: number;
+  salary?: number;
+  contractTime?: number;
+  matches?: Match[];
+  latestFinishedMatchDate?: string | null;
   currency?: string;
   careerNation?: string;
   isEuropean?: boolean;
+  arrivalDate?: string | Date | null;
 };
 
 const FooterSection_Player = ({
@@ -22,28 +24,41 @@ const FooterSection_Player = ({
   salary,
   contractTime,
   matches,
-  currency,
-  careerNation,
-  isEuropean,
+  latestFinishedMatchDate,
+  currency: propCurrency,
+  careerNation: propCareerNation,
+  isEuropean: propIsEuropean,
+  arrivalDate,
 }: FooterSection_PlayerProps) => {
   const seasonTheme = useContext(SeasonThemeContext);
-  const effectiveNation = careerNation ?? seasonTheme?.career?.nation;
+  const effectiveCurrency = propCurrency ?? seasonTheme?.career?.currency;
+  const effectiveNation = propCareerNation ?? seasonTheme?.career?.nation;
   const isEurope =
-    typeof isEuropean === "boolean"
-      ? isEuropean
+    typeof propIsEuropean === "boolean"
+      ? propIsEuropean
       : effectiveNation
       ? getContinentByCountry(effectiveNation) === "Europa"
       : true;
 
+  if (!playerValue && !salary && !contractTime) {
+    return null;
+  }
+
+  const matchSource = matches ?? latestFinishedMatchDate ?? null;
+
   return (
     <footer className={Styles.player_contract}>
       <h3 className={Data.data_title}>
-        {formatDisplayValue(playerValue, currency)}
+        {playerValue !== undefined ? formatDisplayValue(playerValue, effectiveCurrency) : ""}
       </h3>
       <div className={Styles.player_contract_bottom}>
-        <h3 className={Data.data}>{formatDisplayValue(salary, currency)}</h3>
+        <h3 className={Data.data}>
+          {salary !== undefined ? formatDisplayValue(salary, effectiveCurrency) : ""}
+        </h3>
         <div className={Data.data}>
-          {getVisualContract(contractTime, matches, isEurope)}
+          {contractTime !== undefined
+            ? getVisualContract(contractTime, matchSource, isEurope, arrivalDate)
+            : ""}
         </div>
       </div>
     </footer>

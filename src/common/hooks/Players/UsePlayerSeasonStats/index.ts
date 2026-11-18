@@ -7,6 +7,7 @@ import { useAddSeasonPlayerForm } from "../UseAddSeasonPlayerForm";
 import { useLeagueStatsManager } from "../UseLeagueStatsManager";
 import { useSeasonStatsFormData } from "../UseSeasonStatsFormData";
 import { ServicePlayers } from "../../../services/ServicePlayers";
+import { toast } from "../../../services/ToastService";
 
 type UsePlayerSeasonStatsProps = {
   career: Career;
@@ -26,6 +27,7 @@ export const usePlayerSeasonStats = ({
     setFormValues,
     handleInputChange,
     booleanValues,
+    mergedFormValues,
     handleBooleanChange,
   } = useAddSeasonPlayerForm();
 
@@ -108,7 +110,7 @@ export const usePlayerSeasonStats = ({
       return true;
     } catch (error) {
       console.error("Erro ao deletar a liga:", error);
-      alert("Não foi possível remover a liga.");
+      toast.error("Não foi possível remover a liga.");
       return false;
     } finally {
       setIsDeletingLeague(false);
@@ -118,6 +120,7 @@ export const usePlayerSeasonStats = ({
   return {
     formValues,
     booleanValues,
+    mergedFormValues,
     leagues,
     isGoalkeeper,
     originalLeagueNameToEdit,

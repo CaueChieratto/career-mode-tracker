@@ -9,10 +9,15 @@ import Styles from "./GroupSquadTab.module.css";
 import { ColorsService } from "../../../../common/services/ColorsService";
 import { format } from "date-fns";
 import { FormatDate } from "../../../../common/types/enums/FormatDate";
-import { getValidDate } from "../../helper/getValidDate";
+import { getValidDate } from "../../../../common/utils/Date";
 import { useParams } from "react-router-dom";
+import { SectionScreen } from "../../../../layout/SectionView/config/screens";
 
-const GroupSquadTab = () => {
+type GroupSquadTabProps = {
+  onOpenScreen?: (screen: SectionScreen) => void;
+};
+
+const GroupSquadTab = ({ onOpenScreen }: GroupSquadTabProps = {}) => {
   const { seasonsByCareer } = useGroupCareerContext();
   const { groupId } = useParams<{ groupId: string }>();
   const [openId, setOpenId] = useState<string | null>(null);
@@ -114,6 +119,7 @@ const GroupSquadTab = () => {
                           careerNation={career.nation}
                           careerId={career.id}
                           groupId={groupId}
+                          onOpenScreen={onOpenScreen}
                         />
                       ))}
                     </Card>

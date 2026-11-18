@@ -1,7 +1,7 @@
 import Button from "../../../../../../../../../../../../components/Button";
 import SearchableSelect from "../../../../../../../../../../../../components/SearchableSelect";
-import { AcademyPlayers } from "../../../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
-import { PlayerMatchesStats } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
+import { AcademyPlayers } from "../../../../../../../../../../../../common/interfaces/AcademyData";
+import { PlayerMatchesStats } from "../../../../../../../../../../../../common/interfaces/AcademyData";
 import { PlayerItem } from "../../../../../../../Player/components/PlayerItem";
 import Styles from "./LineupSection.module.css";
 

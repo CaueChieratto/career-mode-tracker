@@ -1,5 +1,6 @@
 import {
   getDocs,
+  getDoc,
   setDoc,
   deleteDoc,
   updateDoc,
@@ -10,8 +11,8 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { Players } from "../../../../../../common/interfaces/playersInfo/players";
 import { db } from "../../../../../../common/services/Firebase";
-import { AcademyPlayers } from "../../interfaces/AcademyPlayers/AcademyPlayers";
-import { AcademyTournaments } from "../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyPlayers, AcademyTournaments } from "../../../../../../common/interfaces/AcademyData";
+
 import { Career } from "../../../../../../common/interfaces/Career";
 import {
   getAsyncUser,
@@ -46,6 +47,28 @@ export const AcademyService = {
       getAcademyCollection(user.uid, careerId, seasonId, "academyTournaments"),
     );
     return querySnapshot.docs.map((doc) => doc.data() as AcademyTournaments);
+  },
+
+  getPlayerAnnotationsAcrossSeasons: async (
+    careerId: string,
+    seasonIds: string[],
+    academyPlayerId: string,
+  ): Promise<string> => {
+    const user = await getAsyncUser();
+    for (const seasonId of seasonIds) {
+      const docRef = getAcademyDoc(
+        user.uid,
+        careerId,
+        seasonId,
+        "academyPlayers",
+        academyPlayerId,
+      );
+      const snap = await getDoc(docRef);
+      if (snap.exists() && snap.data().annotations) {
+        return snap.data().annotations as string;
+      }
+    }
+    return "";
   },
 
   addPlayerToAcademy: async (
@@ -150,7 +173,9 @@ export const AcademyService = {
     const requestedDate =
       promotionDate || new Date().toLocaleDateString("pt-BR");
     const careerId = career.id;
-    const currentSeason = career.clubData.find((season) => season.id === seasonId);
+    const currentSeason = career.clubData.find(
+      (season) => season.id === seasonId,
+    );
     if (!currentSeason) throw new Error("Temporada não encontrada");
     if (academyPlayer.status === "released") {
       throw new Error("Origem de promoção inválida");
@@ -201,10 +226,8 @@ export const AcademyService = {
         previousEvent &&
         existing.isAcademy &&
         existing.academyData?.id === academyPlayer.id &&
-        existing.academyData.status === "promoted" &&
-        existing.academyHistory?.some(
-          (event) => event.id === previousEvent.id,
-        )
+        existing.academyData?.status === "promoted" &&
+        existing.academyHistory?.some((event) => event.id === previousEvent.id)
       ) {
         return { academyPlayer, professional: existing };
       }
@@ -239,10 +262,7 @@ export const AcademyService = {
       ...buildPromotedPlayer(
         promotedAcademyPlayer,
         effectiveDate,
-        buildPlayerAcademyTournaments(
-          academyTournaments,
-          academyPlayer.id,
-        ),
+        buildPlayerAcademyTournaments(academyTournaments, academyPlayer.id),
         career.academy?.nickname,
       ),
       id: professionalId,

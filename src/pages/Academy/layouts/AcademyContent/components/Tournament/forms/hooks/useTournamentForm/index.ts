@@ -2,7 +2,7 @@ import { TournamentDataPayload } from "../../types/TournamentDataPayload";
 import { TournamentFormTexts } from "../../types/TournamentFormTexts";
 import { getTournamentFormRows } from "../../utils/getTournamentFormRows";
 import { useAsyncForm } from "../../../../../hooks/useAsyncForm";
-import { AcademyTournaments } from "../../../../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyTournaments } from "../../../../../../../../../common/interfaces/AcademyData";
 
 type UseTournamentFormProps = {
   texts: TournamentFormTexts;

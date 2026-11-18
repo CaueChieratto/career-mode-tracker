@@ -1,0 +1,26 @@
+.container_captains {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  padding: 0 10px;
+}
+
+.captain_item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rank_badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--blackColor);
+  flex-shrink: 0;
+}

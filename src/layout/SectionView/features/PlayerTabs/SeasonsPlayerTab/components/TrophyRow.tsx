@@ -1,11 +1,7 @@
 import { Trophy } from "../../../../../../common/interfaces/club/trophy";
 import { Players } from "../../../../../../common/interfaces/playersInfo/players";
 import { LeagueStats } from "../../../../../../common/interfaces/playersStats/leagueStats";
-import StatisticsTable_Title from "../../../../../../components/Statistics/StatisticsTable_Title";
-import Styles from "../SeasonsPlayerTab.module.css";
-import LeagueStatsRow from "./LeagueStatsRow";
-import NoTitleSeason from "../../components/NoTitleSeason";
-import CalculatedStatistics from "../../../../../../components/Statistics/CalculatedStatistics";
+import ExpandableLeagueStatsRow from "../../components/ExpandableLeagueStatsRow";
 
 type TrophyRowProps = {
   trophy?: Trophy;
@@ -34,43 +30,16 @@ const TrophyRow = ({
   const isGoalkeeper = playerInSeason?.position === "GOL";
 
   return (
-    <>
-      <section
-        className={Styles.section}
-        onClick={() => toggleExpand(trophyKey)}
-      >
-        <StatisticsTable_Title
-          isPlayer
-          type="expand"
-          leagueImage={detailedLeagueStats?.leagueImage}
-          leagueName={leagueStats.leagueName}
-          expand={isExpanded}
-        />
-
-        <CalculatedStatistics
-          league
-          isPlayer
-          leagueStats={detailedLeagueStats}
-          isGoalkeeper={isGoalkeeper}
-        />
-      </section>
-
-      {isExpanded && (
-        <>
-          {trophy ? (
-            <LeagueStatsRow
-              leagueName={trophy.leagueName}
-              leagueImage={trophy.leagueImage}
-            />
-          ) : (
-            <NoTitleSeason
-              text="Não ganhou a"
-              leagueName={leagueStats.leagueName}
-            />
-          )}
-        </>
-      )}
-    </>
+    <ExpandableLeagueStatsRow
+      expandKey={trophyKey}
+      leagueStats={detailedLeagueStats}
+      fallbackLeagueName={leagueStats.leagueName}
+      isGoalkeeper={isGoalkeeper}
+      isExpanded={isExpanded}
+      onToggleExpand={toggleExpand}
+      trophy={trophy}
+      isTotal={false}
+    />
   );
 };
 

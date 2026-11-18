@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Career } from "../../../interfaces/Career";
 import { Players } from "../../../interfaces/playersInfo/players";
 import { ServicePlayers } from "../../../services/ServicePlayers";
-import { usePlayerGroupStatsContext } from "../../../../pages/Players/contexts/PlayerGroupStatsContext/context";
+import { usePlayerGroupStatsContext } from "../../../../contexts/PlayerGroupStatsContext";
 
 export const useGroupAggregatedPlayers = (
   career: Career,

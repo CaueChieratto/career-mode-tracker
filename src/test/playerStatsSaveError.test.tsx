@@ -5,6 +5,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { useSavePlayerStats } from "../pages/Match/components/LineupTab/views/AddMatchStatsPlayer/hooks/useSavePlayerStats";
 import { savePlayerMatchStats } from "../pages/Match/components/LineupTab/views/AddMatchStatsPlayer/services/savePlayerMatchStats";
 import { career, match, player, season } from "./factories/domain";
+import { clearAllToasts, toastStore } from "../common/services/ToastService";
 
 vi.mock(
   "../pages/Match/components/LineupTab/views/AddMatchStatsPlayer/services/savePlayerMatchStats",
@@ -23,7 +24,7 @@ it("falha de escrita é tratada, mantém editor aberto e permite nova tentativa"
     .mockResolvedValueOnce({ updatedPlayerStats: [] });
   const onClose = vi.fn();
   const onSaved = vi.fn();
-  vi.spyOn(window, "alert").mockImplementation(() => {});
+  clearAllToasts();
   vi.spyOn(console, "error").mockImplementation(() => {});
   const { result } = renderHook(() =>
     useSavePlayerStats({
@@ -44,7 +45,7 @@ it("falha de escrita é tratada, mantém editor aberto e permite nova tentativa"
   expect(result.current.isSaving).toBe(false);
   expect(onClose).not.toHaveBeenCalled();
   expect(onSaved).not.toHaveBeenCalled();
-  expect(window.alert).toHaveBeenCalledTimes(1);
+  expect(toastStore.getSnapshot().some((t) => t.type === "error")).toBe(true);
 
   await act(async () => {
     await result.current.savePlayerStats();

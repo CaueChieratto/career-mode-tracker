@@ -1,5 +1,4 @@
 import {
-  collectionGroup,
   getDocs,
   collection,
   updateDoc,
@@ -7,14 +6,14 @@ import {
 import { Career } from "../../../../../common/interfaces/Career";
 import { Teams } from "../../../../../common/interfaces/Teams";
 import { auth, db } from "../../../../../common/services/Firebase";
-import { CloudinaryService } from "../../../AddBadgeClub/services/CloudinaryService";
+import { CloudinaryService } from "../../../../../common/services/CloudinaryService";
 import { EditableTeam } from "../../types";
 
 export const fetchAllTeamsFromCareers = async (): Promise<EditableTeam[]> => {
   const user = auth.currentUser;
   if (!user) return [];
 
-  const careersRef = collectionGroup(db, "careers");
+  const careersRef = collection(db, `users/${user.uid}/careers`);
   const snapshot = await getDocs(careersRef);
   const teamMap = new Map<string, EditableTeam>();
 

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { AcademyPlayers } from "../../../../interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../../../../../../../common/interfaces/AcademyData";
 import { PlayerItem } from "../PlayerItem";
 import Styles from "../../../../AcademyContent.module.css";
 

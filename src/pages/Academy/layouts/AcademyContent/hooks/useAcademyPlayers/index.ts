@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, Dispatch, SetStateAction } from "react";
 import { AcademyService } from "../../services/AcademyService";
-import { AcademyPlayers } from "../../interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../../../../../common/interfaces/AcademyData";
 import { Career } from "../../../../../../common/interfaces/Career";
 
 export const useAcademyPlayers = (
@@ -8,7 +8,6 @@ export const useAcademyPlayers = (
   seasonId: string,
   isGeral?: boolean,
 ) => {
-  const [playersAcademy, setPlayersAcademy] = useState<AcademyPlayers[]>([]);
   const [allPlayersAcademy, setAllPlayersAcademy] = useState<AcademyPlayers[]>(
     [],
   );
@@ -61,24 +60,12 @@ export const useAcademyPlayers = (
 
           const aggregatedPlayers = Array.from(allPlayersMap.values());
           setAllPlayersAcademy(aggregatedPlayers);
-
-          const activePlayers = aggregatedPlayers.filter(
-            (player) =>
-              player.status !== "released" && player.status !== "promoted",
-          );
-          setPlayersAcademy(activePlayers);
         } else {
           const data = await AcademyService.getPlayersAcademy(
             career.id,
             seasonId,
           );
           setAllPlayersAcademy(data);
-
-          const activePlayers = data.filter(
-            (player) =>
-              player.status !== "released" && player.status !== "promoted",
-          );
-          setPlayersAcademy(activePlayers);
         }
       } catch (error) {
         console.error("Erro ao carregar jogadores da academia:", error);
@@ -93,14 +80,25 @@ export const useAcademyPlayers = (
     fetchPlayers();
   }, [fetchPlayers]);
 
+  const playersAcademy = useMemo(() => {
+    return allPlayersAcademy.filter(
+      (player) => player.status !== "released" && player.status !== "promoted",
+    );
+  }, [allPlayersAcademy]);
+
+  const setPlayersAcademy: Dispatch<SetStateAction<AcademyPlayers[]>> =
+    useCallback((action) => {
+      setAllPlayersAcademy((current) => {
+        const next = typeof action === "function" ? action(current) : action;
+        return next;
+      });
+    }, []);
+
   const applyPromotedPlayer = useCallback((promoted: AcademyPlayers) => {
     setAllPlayersAcademy((current) =>
       current.map((player) =>
         player.id === promoted.id ? promoted : player,
       ),
-    );
-    setPlayersAcademy((current) =>
-      current.filter((player) => player.id !== promoted.id),
     );
   }, []);
 

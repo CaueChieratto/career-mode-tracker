@@ -15,29 +15,8 @@
   min-height: 100px;
 }
 
-.container_info {
-  align-content: space-between;
-  display: grid;
-  gap: 16px 6px;
-  grid-template-columns: 1fr 1fr;
-  justify-items: center;
-  min-height: 50px;
-  width: 100%;
-}
-
 .h1 {
   font-size: 22px;
-}
-
-.h2 {
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.number {
-  color: var(--color-quaternary);
-  font-size: 16px;
-  font-weight: 600;
 }
 
 .icon {

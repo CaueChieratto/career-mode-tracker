@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
   readdirSync,
@@ -59,6 +59,25 @@ const cli = path.join(
 );
 if (!existsSync(cli))
   throw new Error("Run npm ci --prefix tests/emulator-tools first");
+const functionsDir = path.join(root, "functions");
+const functionsTsc = path.join(
+  functionsDir,
+  "node_modules",
+  "typescript",
+  "bin",
+  "tsc",
+);
+if (!existsSync(functionsTsc))
+  throw new Error("Run npm ci --prefix functions first");
+const functionsBuild = spawnSync(
+  process.execPath,
+  [functionsTsc, "-p", path.join(functionsDir, "tsconfig.json")],
+  { cwd: functionsDir, stdio: "inherit", env },
+);
+if (functionsBuild.status !== 0)
+  throw new Error(
+    `Functions build failed with exit code ${functionsBuild.status ?? 1}`,
+  );
 const dummyJsonPath = path.join(root, "functions", "dummy.json");
 try {
   const crypto = await import("node:crypto");

@@ -10,21 +10,39 @@ import { IoColorPalette } from "react-icons/io5";
 type BottomMenuProps = {
   noHavePlayers?: boolean;
   changeClubColor?: () => void;
+  playerId?: string;
+  careerId?: string;
 };
 
-const BottomMenu = ({ noHavePlayers, changeClubColor }: BottomMenuProps) => {
+const BottomMenu = ({
+  noHavePlayers,
+  changeClubColor,
+  playerId: propPlayerId,
+  careerId: propCareerId,
+}: BottomMenuProps) => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const { careerId, seasonId, playerId } = useParams();
+  const {
+    careerId: paramCareerId,
+    seasonId,
+    playerId: paramPlayerId,
+  } = useParams();
   const location = useLocation();
 
+  const effectivePlayerId = propPlayerId ?? paramPlayerId;
+  const effectiveCareerId = propCareerId ?? paramCareerId;
+
   const compareClick = () => {
-    if (playerId) {
-      navigate(`/Career/${careerId}/Geral/Player/${playerId}/Compare`);
+    if (!effectiveCareerId) return;
+
+    if (effectivePlayerId) {
+      navigate(
+        `/Career/${effectiveCareerId}/Geral/Player/${effectivePlayerId}/Compare`,
+      );
     } else if (location.pathname.includes("/Geral")) {
-      navigate(`/Career/${careerId}/Geral/Compare`);
+      navigate(`/Career/${effectiveCareerId}/Geral/Compare`);
     } else if (seasonId) {
-      navigate(`/Career/${careerId}/Season/${seasonId}/Compare`);
+      navigate(`/Career/${effectiveCareerId}/Season/${seasonId}/Compare`);
     }
   };
 

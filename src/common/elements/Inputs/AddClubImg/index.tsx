@@ -13,10 +13,11 @@ export const AddClubImg = forwardRef<HTMLInputElement, AddClubImgProps>(
       type="file"
       name="img"
       id="img"
+      accept="image/png, image/jpeg, image/webp"
       onChange={onChange}
       className={className}
     />
-  )
+  ),
 );
 
 AddClubImg.displayName = "AddClubImg";

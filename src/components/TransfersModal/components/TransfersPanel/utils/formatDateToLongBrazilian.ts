@@ -1,22 +1,29 @@
-export function formatDateToLongBrazilian(date: Date): string {
-  const monthNames = [
-    "janeiro",
-    "fevereiro",
-    "março",
-    "abril",
-    "maio",
-    "junho",
-    "julho",
-    "agosto",
-    "setembro",
-    "outubro",
-    "novembro",
-    "dezembro",
-  ];
+export function formatDateToLongBrazilian(date: Date | string | number): string {
+  try {
+    const d = date instanceof Date ? date : new Date(date);
+    if (isNaN(d.getTime())) return "";
 
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = monthNames[date.getMonth()];
-  const year = date.getFullYear();
+    const monthNames = [
+      "janeiro",
+      "fevereiro",
+      "março",
+      "abril",
+      "maio",
+      "junho",
+      "julho",
+      "agosto",
+      "setembro",
+      "outubro",
+      "novembro",
+      "dezembro",
+    ];
 
-  return `${day} de ${month} de ${year}`;
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = monthNames[d.getMonth()];
+    const year = d.getFullYear();
+
+    return `${day} de ${month} de ${year}`;
+  } catch {
+    return "";
+  }
 }

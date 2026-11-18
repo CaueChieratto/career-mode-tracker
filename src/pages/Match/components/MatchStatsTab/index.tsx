@@ -7,7 +7,7 @@ import {
 import { Match } from "../../../../common/interfaces/Match";
 import { ClubData } from "../../../../common/interfaces/club/clubData";
 import { Career } from "../../../../common/interfaces/Career";
-import { getOpponentCardsProjection } from "../../helpers/opponentCards";
+import { getOpponentCardsProjection } from "../../../../common/services/ServiceOpponentPlayers/helpers/opponentCards";
 
 type MixedStat =
   | ({ type: "standard" } & StatRowProps)

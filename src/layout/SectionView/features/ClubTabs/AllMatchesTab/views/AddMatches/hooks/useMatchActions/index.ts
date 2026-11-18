@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { buildMatchData } from "../../helpers/buildMatchData";
-import { ServiceMatches } from "../../services/ServiceMatches";
+import { ServiceMatches } from "../../../../../../../../../common/services/ServiceMatches";
 import { validateMatchForm } from "../../validators/validateMatchForm";
 import { MONTH_TO_NUM } from "../../../../constants/MONTH_OPTIONS";
 import { buildTeamData } from "../../helpers/buildTeamData";
@@ -10,6 +10,9 @@ import { useAddMatchesContext } from "../../contexts/context";
 import { ServiceCareer } from "../../../../../../../../../common/services/ServiceCareer";
 import { getSeasonName } from "../../../../../../../../../common/utils/GetSeasonName";
 import { Trophy } from "../../../../../../../../../common/interfaces/club/trophy";
+import { ServiceClubBadges } from "../../../../../../../../../common/services/ServiceClubBadges";
+import { useToast } from "../../../../../../../../../common/hooks/UseToast";
+import { NavigationSessionStore } from "../../../../../../../../../common/services/NavigationSessionStore";
 
 export function useMatchActions() {
   const {
@@ -20,6 +23,7 @@ export function useMatchActions() {
     booleanValues,
     onClose: onSuccess,
   } = useAddMatchesContext();
+  const { confirm, error: showError, warning: showWarning, success: showSuccess } = useToast();
 
   const careerId = career.id;
   const seasonId = season.id;
@@ -47,7 +51,7 @@ export function useMatchActions() {
 
     const validation = validateMatchForm({ ...formValues, date: finalDate });
     if (!validation.valid) {
-      alert(validation.message);
+      showWarning(validation.message || "Dados da partida inválidos.");
       return;
     }
 
@@ -59,7 +63,9 @@ export function useMatchActions() {
           : "Fora"
         : "Casa");
     const isKnockout = booleanValues.isKnockout ?? false;
-    const isReturnMatch = isKnockout ? (booleanValues.isReturnMatch ?? false) : false;
+    const isReturnMatch = isKnockout
+      ? (booleanValues.isReturnMatch ?? false)
+      : false;
 
     const existingMatch = matchesId
       ? season.matches?.find((m) => m.matchesId === matchesId)
@@ -97,10 +103,15 @@ export function useMatchActions() {
         newTeamData = {
           name: formValues.opponentTeam,
           badge: teamFromUserHistory.badge,
+          colors: teamFromUserHistory.colors,
         };
       } else {
         const specialUserId = import.meta.env.VITE_SPECIAL_USER_ID;
-        const isSpecialUser = auth.currentUser?.uid === specialUserId;
+        const isSpecialUser = Boolean(
+          auth.currentUser?.uid &&
+          specialUserId &&
+          auth.currentUser.uid === specialUserId,
+        );
 
         if (isSpecialUser) {
           newTeamData = await buildTeamData({
@@ -117,6 +128,7 @@ export function useMatchActions() {
             newTeamData = {
               name: formValues.opponentTeam,
               badge: teamFromSpecialUser.badge,
+              colors: teamFromSpecialUser.colors,
             };
           } else {
             newTeamData = {
@@ -129,6 +141,15 @@ export function useMatchActions() {
             name: formValues.opponentTeam,
             badge: "",
           };
+        }
+      }
+
+      if (newTeamData && !newTeamData.colors) {
+        const resolvedColors = await ServiceClubBadges.resolveClubColors(
+          formValues.opponentTeam,
+        );
+        if (resolvedColors && resolvedColors.length >= 2) {
+          newTeamData.colors = resolvedColors;
         }
       }
 
@@ -155,15 +176,20 @@ export function useMatchActions() {
       if (newTeamData) {
         if (teamAlreadyExistsInCurrentSeason) {
           const updatedTeams =
-            season.teams?.map((t) =>
-              t.name.toLowerCase() === opponentNameLower
-                ? {
-                    ...t,
-                    badge: newTeamData!.badge,
-                    leagueName: newTeamData!.leagueName || t.leagueName,
-                  }
-                : t,
-            ) || [];
+            season.teams?.map((t) => {
+              if (t.name.toLowerCase() === opponentNameLower) {
+                const updated: Teams = {
+                  ...t,
+                  badge: newTeamData!.badge,
+                };
+                const colors = newTeamData!.colors || t.colors;
+                if (colors) updated.colors = colors;
+                const leagueName = newTeamData!.leagueName || t.leagueName;
+                if (leagueName) updated.leagueName = leagueName;
+                return updated;
+              }
+              return t;
+            }) || [];
           await ServiceMatches.updateSeasonTeams(
             careerId,
             seasonId,
@@ -180,7 +206,10 @@ export function useMatchActions() {
         const updatedTeams =
           season.teams?.map((t) =>
             t.name.toLowerCase() === opponentNameLower
-              ? { ...t, leagueName: formValues.league }
+              ? {
+                  ...t,
+                  ...(formValues.league ? { leagueName: formValues.league } : {}),
+                }
               : t,
           ) || [];
         await ServiceMatches.updateSeasonTeams(
@@ -223,6 +252,21 @@ export function useMatchActions() {
         }
       }
 
+      showSuccess(
+        matchesId
+          ? "Partida atualizada com sucesso!"
+          : "Partida adicionada com sucesso!",
+      );
+
+      const targetMatchId = matchesId || matchData.matchesId;
+      if (targetMatchId) {
+        NavigationSessionStore.saveClickAnchor("all_matches", {
+          scrollY: 0,
+          anchorSelector: `#match-card-${targetMatchId}`,
+          updatedAt: Date.now(),
+        });
+      }
+
       onSuccess({
         type: matchesId ? "UPDATE" : "ADD",
         match: matchData,
@@ -231,7 +275,7 @@ export function useMatchActions() {
       });
     } catch (error) {
       console.error("Erro: ", error);
-      alert("Ocorreu um erro ao salvar a partida. Tente novamente.");
+      showError("Ocorreu um erro ao salvar a partida. Tente novamente.");
     } finally {
       setIsSaving(false);
     }
@@ -244,13 +288,17 @@ export function useMatchActions() {
     formValues,
     booleanValues,
     onSuccess,
+    showWarning,
+    showError,
+    showSuccess,
   ]);
 
   const deleteMatch = useCallback(async () => {
     if (!matchesId) return;
 
-    const confirmed = window.confirm(
+    const confirmed = await confirm(
       "Tem certeza que deseja deletar esta partida?",
+      { tone: "danger", confirmLabel: "Deletar" },
     );
     if (!confirmed) return;
 
@@ -266,18 +314,14 @@ export function useMatchActions() {
 
       await ServiceMatches.deleteMatchFromSeason(career, season, matchToDelete);
 
+      showSuccess("Partida excluída com sucesso!");
       onSuccess({ type: "DELETE", matchId: matchesId });
     } catch {
-      alert("Erro ao excluir a partida. Tente novamente.");
+      showError("Erro ao excluir a partida. Tente novamente.");
     } finally {
       setIsSaving(false);
     }
-  }, [
-    matchesId,
-    season,
-    career,
-    onSuccess,
-  ]);
+  }, [matchesId, season, career, onSuccess, confirm, showError, showSuccess]);
 
   return { isSaving, saveMatch, deleteMatch };
 }

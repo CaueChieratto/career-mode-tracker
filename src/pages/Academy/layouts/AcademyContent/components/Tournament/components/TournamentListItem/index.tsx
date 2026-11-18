@@ -1,5 +1,5 @@
 import { FaTrophy } from "react-icons/fa";
-import { AcademyTournaments } from "../../../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyTournaments } from "../../../../../../../../common/interfaces/AcademyData";
 import { AcademyListItem } from "../../../AcademyListItem";
 import { DefaultCircle } from "../../../../ui/DefaultCircle";
 import { InfoItem } from "../../../../ui/InfoItem";

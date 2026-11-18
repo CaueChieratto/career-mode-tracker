@@ -1,55 +1,67 @@
-import { useRef } from "react";
+import React, { useContext, useRef } from "react";
 import Styles from "./AddSeason_PlayerScreen.module.css";
 import ModalManager from "../../../../../../../../../common/constants/ModalManager";
 import { useModalManager } from "../../../../../../../../../common/hooks/Modal/UseModalManager";
 import { useSeasonTheme } from "../../../../../../../../../common/hooks/Seasons/UseSeasonTheme";
-import { Career } from "../../../../../../../../../common/interfaces/Career";
-import { ClubData } from "../../../../../../../../../common/interfaces/club/clubData";
 import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
 import HeaderSeason from "../../../../../../../../../components/HeaderSeason";
 import Load from "../../../../../../../../../components/Load";
 import Navbar from "../../../../../../../../../ui/Navbar";
 import { usePlayerStats } from "../../../../../../../../../common/hooks/Players/UsePlayerStats";
 import AddSeason_Player_Form from "../../components/AddSeason_Player_Form";
-import { OptimisticUpdateData } from "../../../../../../../helpers/updateSectionCareer";
-import { toRawPlayer } from "../../../../../../../helpers/mergeMatchStats";
+import { toRawPlayer } from "../../../../../../../../../common/stats/helpers/mergeMatchStats";
+import { AddSeasonPlayerContext } from "../../contexts/context";
+import { AddSeasonPlayerProps } from "../../types";
+import { NavigationSessionStore } from "../../../../../../../../../common/services/NavigationSessionStore";
 
-type Props = {
-  career: Career;
-  season: ClubData;
-  player?: Players;
-  onClose: (optimisticData?: OptimisticUpdateData) => void;
-};
+export const AddSeason_PlayerScreen: React.FC<Partial<AddSeasonPlayerProps>> = (
+  props = {},
+) => {
+  const context = useContext(AddSeasonPlayerContext);
 
-export default function AddSeason_PlayerScreen({
-  career,
-  season,
-  player,
-  onClose,
-}: Props) {
+  const career = props?.career ?? context?.career;
+  const season = props?.season ?? context?.season;
+  const player = props?.player ?? context?.player;
+  const onClose = props?.onClose ?? context?.onClose;
+
   const formRef = useRef<HTMLFormElement>(null);
   const pendingPlayerRef = useRef<Players | undefined>(undefined);
   const modalManager = useModalManager();
   const { clubColor, darkClubColor } = useSeasonTheme();
 
+  const handleCancelBack = () => {
+    pendingPlayerRef.current = undefined;
+    onClose?.();
+  };
+
   const handleGoBack = () => {
     const updatedPlayer = pendingPlayerRef.current;
     pendingPlayerRef.current = undefined;
+
+    const targetPlayerId = updatedPlayer?.id || player?.id;
+    if (targetPlayerId) {
+      NavigationSessionStore.saveClickAnchor("stats", {
+        scrollY: 0,
+        anchorSelector: `#player-stat-${targetPlayerId}`,
+        updatedAt: Date.now(),
+      });
+    }
+
     if (updatedPlayer) {
-      onClose({ type: "UPDATE_PLAYER", player: updatedPlayer });
+      onClose?.({ type: "UPDATE_PLAYER", player: updatedPlayer });
       return;
     }
-    onClose();
+    onClose?.();
   };
 
   const { handleStatsSave, isStatsLoading } = usePlayerStats({
-    career,
-    careerId: career.id,
-    currentPlayers: season.players,
+    career: career!,
+    careerId: career?.id || "",
+    currentPlayers: season?.players || [],
     handleGoBack,
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formRef.current) return;
     const formData = new FormData(formRef.current);
 
@@ -59,7 +71,7 @@ export default function AddSeason_PlayerScreen({
 
     let targetPlayer = player;
 
-    if (!targetPlayer) {
+    if (!targetPlayer && season?.players) {
       const selectedName = formData.get("playerName") as string | null;
       targetPlayer = selectedName
         ? season.players.find((p) => p.name === selectedName)
@@ -75,15 +87,20 @@ export default function AddSeason_PlayerScreen({
       };
     }
 
-    handleStatsSave(formData);
+    const result = await handleStatsSave(formData);
+    if (result === false) {
+      pendingPlayerRef.current = undefined;
+    }
   };
+
+  if (!career || !season) return null;
 
   return (
     <>
       <HeaderSeason
         careerId={career.id}
         career={career}
-        backSeasons={onClose}
+        backSeasons={handleCancelBack}
         titleText={player?.name}
       />
       <Navbar
@@ -99,7 +116,6 @@ export default function AddSeason_PlayerScreen({
             player={player}
             career={career}
             season={season}
-            openModal={modalManager.openModal}
           />
         </div>
       </div>
@@ -115,4 +131,6 @@ export default function AddSeason_PlayerScreen({
       />
     </>
   );
-}
+};
+
+export default AddSeason_PlayerScreen;

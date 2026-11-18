@@ -5,7 +5,6 @@ import AddOrEditLeagueButton from "../../../../../../../../../common/elements/Bu
 import Load from "../../../../../../../../../components/Load";
 import { Career } from "../../../../../../../../../common/interfaces/Career";
 import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
-import { ModalType } from "../../../../../../../../../common/types/enums/ModalType";
 import { ClubData } from "../../../../../../../../../common/interfaces/club/clubData";
 import { useSeasonTheme } from "../../../../../../../../../common/hooks/Seasons/UseSeasonTheme";
 import { usePlayerSeasonStats } from "../../../../../../../../../common/hooks/Players/UsePlayerSeasonStats";
@@ -16,7 +15,6 @@ type AddSeason_Player_FormProps = {
   player?: Players;
   career: Career;
   season: ClubData;
-  openModal: (modal: ModalType, career?: Career) => void;
 };
 
 const AddSeason_Player_Form = forwardRef<
@@ -27,8 +25,7 @@ const AddSeason_Player_Form = forwardRef<
   const leagueFormRef = useRef<HTMLDivElement>(null);
 
   const {
-    formValues,
-    booleanValues,
+    mergedFormValues,
     leagues,
     isGoalkeeper,
     originalLeagueNameToEdit,
@@ -56,12 +53,7 @@ const AddSeason_Player_Form = forwardRef<
               title={item.title}
               rows={item.fields}
               isGoalkeeper={isGoalkeeper}
-              formValues={{
-                ...formValues,
-                ...Object.fromEntries(
-                  Object.entries(booleanValues).map(([k, v]) => [k, String(v)]),
-                ),
-              }}
+              formValues={mergedFormValues}
               onInputChange={handleInputChange}
               onBooleanChange={handleBooleanChange}
             />

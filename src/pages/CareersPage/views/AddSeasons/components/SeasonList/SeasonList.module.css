@@ -1,0 +1,12 @@
+.container_card {
+  width: 100%;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.general {
+  font-size: 20px;
+  line-height: 20px;
+}
+

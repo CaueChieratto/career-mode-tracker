@@ -18,14 +18,6 @@
   color: var(--blackColor);
 }
 
-.ratingBadge {
-  color: #fff;
-  font-weight: 700;
-  font-size: 16px;
-  padding: 4px 8px;
-  border-radius: 4px;
-}
-
 .matchHeader {
   display: flex;
   justify-content: space-between;

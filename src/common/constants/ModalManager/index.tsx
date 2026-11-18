@@ -1,7 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import Modal from "../../../components/Modal";
 import DeleteConfirmModal from "../../../ui/modals/DeleteConfirmModal";
-import NewCareerModal from "../../../ui/modals/NewCareerModal";
 import { Career } from "../../interfaces/Career";
 import { ModalType } from "../../types/enums/ModalType";
 import SlideUpModal from "../../../ui/modals/SlideUpModal";
@@ -62,11 +61,12 @@ const ModalManager = ({
       return (
         <Modal
           isOpen
+          isNormalTop
           closeModal={closeModal}
           animationContainer="left"
           text="Adicionar Carreira"
         >
-          <NewCareerModal closeModal={closeModal}></NewCareerModal>
+          <EditCareerModal mode="create" closeModal={closeModal} />
         </Modal>
       );
     case ModalType.EDIT_TEAMS:
@@ -105,10 +105,10 @@ const ModalManager = ({
         >
           <EditCareerModal
             closeModal={closeModal}
-            edit={false}
+            mode="style"
             setSelectedCareer={setSelectedCareer}
             selectedCareer={selectedCareer!}
-          ></EditCareerModal>
+          />
         </Modal>
       );
     case ModalType.EDIT_CLUB:
@@ -122,10 +122,10 @@ const ModalManager = ({
         >
           <EditCareerModal
             closeModal={closeModal}
-            edit
+            mode="edit"
             setSelectedCareer={setSelectedCareer}
             selectedCareer={selectedCareer!}
-          ></EditCareerModal>
+          />
         </Modal>
       );
     case ModalType.SLIDE_UP_PANEL:

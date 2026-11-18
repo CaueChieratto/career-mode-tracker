@@ -24,23 +24,61 @@ export const useHeaderNavigation = ({
     const groupIdFromSearch = searchParams.get("groupId");
 
     if (fromPlayerId) {
+      if (fromGroup && groupIdFromSearch) {
+        navigate(`/CareerGroup/${groupIdFromSearch}/Geral`, {
+          state: {
+            reopenScreen: {
+              key: "player",
+              playerId: fromPlayerId,
+              careerId,
+              isNotSeason: true,
+              isFromGroup: true,
+              groupId: groupIdFromSearch,
+            },
+          },
+        });
+        return;
+      }
       if (isFromSeasonPlayer && seasonId) {
-        navigate(
-          `/Career/${careerId}/Season/${seasonId}/Player/${fromPlayerId}`,
-        );
+        navigate(`/Career/${careerId}/Season/${seasonId}`, {
+          state: {
+            reopenScreen: {
+              key: "player",
+              playerId: fromPlayerId,
+              careerId,
+              seasonId,
+              isNotSeason: false,
+            },
+          },
+        });
         return;
       }
       if (isFromGeral) {
-        navigate(`/Career/${careerId}/Geral/Player/${fromPlayerId}`);
+        navigate(`/Career/${careerId}/Geral`, {
+          state: {
+            reopenScreen: {
+              key: "player",
+              playerId: fromPlayerId,
+              careerId,
+              isNotSeason: true,
+            },
+          },
+        });
         return;
       }
       if (seasonId) {
-        navigate(
-          `/Career/${careerId}/Season/${seasonId}/EditPlayer/${fromPlayerId}`,
-        );
+        navigate(`/Career/${careerId}/Season/${seasonId}`, {
+          state: {
+            reopenScreen: {
+              key: "addSquadPlayer",
+              playerId: fromPlayerId,
+              seasonId,
+            },
+          },
+        });
         return;
       }
-      navigate(`/Career/${careerId}`);
+      navigate("/CareersPage", { state: { addSeasonsCareerId: careerId } });
       return;
     }
 
@@ -59,7 +97,7 @@ export const useHeaderNavigation = ({
       } else if (seasonId) {
         navigate(`/Career/${careerId}/Season/${seasonId}`);
       } else {
-        navigate(`/Career/${careerId}`);
+        navigate("/CareersPage", { state: { addSeasonsCareerId: careerId } });
       }
       return;
     }
@@ -72,7 +110,7 @@ export const useHeaderNavigation = ({
       return;
     }
 
-    navigate(`/Career/${careerId}`);
+    navigate("/CareersPage", { state: { addSeasonsCareerId: careerId } });
   };
 
   return { handleGoBack };

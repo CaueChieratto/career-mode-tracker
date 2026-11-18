@@ -1,12 +1,14 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { buildSectionViewModel } from "../../helpers/buildSectionViewModel";
-import { augmentCareerWithMatchStats } from "../../helpers/mergeMatchStats";
+import { augmentCareerWithMatchStats } from "../../../../common/stats/helpers/mergeMatchStats";
 import type { SectionViewProps } from "../../types/SectionViewProps";
 import { useSectionCareer } from "../useSectionCareer";
 import { useSectionModal } from "../useSectionModal";
 import { useSectionNavigation } from "../useSectionNavigation";
 import { useSectionTabs } from "../useSectionTabs";
 import { Players } from "../../../../common/interfaces/playersInfo/players";
+import { findAchievedObjectiveBonusesToSettle } from "../../../../common/services/ServiceFinance/clauseAutoEvaluator";
+import { PlayersContractService } from "../../../../common/services/ServicePlayers/PlayersContractService";
 
 type UseSectionViewParams = Pick<
   SectionViewProps,
@@ -17,6 +19,7 @@ type UseSectionViewParams = Pick<
   | "isPlayer"
   | "notSeason"
   | "onScreenChange"
+  | "tabStorageKey"
 >;
 
 export function useSectionView({
@@ -27,6 +30,7 @@ export function useSectionView({
   isPlayer,
   notSeason,
   onScreenChange,
+  tabStorageKey,
 }: UseSectionViewParams) {
   const { localCareer, refreshSeason, updateMatchesOptimistically } =
     useSectionCareer(career, season.id);
@@ -44,9 +48,44 @@ export function useSectionView({
         player,
         isPlayer,
         notSeason,
+        tabStorageKey,
       }),
-    [augmentedCareer, isPlayer, notSeason, player, season],
+    [augmentedCareer, isPlayer, notSeason, player, season, tabStorageKey],
   );
+
+  useEffect(() => {
+    if (
+      notSeason ||
+      isPlayer ||
+      !augmentedCareer?.id ||
+      !augmentedSeason?.id ||
+      augmentedSeason.id === "geral"
+    ) {
+      return;
+    }
+
+    const candidates = findAchievedObjectiveBonusesToSettle(
+      augmentedCareer,
+      augmentedSeason,
+    );
+    if (candidates.length === 0) return;
+
+    let cancelled = false;
+    void PlayersContractService.autoSettleAchievedObjectiveBonuses(
+      augmentedCareer.id,
+      augmentedSeason.id,
+      augmentedCareer,
+      augmentedSeason,
+    ).then((result) => {
+      if (!cancelled && result.settledCount > 0) {
+        void refreshSeason(augmentedSeason.id);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [notSeason, isPlayer, augmentedCareer, augmentedSeason, refreshSeason]);
 
   const updatePlayer = useCallback(
     (updatedPlayer: Players) => {

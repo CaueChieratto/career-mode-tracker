@@ -100,6 +100,8 @@ export const deleteCareerClientTree = async (
       "academyPlayers",
       "table",
       "academyTournaments",
+      "proposals",
+      "finance",
     ] as const;
     for (const subName of subNames) {
       const subColRef = collection(
@@ -206,4 +208,20 @@ export const deleteSeasonFromTrophies = (
   trophies = trophies.filter((trophy) => trophy.seasons.length > 0);
 
   return trophies;
+};
+
+export const removeAllTrophiesForSeason = (
+  career: Career,
+  seasonName: string,
+): Trophy[] => {
+  if (!career.trophies || !Array.isArray(career.trophies)) {
+    return [];
+  }
+
+  return career.trophies
+    .map((trophy) => ({
+      ...trophy,
+      seasons: (trophy.seasons || []).filter((s) => s !== seasonName),
+    }))
+    .filter((trophy) => trophy.seasons.length > 0);
 };

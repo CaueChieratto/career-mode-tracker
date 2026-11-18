@@ -3,7 +3,7 @@ import { ClubData } from "../../../interfaces/club/clubData";
 import { Players } from "../../../interfaces/playersInfo/players";
 import { LeagueStats } from "../../../interfaces/playersStats/leagueStats";
 import { sortPlayersByPosition } from "../../../utils/Sorts";
-import { seasonsFormFields } from "../../../../layout/SectionView/features/ClubTabs/StatsTab_Club/views/AddSeason_Player/constants/SeasonsFormFields";
+import { seasonsFormFields } from "../../../constants/SeasonsFormFields";
 
 type UseSeasonStatsFormDataProps = {
   season: ClubData;

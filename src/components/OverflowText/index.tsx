@@ -3,6 +3,7 @@ import Styles from "./OverflowText.module.css";
 
 type OverflowTextProps = {
   text: string;
+  children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   direction?: "left" | "right";
@@ -12,6 +13,7 @@ type OverflowTextProps = {
 
 export const OverflowText = ({
   text,
+  children,
   className = "",
   style,
   direction = "left",
@@ -67,7 +69,7 @@ export const OverflowText = ({
           : ""
       }`.trim()}
     >
-      {text}
+      {children ?? text}
     </span>
   );
 };

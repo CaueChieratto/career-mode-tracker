@@ -1,15 +1,17 @@
-import { Match } from "../Match";
+import type { Match } from "../Match";
 
 export type OpponentGoal = {
   player: string;
   minute: string;
   playerId?: string;
+  isFormerPlayer?: boolean;
 };
 
 export type OpponentAssist = {
   player: string;
   goalReference: string;
   playerId?: string;
+  isFormerPlayer?: boolean;
 };
 
 export type OpponentCard = {
@@ -21,12 +23,14 @@ export type OpponentCard = {
   red: boolean;
   redMinute: string;
   playerId?: string;
+  isFormerPlayer?: boolean;
 };
 
 export type OpponentOwnGoal = {
   player: string;
   minute: string;
   playerId?: string;
+  isFormerPlayer?: boolean;
 };
 
 export type OpponentEvents = {

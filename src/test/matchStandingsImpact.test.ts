@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasStandingsImpact } from "../layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable/hasStandingsImpact";
+import { hasStandingsImpact } from "../common/services/ServiceTable/hasStandingsImpact";
 import { match } from "./factories/domain";
 import type { Match } from "../common/interfaces/Match";
 

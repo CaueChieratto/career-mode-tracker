@@ -4,7 +4,8 @@ import { ClubData } from "../../../interfaces/club/clubData";
 import { useCareers } from "../../Career/UseCareer";
 import { useOpenTransfersModal } from "../../Modal/UseOpenTransfersModal";
 import { useAggregatedPlayers } from "../../Players/UseAggregatedPlayers";
-import { getSeasonTabsConfig } from "../../../../layout/SectionView/config/seasonTabsConfig";
+import { getSeasonTabsConfig } from "../../../config/seasonTabsConfig";
+import { aggregateFinancialReports } from "../../../services/ServiceFinance/aggregation";
 
 export const useSeasonView = (isGeralPage: boolean, isPlayer?: boolean) => {
   const { careerId, seasonId } = useParams<{
@@ -36,6 +37,7 @@ export const useSeasonView = (isGeralPage: boolean, isPlayer?: boolean) => {
       return {
         ...latestSeason,
         players: aggregatedPlayers,
+        financialReport: career ? aggregateFinancialReports(career) : undefined,
       };
     }
     return career?.clubData.find((s) => s.id === seasonId);
@@ -46,10 +48,10 @@ export const useSeasonView = (isGeralPage: boolean, isPlayer?: boolean) => {
 
     if (isGeralPage) {
       if (!latestSeason) return [];
-      return getSeasonTabsConfig(career, latestSeason.id, navigate, !!isPlayer);
+      return getSeasonTabsConfig(career, latestSeason.id, navigate, !!isPlayer, true);
     }
     if (!seasonId) return [];
-    return getSeasonTabsConfig(career, seasonId, navigate, !!isPlayer);
+    return getSeasonTabsConfig(career, seasonId, navigate, !!isPlayer, false);
   }, [career, seasonId, navigate, isGeralPage, latestSeason, isPlayer]);
 
   const {
@@ -58,6 +60,10 @@ export const useSeasonView = (isGeralPage: boolean, isPlayer?: boolean) => {
     playersToShow,
     handleOpenTransfers,
     handleCloseModal,
+    proposals,
+    proposalsArrivals,
+    proposalsExits,
+    proposalsRenewals,
   } = useOpenTransfersModal(
     career,
     isGeralPage ? (latestSeason ?? undefined) : seasonData,
@@ -74,5 +80,9 @@ export const useSeasonView = (isGeralPage: boolean, isPlayer?: boolean) => {
     playersToShow,
     handleOpenTransfers,
     handleCloseModal,
+    proposals,
+    proposalsArrivals,
+    proposalsExits,
+    proposalsRenewals,
   };
 };

@@ -1,4 +1,4 @@
-import { PlayerMatchesStats } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
+import { PlayerMatchesStats } from "../../../../../../../../../../../../common/interfaces/AcademyData";
 import { FormInput } from "../../../../../../../FormInput";
 import Button from "../../../../../../../../../../../../components/Button";
 import Styles from "./StatsCard.module.css";

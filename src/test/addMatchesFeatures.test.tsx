@@ -6,7 +6,7 @@ import { getMatchFormFields } from '../layout/SectionView/features/ClubTabs/AllM
 import { buildMatchData } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/helpers/buildMatchData';
 import { useMatchActions } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/hooks/useMatchActions';
 import { useAddMatchesContext } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/contexts/context';
-import { ServiceMatches } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches';
+import { ServiceMatches } from '../common/services/ServiceMatches';
 import { ServiceCareer } from '../common/services/ServiceCareer';
 import { useAddDetails } from '../pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/useAddDetails';
 import { career, season, match } from './factories/domain';
@@ -17,7 +17,7 @@ vi.mock('../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/
   useAddMatchesContext: vi.fn(),
 }));
 
-vi.mock('../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches', () => ({
+vi.mock('../common/services/ServiceMatches', () => ({
   ServiceMatches: {
     addMatchToSeason: vi.fn().mockResolvedValue(undefined),
     updateMatchInSeason: vi.fn().mockResolvedValue(undefined),
@@ -377,6 +377,13 @@ describe('useMatchActions - Salvamento de estádio e troféu automático na fina
         matchVenue: 'Neutro',
         stadium: 'Centenario',
       },
+      mergedFormValues: {
+        date: '15/06',
+        league: 'Copa Sul-Americana',
+        opponentTeam: 'Flamengo',
+        matchVenue: 'Neutro',
+        stadium: 'Centenario',
+      },
       booleanValues: {},
       onClose,
       setFormValues: vi.fn(),
@@ -427,6 +434,14 @@ describe('useMatchActions - Salvamento de estádio e troféu automático na fina
         matchVenue: 'Neutro',
         stage: 'Final',
       },
+      mergedFormValues: {
+        date: '15/06',
+        league: 'Copa Libertadores',
+        opponentTeam: 'Palmeiras',
+        matchVenue: 'Neutro',
+        stage: 'Final',
+        isKnockout: 'true',
+      },
       booleanValues: { isKnockout: true },
       onClose,
       setFormValues: vi.fn(),
@@ -475,6 +490,14 @@ describe('useMatchActions - Salvamento de estádio e troféu automático na fina
         opponentTeam: 'Palmeiras',
         matchVenue: 'Neutro',
         stage: 'Final',
+      },
+      mergedFormValues: {
+        date: '15/06',
+        league: 'Copa Libertadores',
+        opponentTeam: 'Palmeiras',
+        matchVenue: 'Neutro',
+        stage: 'Final',
+        isKnockout: 'true',
       },
       booleanValues: { isKnockout: true },
       onClose,

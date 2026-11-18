@@ -20,7 +20,10 @@ const Navbar = ({
   const optionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
-    if (optionRefs.current[activeOption]) {
+    if (
+      optionRefs.current[activeOption] &&
+      typeof optionRefs.current[activeOption]?.scrollIntoView === "function"
+    ) {
       optionRefs.current[activeOption]?.scrollIntoView({
         behavior: "smooth",
         block: "nearest",

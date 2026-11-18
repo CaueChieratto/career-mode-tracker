@@ -1,7 +1,22 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Field } from "../../../components/FormSection";
 import { capitalizeWords } from "../Formatters/Capitalize";
 import { formatDateInputShort } from "../../utils/Date";
+
+export const mergeFormValues = <
+  TFormValues extends Record<string, string | undefined> = Record<
+    string,
+    string
+  >,
+>(
+  formValues: TFormValues,
+  booleanValues: Record<string, boolean>,
+): Record<string, string> => ({
+  ...(formValues as Record<string, string>),
+  ...Object.fromEntries(
+    Object.entries(booleanValues).map(([k, v]) => [k, String(v)]),
+  ),
+});
 
 export const useForm = () => {
   const [booleanValues, setBooleanValues] = useState<Record<string, boolean>>({
@@ -28,7 +43,8 @@ export const useForm = () => {
       field: Field,
     ) => {
       const { name, value } = e.target;
-      const oldValue = formValues[name] || "";
+      const key = name || field.id;
+      const oldValue = formValues[key] || "";
       let processedValue = value;
 
       if (["playerValue", "buyValue", "salary"].includes(field.id)) {
@@ -66,13 +82,13 @@ export const useForm = () => {
 
       setFormValues((prev) => ({
         ...prev,
-        [name]: processedValue,
+        [key]: processedValue,
       }));
     },
     [formValues, isShiftPressed],
   );
 
-  const handleBooleanChange = (name: string, value: boolean) => {
+  const handleBooleanChange = useCallback((name: string, value: boolean) => {
     setBooleanValues((prev) => ({
       ...prev,
       [name]: value,
@@ -90,19 +106,31 @@ export const useForm = () => {
         return newValues;
       });
     }
-  };
-
-  const handleSigningChange = useCallback((checked: boolean) => {
-    handleBooleanChange("isSigning", checked);
   }, []);
 
-  const handleCaptainChange = useCallback((checked: boolean) => {
-    handleBooleanChange("isCaptain", checked);
-  }, []);
+  const handleSigningChange = useCallback(
+    (checked: boolean) => {
+      handleBooleanChange("isSigning", checked);
+    },
+    [handleBooleanChange],
+  );
+
+  const handleCaptainChange = useCallback(
+    (checked: boolean) => {
+      handleBooleanChange("isCaptain", checked);
+    },
+    [handleBooleanChange],
+  );
+
+  const mergedFormValues = useMemo(
+    () => mergeFormValues(formValues, booleanValues),
+    [formValues, booleanValues],
+  );
 
   return {
     booleanValues,
     formValues,
+    mergedFormValues,
     setFormValues,
     handleInputChange,
     handleKeyDown,

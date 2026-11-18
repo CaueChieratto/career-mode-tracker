@@ -6,6 +6,7 @@ import type {
   PlayerStatsFormValues,
 } from "../../types";
 import { Match } from "../../../../../../../../common/interfaces/Match";
+import { toast } from "../../../../../../../../common/services/ToastService";
 
 interface UseSavePlayerStatsParams extends Omit<
   SavePlayerMatchStatsParams,
@@ -51,10 +52,12 @@ export const useSavePlayerStats = ({
         playerStats: updatedPlayerStats,
       });
 
+      toast.success("Estatísticas do jogador salvas com sucesso!");
+
       onClose();
     } catch (error) {
       console.error("Erro: ", error);
-      alert("Erro ao salvar as estatísticas do jogador. Tente novamente.");
+      toast.error("Erro ao salvar as estatísticas do jogador. Tente novamente.");
     } finally {
       setIsSaving(false);
     }

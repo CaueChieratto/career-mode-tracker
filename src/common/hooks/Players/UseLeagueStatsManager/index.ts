@@ -3,7 +3,8 @@ import { Career } from "../../../interfaces/Career";
 import { ClubData } from "../../../interfaces/club/clubData";
 import { LeagueStats } from "../../../interfaces/playersStats/leagueStats";
 import { Stats } from "../../../interfaces/playersStats/stats";
-import { leaguesByContinent } from "../../../utils/league";
+import { getAllLeaguesFlat } from "../../../utils/league";
+import { toast } from "../../../services/ToastService";
 
 type UseLeagueStatsManagerProps = {
   career: Career;
@@ -64,7 +65,7 @@ export const useLeagueStatsManager = ({
     } = formValues;
 
     if (!playerName || !leagueName) {
-      alert("Selecione um jogador e uma liga.");
+      toast.warning("Selecione um jogador e uma liga.");
       setIsLoading(false);
       return;
     }
@@ -74,21 +75,19 @@ export const useLeagueStatsManager = ({
     );
 
     if (!selectedPlayer) {
-      alert("Jogador não encontrado.");
+      toast.error("Jogador não encontrado.");
       setIsLoading(false);
       return;
     }
 
-    const allLeagues = Object.values(leaguesByContinent)
-      .flatMap((continent) => Object.values(continent))
-      .flat();
+    const allLeagues = getAllLeaguesFlat();
 
     const leagueData =
       season.leagues?.find((l) => l.name === leagueName) ||
       allLeagues.find((l) => l.name === leagueName);
 
     if (!leagueData) {
-      alert("Liga não encontrada.");
+      toast.error("Liga não encontrada.");
       setIsLoading(false);
       return;
     }

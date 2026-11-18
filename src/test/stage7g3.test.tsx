@@ -8,11 +8,11 @@ import {
 } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import SectionView from "../layout/SectionView";
-import type { TabConfig } from "../layout/SectionView/config/seasonTabsConfig";
+import type { TabConfig } from "../common/config/seasonTabsConfig";
 import { career, season, player as playerFactory } from "./factories/domain";
 import { ServicePlayers } from "../common/services/ServicePlayers";
 import { useGroupAggregatedPlayers } from "../common/hooks/Players/useGroupAggregatedPlayers";
-import { PlayerGroupStatsProvider } from "../pages/Players/contexts/PlayerGroupStatsContext";
+import { PlayerGroupStatsProvider } from "../contexts/PlayerGroupStatsContext";
 import type { Career } from "../common/interfaces/Career";
 
 import { ThemeProvider } from "../contexts/LightThemeContext";

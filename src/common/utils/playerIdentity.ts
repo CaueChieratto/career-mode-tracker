@@ -55,6 +55,16 @@ export const getPlayerIdentityKey = (
   return player.id || "";
 };
 
+export interface PlayerIdentityInput {
+  id?: string;
+  name?: string;
+  nation?: string;
+  nationality?: string;
+  isAcademy?: boolean;
+  academyData?: { id?: string; nationality?: string; nation?: string };
+  playedWithUs?: string;
+}
+
 /**
  * Compara se um playerId ou objeto de jogador corresponde a outro.
  * Trata playedWithUs, variações de prefixo 'academy-', isAcademy e vínculo academyData.
@@ -63,7 +73,7 @@ export const isSamePlayerId = (
   idOrPlayerA:
     | string
     | {
-        id: string;
+        id?: string;
         isAcademy?: boolean;
         academyData?: { id?: string };
         playedWithUs?: string;
@@ -72,7 +82,7 @@ export const isSamePlayerId = (
   idOrPlayerB:
     | string
     | {
-        id: string;
+        id?: string;
         isAcademy?: boolean;
         academyData?: { id?: string };
         playedWithUs?: string;
@@ -132,3 +142,30 @@ export const matchPlayerStatToPlayer = (
   // 2. Tenta match com normalização de base / academy
   return players.find((p) => isSamePlayerId(statPlayerId, p));
 };
+
+/**
+ * Encontra um jogador em uma lista pelo ID (incluindo playedWithUs e vínculos da base)
+ * ou por fallback canônico de nome + nacionalidade.
+ */
+export function findPlayerInList<T extends PlayerIdentityInput>(
+  players: T[] | undefined | null,
+  targetPlayer: PlayerIdentityInput | undefined | null,
+): T | undefined {
+  if (!players || !targetPlayer) return undefined;
+
+  const byId = players.find((p) => isSamePlayerId(p, targetPlayer));
+  if (byId) return byId;
+
+  if (targetPlayer.name && targetPlayer.nation) {
+    const normalizedName = targetPlayer.name.trim().toLowerCase();
+    const normalizedNation = targetPlayer.nation.trim().toLowerCase();
+    return players.find(
+      (p) =>
+        Boolean(p.name && p.nation) &&
+        p.name!.trim().toLowerCase() === normalizedName &&
+        p.nation!.trim().toLowerCase() === normalizedNation,
+    );
+  }
+
+  return undefined;
+}

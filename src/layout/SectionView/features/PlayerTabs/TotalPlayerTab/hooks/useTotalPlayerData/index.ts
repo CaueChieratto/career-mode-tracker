@@ -4,13 +4,17 @@ import { belongsToSeason } from "../../../AcademyPlayerTab/helpers/belongsToSeas
 import { getAcademyConsolidatedStats } from "../../helpers/getAcademyConsolidatedStats";
 import { buildPlayerTabCopyText } from "../../../helpers/buildPlayerTabCopyText";
 import { formatSeasonString } from "../../helpers/formatSeasonString";
-import { findPlayerInList } from "../../helpers/findPlayerInList";
+import { findPlayerInList } from "../../../../../../../common/utils/playerIdentity";
 import { buildAcademyTrophies } from "../../helpers/buildAcademyTrophies";
 import { useGroupAggregatedPlayers } from "../../../../../../../common/hooks/Players/useGroupAggregatedPlayers";
+import { usePlayerGroupStatsContext } from "../../../../../../../contexts/PlayerGroupStatsContext";
 import { Career } from "../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../common/interfaces/club/clubData";
 import { Players } from "../../../../../../../common/interfaces/playersInfo/players";
-import { getContinentByCountry } from "../../../../../../../common/services/GetContinentByCountry";
+import {
+  getValidDate,
+  isEuropeanSeason,
+} from "../../../../../../../common/utils/Date";
 import { Copy } from "../../../../../../../common/utils/Copy";
 import { useTotalPlayerTab } from "../useTotalPlayerTab";
 
@@ -27,10 +31,13 @@ export const useTotalPlayerData = ({
 }: UseTotalPlayerDataArgs) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
+  const groupStatsCtx = usePlayerGroupStatsContext();
   const isFromGroup =
-    searchParams.get("fromGroup") === "true" ||
-    location.pathname.includes("/CareerGroup");
-  const isNotSeason = location.pathname.includes("/Geral");
+    groupStatsCtx?.isFromGroup ??
+    (searchParams.get("fromGroup") === "true" ||
+      location.pathname.includes("/CareerGroup"));
+  const isNotSeason =
+    groupStatsCtx?.isGeralPage ?? location.pathname.includes("/Geral");
 
   const { groupPlayers, isLoadingGroup } = useGroupAggregatedPlayers(
     career,
@@ -71,9 +78,12 @@ export const useTotalPlayerData = ({
           career.nation,
         );
 
-        trophies = career.trophies.filter((t) =>
-          t.seasons.includes(seasonString),
-        );
+        trophies = career.trophies
+          .filter((t) => t.seasons.includes(seasonString))
+          .map((t) => ({
+            ...t,
+            seasons: [seasonString],
+          }));
         identifier = seasonString;
 
         const playerInThisSeason = findPlayerInList(season.players, player);
@@ -117,8 +127,8 @@ export const useTotalPlayerData = ({
 
     if (isNotSeason || !season) return playerForTotalCalc.academyTournaments;
 
-    const careerStartYear = new Date(career.createdAt).getFullYear();
-    const isEurope = getContinentByCountry(career.nation) === "Europa";
+    const careerStartYear = getValidDate(career.createdAt).getFullYear();
+    const isEurope = isEuropeanSeason(career.nation);
 
     return playerForTotalCalc.academyTournaments.filter((t) =>
       belongsToSeason(t.date, season.seasonNumber, careerStartYear, isEurope),

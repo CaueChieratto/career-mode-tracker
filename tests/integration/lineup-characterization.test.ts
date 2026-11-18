@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { FirebaseError } from "firebase/app";
 import { signOut } from "firebase/auth";
 import { ServiceLineup } from "../../src/pages/Match/services/ServiceLineup";
-import { ServiceMatches } from "../../src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../src/common/services/ServiceMatches";
 import { buildLineupStatsUpdate } from "../../src/pages/Match/components/LineupTab/helpers/buildLineupStatsUpdate";
 import { savePlayerMatchStats } from "../../src/pages/Match/components/LineupTab/views/AddMatchStatsPlayer/services/savePlayerMatchStats";
 import type { PlayerMatchStat } from "../../src/common/interfaces/PlayerMatchStat";
@@ -489,22 +489,16 @@ it("[B16-B] concorrência: operação 1 remove A e operação 2 remove A e B", a
   expect(final.parent.lineup).toEqual(lineupFor(["B", "C", "D"]));
 });
 
-it("[B16-B] save de lineup não abre leitura transacional", async () => {
+it("[C3] save de lineup executa leitura transacional autoritativa do documento pai", async () => {
   await seed();
   const original = await appMatch();
   boundary.calls = [];
-  boundary.hook = (call) => {
-    if (call.phase === "before" && call.operation.startsWith("get")) {
-      throw new FirebaseError("resource-exhausted", "Injected read quota");
-    }
-  };
   await remove(["A"], original);
-  boundary.hook = undefined;
-  expect(
-    boundary.calls.filter(
-      (call) => call.phase === "before" && call.operation.startsWith("get"),
-    ),
-  ).toEqual([]);
+  const reads = boundary.calls.filter(
+    (call) => call.phase === "before" && call.operation.startsWith("get"),
+  );
+  expect(reads.length).toBeGreaterThan(0);
+  expect(reads[0].path).toBe(matchPath());
   const final = await state();
   expectSources(final, ["B", "C", "D"], ["B", "C", "D"], ["B", "C", "D"]);
   expect(final.parent.lineup).toEqual(lineupFor(["B", "C", "D"]));
@@ -651,7 +645,7 @@ it("[B16] titular/contraparte: falha transitória é atômica e retry explícito
     formValues: { minutesPlayed: "60", substituteIn: "B", matchGoals: "2" },
     booleanValues: {},
   };
-  failOnce("setDoc", "/playerStats/B", "before", "unavailable");
+  failOnce("setDoc", "/playerStats/B", "before", "permission-denied");
   await expect(savePlayerMatchStats(args)).rejects.toThrow("Injected");
   expectSources(await state(), keepIds, keepIds, keepIds);
   boundary.hook = undefined;

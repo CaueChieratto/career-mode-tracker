@@ -1,0 +1,57 @@
+.card {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px #0003;
+  margin-bottom: 16px;
+  padding: 12px 20px;
+  color: var(--blackColor);
+}
+
+.container {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 100px;
+}
+
+.title {
+  font-size: 22px;
+  color: var(--blackColor);
+}
+
+.grid {
+  align-content: space-between;
+  display: grid;
+  gap: 16px 6px;
+  grid-template-columns: 1fr 1fr;
+  justify-items: center;
+  min-height: 50px;
+  width: 100%;
+}
+
+.item {
+  align-items: center;
+  color: var(--color-tertiary);
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.label {
+  font-size: 14px;
+}
+
+.labelBold {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.value {
+  color: var(--color-quaternary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.icon {
+  font-size: 40px;
+}

@@ -2,7 +2,7 @@ import { FaStar } from "react-icons/fa";
 import Styles from "./MVPCard.module.css";
 import { CardDetails } from "../../../../../../ui/IconsSVG/CardDetails";
 import { UseMatchRatingColor } from "../../../../../../common/hooks/Colors/GetOverallColor";
-import { PlayerCircle } from "../../../LineupTab/layouts/Section/components/SlotButton/components/PlayerDetails/PlayerCircle";
+import { PlayerCircle } from "../../../../../../components/PlayerCircle";
 import { formatPlayerName } from "../../../../../../common/utils/formatPlayerName";
 
 type MVPCardProps = {

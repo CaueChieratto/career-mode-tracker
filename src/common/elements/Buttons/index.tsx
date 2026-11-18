@@ -1,31 +1,33 @@
 import { AddSeasonButton } from "./AddSeasonButton";
 import { BackCareerPage } from "./BackCareerPage";
-import { CareerCardButtons } from "./CareerCardButtons";
-import { AddNewCareer } from "./AddNewCareer";
 import { AddPlayerSeason } from "./AddPlayerSeason";
 import { AddSquadPlayer } from "./AddSquadPlayer";
 import { ChangeClubColors } from "./ChangeClubColors";
-import AddOrEditLeagueButton from "./AddOrEditLeagueButton";
 import { AddMatches } from "./AddMatches";
 import { AddTeamsToTable } from "./AddTeamsToTable";
 import { SaveFormation } from "./SaveFormation";
 import { AddStatsMatch } from "./AddStatsMatch";
 import { AddDetails } from "./AddDetails";
 import { EnterAcademy } from "./EnterAcademy";
+import { ManageClauses } from "./ManageClauses";
+import { ThemedActionButton } from "./ThemedActionButton";
+import { AddOrEditLeagueButton } from "./AddOrEditLeagueButton";
+
+export { ThemedActionButton, AddOrEditLeagueButton };
 
 export const Buttons = {
   AddSeasonButton,
   BackCareerPage,
   AddPlayerSeason,
-  CareerCardButtons,
-  AddNewCareer,
   AddSquadPlayer,
   AddTeamsToTable,
   AddMatches,
   ChangeClubColors,
-  AddOrEditLeagueButton,
   SaveFormation,
   AddStatsMatch,
   AddDetails,
   EnterAcademy,
+  ManageClauses,
+  ThemedActionButton,
+  AddOrEditLeagueButton,
 };

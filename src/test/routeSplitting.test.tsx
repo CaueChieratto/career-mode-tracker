@@ -11,15 +11,12 @@ vi.mock("../common/helpers/Deleters", () => ({
   deleteCareer: vi.fn(),
 }));
 
-vi.mock(
-  "../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/API/TheSportsDBTeam",
-  () => ({
-    TheSportsDBTeam: {
-      getTeamsLeague: vi.fn().mockResolvedValue([]),
-    },
-  }),
-);
-
+vi.mock("../common/services/FootballDataService", () => ({
+  FootballDataService: {
+    fetchTeamByClubName: vi.fn().mockResolvedValue(null),
+  },
+  fetchTeamByClubName: vi.fn().mockResolvedValue(null),
+}));
 describe("[7E2] Route Code Splitting", () => {
   afterEach(async () => {
     await act(async () => {});

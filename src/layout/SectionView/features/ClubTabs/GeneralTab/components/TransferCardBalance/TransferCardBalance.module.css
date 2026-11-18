@@ -1,7 +1,0 @@
-.container_info {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr 1fr;
-  min-height: 50px;
-  width: 100%;
-  gap: 6px;
-}

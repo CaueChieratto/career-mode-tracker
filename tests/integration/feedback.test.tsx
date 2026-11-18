@@ -4,6 +4,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { useLineupPersistence } from "../../src/pages/Match/components/LineupTab/hooks/useLineupPersistence";
 import { lineup, match } from "../../src/test/factories/domain";
 import { failOnce, matchPath, put, read, seedCareer } from "./helpers";
+import { clearAllToasts, toastStore } from "../../src/common/services/ToastService";
 
 vi.mock("react-router-dom", () => ({
   useParams: () => ({ careerId: "c1", seasonId: "s1" }),
@@ -18,7 +19,7 @@ it.each([false, true])(
     await put(matchPath(), initial);
     failOnce("setDoc", "/matches/m1", "before", "permission-denied");
     vi.spyOn(console, "error").mockImplementation(() => {});
-    vi.stubGlobal("alert", vi.fn());
+    clearAllToasts();
     const onSaved = vi.fn();
     const draft = lineup();
     const before = structuredClone(draft);
@@ -37,7 +38,7 @@ it.each([false, true])(
       await save!();
     });
     expect(onSaved).not.toHaveBeenCalled();
-    expect(alert).toHaveBeenCalledOnce();
+    expect(toastStore.getSnapshot().some((t) => t.type === "error")).toBe(true);
     expect(result.current.getSavedLineup()).toEqual(
       existing ? previous : undefined,
     );
@@ -52,6 +53,6 @@ it.each([false, true])(
     });
     expect(result.current.getSavedLineup()).toBe(draft);
     expect((await read(matchPath()))!.lineup).toEqual(draft);
-    vi.unstubAllGlobals();
+
   },
 );

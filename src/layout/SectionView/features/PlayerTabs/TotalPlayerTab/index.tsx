@@ -8,7 +8,7 @@ import SeasonTotalStats from "../components/SeasonTotalStats";
 import { PlayerSeasonSkeleton } from "../ui/PlayerSeasonSkeleton";
 import LeagueStatsRowTotal from "./components/LeagueStatsRowTotal";
 import { useTotalPlayerData } from "./hooks/useTotalPlayerData";
-import Styles from "./TotalPlayerTab.module.css";
+import Styles from "../PlayerTabs.module.css";
 
 type TotalPlayerTabProps = {
   player?: Players;
@@ -86,7 +86,7 @@ const TotalPlayerTab = ({
           onClickCopy={handleCopyTotal}
         />
         <SeasonTotalStats
-          isTotal
+          isTotal={isNotSeason}
           playerInSeason={playerForTotalCalc}
           trophiesWonInSeason={displayTrophies}
         />
@@ -100,7 +100,7 @@ const TotalPlayerTab = ({
             onClickCopy={handleCopyTotalBase}
           />
           <SeasonTotalStats
-            isTotal
+            isTotal={isNotSeason}
             playerInSeason={playerWithAcademyTotal}
             trophiesWonInSeason={displayTrophiesWithBase}
           />

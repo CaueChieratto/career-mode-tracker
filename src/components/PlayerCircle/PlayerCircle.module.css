@@ -1,0 +1,34 @@
+.player_circle,
+.player_circle_squad {
+  background-color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+  border: 2px solid #e2e8f0;
+  position: relative;
+  z-index: 1;
+}
+
+.player_circle {
+  width: 45px;
+  height: 45px;
+}
+
+.player_circle_squad {
+  width: 40px;
+  height: 40px;
+}
+
+.player_icon {
+  font-size: 22px;
+  color: #010127;
+}
+
+.shirt_number_center {
+  font-size: 20px;
+  font-weight: bold;
+  color: #010127;
+}
+

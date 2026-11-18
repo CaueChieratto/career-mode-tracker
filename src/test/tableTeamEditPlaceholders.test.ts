@@ -27,7 +27,7 @@ vi.mock(
 );
 
 vi.mock(
-  "../layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable",
+  "../common/services/ServiceTable",
   () => ({
     ServiceTable: {
       addTeamToTable: mocks.addTeamToTable,
@@ -184,6 +184,7 @@ describe("campos numericos da edicao da tabela", () => {
     const { result } = renderHook(() => useTableTeamActions());
     await act(async () => result.current.saveTableTeam());
 
+    expect(mocks.updateTeamInTable).toHaveBeenCalledTimes(1);
     const calls = mocks.updateTeamInTable.mock.calls;
     const payload = calls[calls.length - 1]?.[3];
     expect(payload).toMatchObject({

@@ -61,13 +61,13 @@ export const sortPlayers = (
         result = a.age - b.age;
         break;
       case "Ordenar por salário":
-        result = a.salary - b.salary;
+        result = (a.salary || 0) - (b.salary || 0);
         break;
       case "Ordenar por valor de mercado":
-        result = a.playerValue - b.playerValue;
+        result = (a.playerValue || 0) - (b.playerValue || 0);
         break;
       case "Ordenar por tempo de contrato":
-        result = a.contractTime - b.contractTime;
+        result = (a.contractTime || 0) - (b.contractTime || 0);
         break;
       default:
         return 0;

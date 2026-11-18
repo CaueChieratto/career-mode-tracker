@@ -1,6 +1,6 @@
-import { AcademyMatches } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
-import { PlayerMatchesStats } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
-import { AcademyPlayers } from "../../../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyMatches } from "../../../../../../../../../../../../common/interfaces/AcademyData";
+import { PlayerMatchesStats } from "../../../../../../../../../../../../common/interfaces/AcademyData";
+import { AcademyPlayers } from "../../../../../../../../../../../../common/interfaces/AcademyData";
 
 const parseStat = (value: number | string | null | undefined) => {
   if (value === null || value === undefined || value === "") {

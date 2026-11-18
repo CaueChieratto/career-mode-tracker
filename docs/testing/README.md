@@ -6,6 +6,9 @@ Escopo atual: etapas 1–4. Leia [contratos e bugs das etapas 1–3](contracts-a
 
 ```sh
 npm ci
+npm ci --prefix tests/emulator-tools
+npm ci --prefix functions
+npm run test:emulators:prepare
 npm run test:run
 npm run test:coverage
 npm run test:integration
@@ -16,7 +19,7 @@ npm run lint
 npm run build
 ```
 
-`npm test` abre modo watch. `coverage/index.html` contém relatório navegável; JSON e resumo ficam na mesma pasta, ignorada pelo Git. Denominador: todos os arquivos TS/TSX de produção, inclusive páginas e serviços não testados; somente testes e declarações ficam excluídos. Não existe limiar global artificial nesta primeira etapa.
+Em um clone novo, `npm ci --prefix tests/emulator-tools`, `npm ci --prefix functions` e `npm run test:emulators:prepare` preparam respectivamente a CLI de emuladores, as dependências das Cloud Functions (via `functions/package-lock.json`) e o binário local do Firestore Emulator antes de `npm run test:integration` compilar `functions/lib/` automaticamente e iniciar os emuladores locais. `npm test` abre modo watch. `coverage/index.html` contém relatório navegável; JSON e resumo ficam na mesma pasta, ignorada pelo Git. Denominador: todos os arquivos TS/TSX de produção, inclusive páginas e serviços não testados; somente testes e declarações ficam excluídos. Não existe limiar global artificial nesta primeira etapa.
 
 ## Isolamento
 

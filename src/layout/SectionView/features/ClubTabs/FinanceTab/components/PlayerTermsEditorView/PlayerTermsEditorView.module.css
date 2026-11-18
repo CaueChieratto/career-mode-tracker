@@ -1,0 +1,56 @@
+.container {
+  padding: 32px 16px 240px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  gap: 40px;
+  max-width: 600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.drawerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.gridContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.drawerActionButtonWrapper {
+  display: flex;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btnRevertWageAdjustment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnRevertWageAdjustment:hover {
+  background-color: rgba(239, 68, 68, 0.18);
+  border-color: #ef4444;
+}
+
+.btnRevertWageAdjustment:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -3,6 +3,7 @@ import { FaBold, FaEdit, FaSave } from "react-icons/fa";
 import Styles from "./AddPlayerAnnotations.module.css";
 import Button from "../../../../../../../../components/Button";
 import { useAcademyContext } from "../../../../../contexts/AcademyContext/hooks/useAcademyContext";
+import { toast } from "../../../../../../../../common/services/ToastService";
 
 export const AddPlayerAnnotations = () => {
   const { selectedPlayer, onUpdatePlayer } = useAcademyContext();
@@ -45,9 +46,11 @@ export const AddPlayerAnnotations = () => {
         annotations: updatedContent,
       };
       await onUpdatePlayer(updatedPlayer, true);
+      toast.success("Anotações salvas com sucesso!");
       setIsEditing(false);
     } catch (error) {
       console.error("Erro ao salvar anotações:", error);
+      toast.error("Erro ao salvar anotações. Tente novamente.");
     } finally {
       setIsLoading(false);
     }

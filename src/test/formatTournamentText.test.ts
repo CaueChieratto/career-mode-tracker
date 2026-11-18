@@ -4,10 +4,10 @@ import {
   formatTournamentText,
   formatTournamentHeaderName,
   formatPlayerLine,
-} from "../pages/Academy/layouts/AcademyContent/components/Tournament/views/TournamentWorkspace/helpers/formatTournamentText";
-import { AcademyTournaments } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
+} from "../pages/Academy/layouts/AcademyContent/components/Tournament/views/TournamentWorkspace/helpers/buildTournamentCopyText";
+import { AcademyTournaments } from "../common/interfaces/AcademyData";
 import { Career } from "../common/interfaces/Career";
-import { AcademyPlayers } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../common/interfaces/AcademyData";
 
 const createMockCareer = (clubName = "Newell’s Old Boys"): Career =>
   ({

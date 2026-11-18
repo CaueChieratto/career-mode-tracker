@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { AcademyService } from "../../src/pages/Academy/layouts/AcademyContent/services/AcademyService";
-import type { AcademyTournaments } from "../../src/pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
-import type { AcademyMatches } from "../../src/pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import type { AcademyTournaments } from "../../src/common/interfaces/AcademyData";
+import type { AcademyMatches } from "../../src/common/interfaces/AcademyData";
 import { getSuggestedLineup } from "../../src/pages/Academy/layouts/AcademyContent/components/Tournament/features/Match/components/ManageMatchView/helpers/getSuggestedLineup";
 import {
   academyPlayer,

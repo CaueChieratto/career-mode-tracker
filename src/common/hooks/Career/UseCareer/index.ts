@@ -11,11 +11,14 @@ export const notifyCareersUpdated = (updater: CareerUpdater): void => {
   careerUpdaters.forEach((cb) => cb(updater));
 };
 
-export const useCareers = () => {
+export const useCareers = (enabled: boolean = true) => {
   const [careers, setCareers] = useState<Career[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     const handleUpdate = (updater: CareerUpdater) => {
       setCareers((prev) => updater(prev));
     };
@@ -23,19 +26,38 @@ export const useCareers = () => {
     return () => {
       careerUpdaters.delete(handleUpdate);
     };
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
+
     let unsubscribeCareers: (() => void) | undefined;
+    let unsubscribeAuth: (() => void) | undefined;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (unsubscribeCareers) {
-        unsubscribeCareers();
-        unsubscribeCareers = undefined;
-      }
+    try {
+      unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+        if (unsubscribeCareers) {
+          unsubscribeCareers();
+          unsubscribeCareers = undefined;
+        }
 
+        if (user) {
+          setLoading(true);
+          unsubscribeCareers = ServiceCareer.getAll((data) => {
+            setCareers(data);
+            setLoading(false);
+          });
+        } else {
+          setCareers([]);
+          setLoading(false);
+        }
+      });
+    } catch {
+      const user = auth.currentUser;
       if (user) {
-        setLoading(true);
         unsubscribeCareers = ServiceCareer.getAll((data) => {
           setCareers(data);
           setLoading(false);
@@ -44,16 +66,16 @@ export const useCareers = () => {
         setCareers([]);
         setLoading(false);
       }
-    });
+    }
 
     return () => {
-      unsubscribeAuth();
+      unsubscribeAuth?.();
       if (unsubscribeCareers) {
         unsubscribeCareers();
         unsubscribeCareers = undefined;
       }
     };
-  }, []);
+  }, [enabled]);
 
   return { careers, loading };
 };

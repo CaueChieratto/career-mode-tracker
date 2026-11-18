@@ -1,4 +1,4 @@
-import { ServiceMatches } from "../../../../../../../../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../../../../../../../common/services/ServiceMatches";
 import type { Career } from "../../../../../../../../common/interfaces/Career";
 import type { ClubData } from "../../../../../../../../common/interfaces/club/clubData";
 import type { Match } from "../../../../../../../../common/interfaces/Match";
@@ -130,15 +130,16 @@ export const savePlayerMatchStats = async ({
     upsertPlayerStats(updatedPlayerStats, counterpartStats);
   }
 
-  await ServiceMatches.savePlayerStatsToSubcollection(
+  const persistedStats = await ServiceMatches.savePlayerStatsToSubcollection(
     career.id,
     season.id,
     match.matchesId,
     statsToSave,
     updatedPlayerStats,
+    player.id,
   );
 
   return {
-    updatedPlayerStats,
+    updatedPlayerStats: persistedStats || updatedPlayerStats,
   };
 };

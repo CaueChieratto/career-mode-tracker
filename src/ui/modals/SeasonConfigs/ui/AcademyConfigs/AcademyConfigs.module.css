@@ -1,33 +1,5 @@
-.container {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 20px;
-  width: 100%;
-  min-height: 400px;
-}
-
-.wrapper {
-  display: flex;
-  flex-direction: column;
+.wrapper_gap {
   gap: 24px;
-}
-
-.header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--blackColor);
-}
-
-.subtitle {
-  font-size: 13px;
-  color: var(--color-add-player);
 }
 
 .cards_wrapper {
@@ -100,13 +72,6 @@
   color: var(--text-placeholder);
 }
 
-.back {
-  background: transparent;
-  border: none;
-  font-size: 13px;
-  color: var(--color-add-player);
-}
-
 .save_button {
   background: var(--club-color);
   border-radius: 8px;
@@ -117,10 +82,7 @@
   min-width: 32%;
 }
 
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.footer_gap {
   margin-top: 12px;
 }
 

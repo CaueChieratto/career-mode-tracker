@@ -1,4 +1,5 @@
 import { useState, FormEvent } from "react";
+import { toast, isErrorNotified } from "../../../../../../common/services/ToastService";
 
 export const useAsyncForm = <T>(
   onSubmit: (data: T) => Promise<void>,
@@ -14,7 +15,9 @@ export const useAsyncForm = <T>(
       await onSubmit(parsed);
     } catch (error) {
       console.error("Erro ao submeter:", error);
-      alert("Falha ao salvar. Tente novamente.");
+      if (!isErrorNotified(error)) {
+        toast.error("Falha ao salvar. Tente novamente.");
+      }
     } finally {
       setIsLoading(false);
     }

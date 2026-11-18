@@ -1,4 +1,6 @@
 import { Players } from "../../../../../../../common/interfaces/playersInfo/players";
+import { Match } from "../../../../../../../common/interfaces/Match";
+import { isPlayerSoldOrDeparted } from "../../../../../../../common/services/ServicePlayers/helpers/transferTimingHelpers";
 import {
   POSITION_DATA,
   getGroupForPosition,
@@ -7,8 +9,11 @@ import { sortPlayersByPositionWithinGroup } from "../../../../../../../common/ut
 
 export const groupAndSortPlayersByPosition = (
   players: Players[],
+  matches?: Match[],
 ): Map<string, Players[]> => {
-  const activePlayers = (players || []).filter((player) => !player.sell);
+  const activePlayers = (players || []).filter(
+    (player) => !isPlayerSoldOrDeparted(player, matches),
+  );
 
   const grouped = new Map<string, Players[]>(
     POSITION_DATA.map((group) => [group.key, []]),

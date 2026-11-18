@@ -22,7 +22,7 @@ export const EditClubName = ({
     id="club"
     value={clubName}
     onChange={(e) => setClubName(e.target.value)}
-    placeholder={clubName}
+    placeholder={clubName || "Ex: FC Barcelona"}
     onFocus={onFocus}
     onBlur={onBlur}
   />

@@ -1,11 +1,12 @@
-import Styles from "../../InfoPlayerTab.module.css";
+import React from "react";
+import { SectionSummaryGrid } from "../../../../../ui/SectionSummaryCard";
 
 type InfoRowProps = {
   children: React.ReactNode;
 };
 
 const InfoRow: React.FC<InfoRowProps> = ({ children }) => (
-  <div className={Styles.content_container}>{children}</div>
+  <SectionSummaryGrid>{children}</SectionSummaryGrid>
 );
 
 export default InfoRow;

@@ -12,6 +12,7 @@ type CardProps = {
   onOpenModal?: (type: ModalType, selectedCareer: Career) => void;
   className?: string;
   onClick?: () => void;
+  id?: string;
 };
 
 const Card = ({
@@ -21,9 +22,10 @@ const Card = ({
   onOpenModal,
   className,
   onClick,
+  id,
 }: CardProps) => {
   return (
-    <div className={className ?? Styles.card} onClick={onClick}>
+    <div id={id} className={className ?? Styles.card} onClick={onClick}>
       {!className ? (
         <ContainerIcon
           className={Styles.icon_container}

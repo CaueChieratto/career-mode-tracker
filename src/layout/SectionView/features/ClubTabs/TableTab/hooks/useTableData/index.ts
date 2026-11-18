@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Career } from "../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../common/interfaces/club/clubData";
-import { ServiceTable } from "../../views/AddTeamsToTable/services/ServiceTable";
+import { ServiceTable } from "../../../../../../../common/services/ServiceTable";
 import {
   QualificationZone,
   TableRowData,
 } from "../../../../../../../common/interfaces/Table";
 import { TableTeamData } from "../../../../../../../common/interfaces/TableTeamData";
-import { leaguesByContinent } from "../../../../../../../common/utils/league";
+import { getAllLeaguesFlat } from "../../../../../../../common/utils/league";
 
 export const useTableData = (
   career: Career,
@@ -18,12 +18,12 @@ export const useTableData = (
     return (season.table as unknown as TableTeamData[]) || [];
   });
 
+  const lastFetchedUpdatedAtRef = useRef<number | string | undefined>(career.updatedAt);
+
   const isFirstDivision = useMemo(() => {
     if (!season.leagues || season.leagues.length === 0) return true;
 
-    const allKnownCompetitions = Object.values(leaguesByContinent).flatMap(
-      (continent) => Object.values(continent).flat(),
-    );
+    const allKnownCompetitions = getAllLeaguesFlat();
 
     for (const seasonComp of season.leagues) {
       const knownComp = allKnownCompetitions.find(
@@ -46,22 +46,30 @@ export const useTableData = (
 
   useEffect(() => {
     if (!isActive) return;
+    if (!career.id || !season.id) return;
+
+    if (
+      season.table !== undefined &&
+      lastFetchedUpdatedAtRef.current === career.updatedAt
+    ) {
+      return;
+    }
+
+    lastFetchedUpdatedAtRef.current = career.updatedAt;
 
     const fetchTable = async () => {
       try {
-        if (career.id && season.id) {
-          const data = await ServiceTable.getTableBySeason(
-            career.id,
-            season.id,
-          );
-          setRawTableData(data);
-        }
+        const data = await ServiceTable.getTableBySeason(
+          career.id,
+          season.id,
+        );
+        setRawTableData(data);
       } catch (error) {
         console.error("Erro ao buscar a tabela no Firebase:", error);
       }
     };
     fetchTable();
-  }, [career.id, season.id, career.updatedAt, isActive]);
+  }, [career.id, season.id, career.updatedAt, isActive, season.table]);
 
   const tableData = useMemo<TableRowData[]>(() => {
     const getQualificationZone = (

@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { AcademyPlayers } from "../../../interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../../../../../../common/interfaces/AcademyData";
 import { isEuropeanSeason } from "../../../utils/isEuropeanSeason";
 import { Career } from "../../../../../../../common/interfaces/Career";
-import { getSeasonMonthWeight } from "../../../components/Player/components/PlayerDevelopment/utils/getSeasonMonthWeight";
-import { POSITION_DATA } from "../../../../../../../common/types/Positions";
+import { compareAcademyDates } from "../../../components/FeedItem/helpers/extractDateInfo";
+import { getPositionRank } from "../../../../../../../common/utils/Sorts";
 import { usePersistedSort } from "../usePersistedSort";
 import { PLAYER_SORT_OPTIONS } from "../../../constants/Sorts";
 
@@ -16,19 +16,6 @@ export type PlayerSortOption =
   | "height-desc"
   | "position-asc"
   | "overall-desc";
-
-const getPositionRank = (position: string): number => {
-  let globalRank = 0;
-  for (const sector of POSITION_DATA) {
-    const positions = sector.sortOrder ?? sector.positions ?? [];
-    const index = positions.indexOf(position);
-    if (index !== -1) {
-      return globalRank + index;
-    }
-    globalRank += positions.length;
-  }
-  return 999;
-};
 
 export const useSortedPlayers = (players: AcademyPlayers[], career: Career) => {
   const storageKey = `@academy_playerSort_${career.id}`;
@@ -69,37 +56,7 @@ export const useSortedPlayers = (players: AcademyPlayers[], career: Career) => {
           break;
         case "default":
         default: {
-          const getYear = (dateStr: string) => {
-            const parts = dateStr.split(" - ");
-            if (parts.length > 1) {
-              return parseInt(parts[1].split("/")[0], 10) || 0;
-            }
-            return 0;
-          };
-
-          const yearA = getYear(a.arrivalDate);
-          const yearB = getYear(b.arrivalDate);
-
-          if (yearA !== yearB) {
-            result = yearB - yearA;
-            break;
-          }
-
-          const monthA = a.arrivalDate.split("/")[1]?.split(" ")[0] || "1";
-          const monthB = b.arrivalDate.split("/")[1]?.split(" ")[0] || "1";
-
-          const weightA = getSeasonMonthWeight(monthA, isEurope);
-          const weightB = getSeasonMonthWeight(monthB, isEurope);
-
-          if (weightA !== weightB) {
-            result = weightB - weightA;
-            break;
-          }
-
-          const dayA = parseInt(a.arrivalDate.split("/")[0] || "1", 10);
-          const dayB = parseInt(b.arrivalDate.split("/")[0] || "1", 10);
-
-          result = dayB - dayA;
+          result = compareAcademyDates(b.arrivalDate, a.arrivalDate, isEurope, 0);
           break;
         }
       }

@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useTabView } from "../../../../common/hooks/UseTabView";
 import type { SectionScreen } from "../../config/screens";
-import type { TabConfig } from "../../config/seasonTabsConfig";
+import type { TabConfig } from "../../../../common/config/seasonTabsConfig";
 
 interface UseSectionTabsParams {
   storageKey: string;
@@ -14,8 +14,16 @@ export function useSectionTabs({
   tabsConfig,
   openScreen,
 }: UseSectionTabsParams) {
+  const elencoIndex = tabsConfig.findIndex((tab) => tab.title === "Elenco");
+  const defaultIndex =
+    elencoIndex >= 0
+      ? elencoIndex
+      : storageKey.startsWith("season-tab-")
+        ? 1
+        : 0;
+
   const { activeIndex, swiperRef, handleTabClick, handleSlideChange } =
-    useTabView(storageKey);
+    useTabView(storageKey, defaultIndex);
 
   const activeTabConfig = tabsConfig[activeIndex];
 

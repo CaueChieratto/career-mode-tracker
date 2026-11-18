@@ -3,8 +3,9 @@ import { useLocation } from "react-router-dom";
 import Styles from "../../components/Statistic/CalculatedStatistics.module.css";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
 import { LeagueStats } from "../../../../../common/interfaces/playersStats/leagueStats";
-import { calculateTotalStats } from "../../../../../layout/SectionView/features/ClubTabs/StatsTab_Club/components/PlayerStatsList/utils/calculateTotalStats";
+import { calculateTotalStats } from "../../../../../common/stats/helpers/calculateTotalStats";
 import { isMetricEnabledForClubTab } from "../../../../../common/stats/registry/metricsRegistry";
+import { useToast } from "../../../../../common/hooks/UseToast";
 
 type UseStatisticsProps = {
   total?: boolean;
@@ -27,6 +28,7 @@ export const useStatistics = ({
 }: UseStatisticsProps) => {
   const location = useLocation();
   const isGeralPage = location.pathname.includes("/Geral");
+  const { confirm, info } = useToast();
 
   const totalStats = useMemo(() => {
     if (!total || !player) return null;
@@ -91,21 +93,22 @@ export const useStatistics = ({
       {
         label: "Deletar",
         showOnlyForLeague: true,
-        onClick: () => {
+        onClick: async () => {
           if (!leagueStats) return;
 
           const source = (leagueStats as { source?: "matches" | "manual" | "both" }).source;
 
           if (source === "matches") {
-            alert(
+            info(
               `As estatísticas da competição "${leagueStats.leagueName}" são calculadas automaticamente a partir de partidas finalizadas e não podem ser excluídas por aqui. Para alterá-las ou removê-las, acesse a aba Partidas.`,
             );
             return;
           }
 
           if (source === "both") {
-            const confirmed = window.confirm(
+            const confirmed = await confirm(
               `Esta competição possui dados manuais e partidas disputadas.\n\nDeseja excluir apenas as anotações manuais da "${leagueStats.leagueName}"? Os números gerados a partir das partidas continuarão salvos normalmente.`,
+              { tone: "warning", confirmLabel: "Excluir" },
             );
             if (confirmed) {
               handleDeleteLeague?.(leagueStats.leagueName);
@@ -113,8 +116,9 @@ export const useStatistics = ({
             return;
           }
 
-          const confirmed = window.confirm(
+          const confirmed = await confirm(
             `Deseja excluir permanentemente as estatísticas manuais da "${leagueStats.leagueName}"?`,
+            { tone: "danger", confirmLabel: "Excluir" },
           );
           if (confirmed) {
             handleDeleteLeague?.(leagueStats.leagueName);
@@ -122,7 +126,7 @@ export const useStatistics = ({
         },
       },
     ],
-    [totalStats, leagueStats, total, league, player, handleDeleteLeague],
+    [totalStats, leagueStats, total, league, player, handleDeleteLeague, confirm, info],
   );
 
   const filteredStats = useMemo(

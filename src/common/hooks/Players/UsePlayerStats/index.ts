@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Players } from "../../../interfaces/playersInfo/players";
 import { ServicePlayers } from "../../../services/ServicePlayers";
 import { Career } from "../../../interfaces/Career";
+import { toast } from "../../../services/ToastService";
 
 type UsePlayerStatsProps = {
   career: Career;
@@ -21,7 +22,7 @@ export const usePlayerStats = ({
   const [isStatsLoading, setIsLoading] = useState(false);
 
   const handleStatsSave = useCallback(
-    async (formData: FormData) => {
+    async (formData: FormData): Promise<boolean> => {
       setIsLoading(true);
       try {
         const ballonDorValue = formData.get("ballonDor") === "true" ? 1 : 0;
@@ -56,12 +57,16 @@ export const usePlayerStats = ({
             }
           }
         }
+
+        toast.success("Desempenho do jogador salvo com sucesso!");
+        handleGoBack();
+        return true;
       } catch (error) {
         console.error("Falha ao salvar o desempenho:", error);
-        alert("Falha ao salvar o desempenho.");
+        toast.error("Falha ao salvar o desempenho.");
+        return false;
       } finally {
         setIsLoading(false);
-        handleGoBack();
       }
     },
     [career, careerId, seasonId, currentPlayers, handleGoBack],

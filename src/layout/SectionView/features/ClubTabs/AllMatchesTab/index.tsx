@@ -13,7 +13,12 @@ import { getSeasonDateRange } from "../../../../../common/utils/GetSeasonDateRan
 import { getMatchSeason, processMatches } from "./helpers/processMatches";
 import { SectionScreen } from "../../../config/screens";
 import { MatchesContext } from "./contexts/MatchesContext";
-import { isSamePlayerId } from "../../../../../common/utils/playerIdentity";
+import {
+  findPlayerInList,
+  isSamePlayerId,
+} from "../../../../../common/utils/playerIdentity";
+import { NavigationSessionStore } from "../../../../../common/services/NavigationSessionStore";
+import { useScrollAnchorRestore } from "../../../../../common/hooks/useScrollAnchorRestore";
 
 type AllMatchesTabProps = {
   season: ClubData;
@@ -33,8 +38,14 @@ export const AllMatchesTab = ({
   const location = useLocation();
 
   const isGeralUrl = location.pathname.includes("/Geral");
-  const isGeralPage = isGeralUrl || !!player;
+  const isGeralPage = isGeralUrl;
   const storageKeySuffix = isGeralUrl ? "geral" : season.id;
+  const isPlayerView = Boolean(player);
+  const filterScopeKey = isPlayerView
+    ? `player:${player?.id}`
+    : isGeralUrl
+      ? "club:geral"
+      : `club:${season.id}`;
 
   const monthOptions = useMemo(() => {
     const { startDate } = getSeasonDateRange(
@@ -54,24 +65,38 @@ export const AllMatchesTab = ({
     ];
   }, [season.seasonNumber, career.createdAt, career.nation]);
 
+  const savedFilters = useMemo(
+    () => NavigationSessionStore.getAllMatchesFilters(filterScopeKey),
+    [filterScopeKey],
+  );
+
   const [activeTab, setActiveTab] = useState<MatchStatus | string>(() => {
-    return (
-      localStorage.getItem(`matchActiveTab_${storageKeySuffix}`) || "SCHEDULED"
-    );
+    const fromLocal = localStorage.getItem(`matchActiveTab_${storageKeySuffix}`);
+    return fromLocal || savedFilters?.activeTab || "SCHEDULED";
   });
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    return (
-      localStorage.getItem(`matchSelectedMonth_${storageKeySuffix}`) || "Tudo"
+    const fromLocal = localStorage.getItem(
+      `matchSelectedMonth_${storageKeySuffix}`,
     );
+    return fromLocal || savedFilters?.selectedMonth || "Tudo";
   });
   const [selectedSeasonLabel, setSelectedSeasonLabel] = useState<string>(() => {
-    return (
-      localStorage.getItem(`matchSelectedSeason_${storageKeySuffix}`) || "Todas"
+    const fromLocal = localStorage.getItem(
+      `matchSelectedSeason_${storageKeySuffix}`,
     );
+    return fromLocal || savedFilters?.selectedSeason || "Todas";
   });
 
   useEffect(() => {
-    localStorage.setItem(`matchActiveTab_${storageKeySuffix}`, activeTab);
+    NavigationSessionStore.setAllMatchesFilters(filterScopeKey, {
+      activeTab: String(activeTab),
+      selectedMonth,
+      selectedSeason: selectedSeasonLabel,
+    });
+    localStorage.setItem(
+      `matchActiveTab_${storageKeySuffix}`,
+      String(activeTab),
+    );
     localStorage.setItem(
       `matchSelectedMonth_${storageKeySuffix}`,
       selectedMonth,
@@ -80,7 +105,37 @@ export const AllMatchesTab = ({
       `matchSelectedSeason_${storageKeySuffix}`,
       selectedSeasonLabel,
     );
-  }, [activeTab, selectedMonth, selectedSeasonLabel, storageKeySuffix]);
+  }, [
+    activeTab,
+    selectedMonth,
+    selectedSeasonLabel,
+    filterScopeKey,
+    storageKeySuffix,
+  ]);
+
+  useEffect(() => {
+    const pending = NavigationSessionStore.peekClickAnchor("all_matches");
+    if (!pending?.anchorSelector?.startsWith("#match-card-")) return;
+
+    const targetMatchId = pending.anchorSelector.replace("#match-card-", "");
+    const allMatchesList = isGeralPage
+      ? career.clubData?.flatMap((s) => s.matches || []) || []
+      : season.matches || [];
+
+    const targetMatch = allMatchesList.find(
+      (m) => m.matchesId === targetMatchId,
+    );
+    if (!targetMatch) return;
+
+    const expectedTab =
+      targetMatch.status === "FINISHED" ? "FINISHED" : "SCHEDULED";
+    if (activeTab !== expectedTab) {
+      setActiveTab(expectedTab);
+    }
+    if (selectedMonth !== "Tudo") {
+      setSelectedMonth("Tudo");
+    }
+  }, [career.clubData, season.matches, isGeralPage, activeTab, selectedMonth]);
 
   const playerMatchingIds = useMemo(() => {
     if (!player) return new Set<string>();
@@ -88,16 +143,9 @@ export const AllMatchesTab = ({
     ids.add(player.id);
     if (player.playedWithUs) ids.add(player.playedWithUs);
 
-    const normName = player.name.trim().toLowerCase();
-    const normNation = player.nation.trim().toLowerCase();
-
     career.clubData?.forEach((s) => {
       s.players?.forEach((p) => {
-        if (
-          isSamePlayerId(p, player) ||
-          (p.name.trim().toLowerCase() === normName &&
-            p.nation.trim().toLowerCase() === normNation)
-        ) {
+        if (findPlayerInList([p], player)) {
           ids.add(p.id);
           if (p.playedWithUs) ids.add(p.playedWithUs);
         }
@@ -146,7 +194,10 @@ export const AllMatchesTab = ({
     selectedSeasonId: effectiveSeasonId,
     playerId: player?.id,
     matchingPlayerIds: playerMatchingIds,
+    forceFinished: isPlayerView,
   });
+
+  useScrollAnchorRestore("all_matches", [matches]);
 
   return (
     <MatchesContext.Provider
@@ -154,13 +205,13 @@ export const AllMatchesTab = ({
     >
       <ContainerClubContent isMatch>
         <ButtonsSwitch
-          isMatches
+          isMatches={!isPlayerView}
           isGeralPage={isGeralPage}
           selectOptions={monthOptions}
           selectValue={selectedMonth}
           onSelectChange={setSelectedMonth}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          activeTab={isPlayerView ? undefined : activeTab}
+          setActiveTab={isPlayerView ? undefined : setActiveTab}
           seasonOptions={isGeralPage ? seasonOptions : undefined}
           seasonValue={isGeralPage ? selectedSeasonLabel : undefined}
           onSeasonChange={isGeralPage ? setSelectedSeasonLabel : undefined}

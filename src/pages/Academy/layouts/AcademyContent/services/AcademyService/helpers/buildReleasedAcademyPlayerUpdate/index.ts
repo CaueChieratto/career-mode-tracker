@@ -1,4 +1,4 @@
-import { AcademyPlayers } from "../../../../interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../../../../../../../common/interfaces/AcademyData";
 import { buildEvolutionHistory } from "../buildEvolutionHistory";
 
 export const buildReleasedAcademyPlayerUpdate = (

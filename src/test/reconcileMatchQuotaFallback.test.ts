@@ -2,7 +2,11 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
   isQuotaExceededError,
   reconcileMatch,
-} from "../layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable/reconcileMatch";
+} from "../common/services/ServiceTable/reconcileMatch";
+import {
+  markQuotaExceeded,
+  resetQuotaExceeded,
+} from "../common/utils/firestoreRetry";
 import { Match } from "../common/interfaces/Match";
 
 // Mock Firebase & Auth
@@ -64,6 +68,7 @@ describe("isQuotaExceededError", () => {
 
 describe("reconcileMatch fallback em caso de quota exceeded", () => {
   beforeEach(() => {
+    resetQuotaExceeded();
     vi.clearAllMocks();
   });
 
@@ -193,6 +198,34 @@ describe("reconcileMatch fallback em caso de quota exceeded", () => {
     ).rejects.toEqual(permError);
 
     expect(mockSetDoc).not.toHaveBeenCalled();
+  });
+
+  it("salva diretamente e NÃO invoca runTransaction se circuit breaker de quota já estiver ativo", async () => {
+    markQuotaExceeded();
+
+    await reconcileMatch("career-1", "season-1", "match-circuit-breaker", {
+      matchesId: "match-circuit-breaker",
+      date: "01/01/26",
+      league: "La Liga",
+      homeTeam: "FC Barcelona",
+      awayTeam: "Sevilla FC",
+      status: "FINISHED",
+      result: "V",
+      homeScore: 3,
+      awayScore: 0,
+    });
+
+    expect(mockRunTransaction).not.toHaveBeenCalled();
+    expect(mockSetDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: "users/user-123/careers/career-1/seasons/season-1/matches/match-circuit-breaker",
+      }),
+      expect.objectContaining({
+        matchesId: "match-circuit-breaker",
+        result: "V",
+      }),
+      { merge: true },
+    );
   });
 });
 

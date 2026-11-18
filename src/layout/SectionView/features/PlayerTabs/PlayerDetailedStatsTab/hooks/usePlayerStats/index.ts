@@ -1,11 +1,13 @@
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import { useGroupAggregatedPlayers } from "../../../../../../../common/hooks/Players/useGroupAggregatedPlayers";
+import { usePlayerGroupStatsContext } from "../../../../../../../contexts/PlayerGroupStatsContext";
 import { Career } from "../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../common/interfaces/club/clubData";
 import { Players } from "../../../../../../../common/interfaces/playersInfo/players";
 import { useBestPlayersStats } from "../../../../ClubTabs/BestPlayersTab/hooks/useBestPlayersStats";
-import { calculateTotalStats } from "../../../../ClubTabs/StatsTab_Club/components/PlayerStatsList/utils/calculateTotalStats";
+import { calculateTotalStats } from "../../../../../../../common/stats/helpers/calculateTotalStats";
+import { findPlayerInList } from "../../../../../../../common/utils/playerIdentity";
 
 type UsePlayerStatsProps = {
   season: ClubData;
@@ -19,13 +21,19 @@ export const usePlayerStats = ({
   player,
 }: UsePlayerStatsProps) => {
   const location = useLocation();
-  const isGeralPage = location.pathname.includes("/Geral");
+  const groupStatsCtx = usePlayerGroupStatsContext();
+  const isGeralPage =
+    groupStatsCtx?.isGeralPage ?? location.pathname.includes("/Geral");
+  const isFromGroup =
+    groupStatsCtx?.isFromGroup ??
+    (new URLSearchParams(location.search).get("fromGroup") === "true" ||
+      location.pathname.includes("/CareerGroup"));
 
   const statsData = useBestPlayersStats(season, career, isGeralPage, 0);
 
   const { groupPlayers, isLoadingGroup } = useGroupAggregatedPlayers(
     career,
-    isGeralPage,
+    isGeralPage && isFromGroup,
   );
 
   const playerStats = useMemo(() => {
@@ -45,11 +53,7 @@ export const usePlayerStats = ({
     });
 
     if (isGeralPage && groupPlayers.length > 0) {
-      const aggregatedPlayer = groupPlayers.find(
-        (p) =>
-          p.name.trim().toLowerCase() === normalizedName &&
-          p.nation.trim().toLowerCase() === normalizedNation,
-      );
+      const aggregatedPlayer = findPlayerInList(groupPlayers, player);
 
       if (aggregatedPlayer) {
         const totalStats = calculateTotalStats(aggregatedPlayer);

@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { getCareerById } from '../../src/common/helpers/Getters';
 import { ServicePlayers } from '../../src/common/services/ServicePlayers';
 import { aggregatePlayerStats } from '../../src/common/services/ServicePlayers/helpers/statsHelpers';
-import { augmentCareerWithMatchStats, getAggregatedPlayersForCareer, toRawPlayer } from '../../src/layout/SectionView/helpers/mergeMatchStats';
+import { augmentCareerWithMatchStats, getAggregatedPlayersForCareer, toRawPlayer } from '../../src/common/stats/helpers/mergeMatchStats';
 import { career, leagueStats, match, player, season, stat } from '../../src/test/factories/domain';
 import { auth } from './firebaseClient';
 import { put, read, seedCareer, seasonPath } from './helpers';

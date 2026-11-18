@@ -54,13 +54,3 @@
   line-height: 1.2;
   white-space: nowrap;
 }
-
-.ratingBadge {
-  color: #fff;
-  font-weight: 700;
-  font-size: 16px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  min-width: 44px;
-  text-align: center;
-}

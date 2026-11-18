@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import type { Match } from "../../src/common/interfaces/Match";
 import type { TableTeamData } from "../../src/common/interfaces/TableTeamData";
-import { ServiceMatches } from "../../src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../src/common/services/ServiceMatches";
 import { career, match, season } from "../../src/test/factories/domain";
 import { boundary } from "./firestoreBoundary";
 import { list, matchPath, put, read, seedCareer, seasonPath } from "./helpers";

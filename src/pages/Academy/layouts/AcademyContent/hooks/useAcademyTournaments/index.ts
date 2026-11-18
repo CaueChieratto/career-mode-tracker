@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { AcademyService } from "../../services/AcademyService";
-import { AcademyTournaments } from "../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyTournaments } from "../../../../../../common/interfaces/AcademyData";
 import { Career } from "../../../../../../common/interfaces/Career";
 
 export const useAcademyTournaments = (

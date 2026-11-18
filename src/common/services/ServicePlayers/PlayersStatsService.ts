@@ -5,6 +5,7 @@ import { Career } from "../../interfaces/Career";
 import { LeagueStats } from "../../interfaces/playersStats/leagueStats";
 import { requireAuth } from "./helpers/authHelpers";
 import { Players } from "../../interfaces/playersInfo/players";
+import { sanitizeFirestoreData } from "../../utils/sanitizeFirestore";
 
 export const PlayersStatsService = {
 
@@ -63,7 +64,10 @@ export const PlayersStatsService = {
       (league) => league.leagueName !== leagueName,
     );
 
-    await setDoc(playerRef, { ...player, statsLeagues: updatedStatsLeagues });
+    await setDoc(
+      playerRef,
+      sanitizeFirestoreData({ ...player, statsLeagues: updatedStatsLeagues }),
+    );
     await updateCareerFirestore(user.uid, careerId, { updatedAt: Date.now() });
   },
 };

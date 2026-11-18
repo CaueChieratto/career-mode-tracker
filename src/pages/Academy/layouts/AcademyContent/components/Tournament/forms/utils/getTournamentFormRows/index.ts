@@ -1,6 +1,6 @@
 import { FieldConfig } from "../../../../Player/forms/types/FieldConfig";
 import { TournamentFormTexts } from "../../types/TournamentFormTexts";
-import { AcademyTournaments } from "../../../../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyTournaments } from "../../../../../../../../../common/interfaces/AcademyData";
 
 type GetFormRowsParams = {
   texts: TournamentFormTexts;

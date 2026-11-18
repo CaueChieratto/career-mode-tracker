@@ -5,7 +5,7 @@ import { AggregatedPlayerStats } from "../../../../../common/interfaces/Aggregat
 import { ContainerClubContent } from "../../../../../components/ContainerClubContent";
 import NoStatsMessage from "../../../../../components/NoStatsMessage";
 import { statConfigs } from "../../ClubTabs/BestPlayersTab/constants/statConfigs";
-import { UseRatingColor } from "../../../../../common/hooks/Colors/GetOverallColor";
+import { RatingBadge } from "../../../../../components/RatingBadge";
 import Card from "../../../../../ui/Card";
 import { PlayerSeasonSkeleton } from "../ui/PlayerSeasonSkeleton";
 import { usePlayerStats } from "./hooks/usePlayerStats";
@@ -88,14 +88,7 @@ const PlayerDetailedStatsTab = ({
               <div key={config.key} className={Styles.statItem}>
                 <span className={Styles.statTitle}>{config.title}</span>
                 {config.isRating ? (
-                  <span
-                    className={Styles.ratingBadge}
-                    style={{ backgroundColor: UseRatingColor(+rawValue) }}
-                  >
-                    {Number(rawValue) % 1 === 0
-                      ? Number(rawValue).toString()
-                      : displayValue}
-                  </span>
+                  <RatingBadge rating={rawValue} displayValue={displayValue} />
                 ) : (
                   <span className={Styles.statValue}>{displayValue}</span>
                 )}

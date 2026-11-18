@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildMatchPayload } from '../pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/helpers/buildMatchPayload';
-import { getNewTableTeamData, getUpdatedTableTeamData } from '../pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/helpers/calculateTableStats';
+import { getNewTableTeamData, getUpdatedTableTeamData } from '../common/services/ServiceTable/helpers/calculateTableStats';
 import { validateMatchForm } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/validators/validateMatchForm';
 import { deepFreeze, match } from './factories/domain';
 

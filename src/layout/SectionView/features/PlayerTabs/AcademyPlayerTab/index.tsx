@@ -7,8 +7,8 @@ import { Career } from "../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../common/interfaces/club/clubData";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
 import { ColorsService } from "../../../../../common/services/ColorsService";
-import { getContinentByCountry } from "../../../../../common/services/GetContinentByCountry";
-import { FIFA_COUNTRY_CODES } from "../../../../../common/constants/FIFA_COUNTRY_CODES";
+import { getContinentByCountry } from "../../../../../common/utils/league";
+import { resolveCountryFlagCode } from "../../../../../common/constants/FIFA_COUNTRY_CODES";
 import NoStatsMessage from "../../../../../components/NoStatsMessage";
 import { AcademyContext } from "../../../../../pages/Academy/layouts/contexts/AcademyContext";
 import { FocusedCard } from "../../../../../pages/Academy/layouts/AcademyContent/components/Cards/FocusedCard";
@@ -18,8 +18,7 @@ import { PlayerPerformance } from "../../../../../pages/Academy/layouts/AcademyC
 import Styles from "./AcademyPlayerTab.module.css";
 import { useAcademyPlayerData } from "./hooks/useAcademyPlayerData";
 import { buildMockAcademyContext } from "./helpers/buildMockAcademyContext";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../../../../../common/services/Firebase";
+import { AcademyService } from "../../../../../pages/Academy/layouts/AcademyContent/services/AcademyService";
 
 type AcademyPlayerTabProps = {
   player?: Players;
@@ -87,19 +86,14 @@ const AcademyPlayerTab: React.FC<AcademyPlayerTabProps> = ({
   useEffect(() => {
     const fetchAcademyNotes = async () => {
       if (!player?.academyData?.id || !career?.clubData) return;
-      const user = auth.currentUser;
-      if (!user) return;
-
-      for (const s of career.clubData) {
-        const docRef = doc(
-          db,
-          `users/${user.uid}/careers/${career.id}/seasons/${s.id}/academyPlayers/${player.academyData.id}`,
-        );
-        const snap = await getDoc(docRef);
-        if (snap.exists() && snap.data().annotations) {
-          setRealAnnotations(snap.data().annotations);
-          break;
-        }
+      const seasonIds = career.clubData.map((s) => s.id);
+      const notes = await AcademyService.getPlayerAnnotationsAcrossSeasons(
+        career.id,
+        seasonIds,
+        player.academyData.id,
+      );
+      if (notes) {
+        setRealAnnotations(notes);
       }
     };
     fetchAcademyNotes();
@@ -118,7 +112,41 @@ const AcademyPlayerTab: React.FC<AcademyPlayerTabProps> = ({
     "annotations",
   );
 
-  if (!player || !player.isAcademy || !academyPlayer) {
+  const locationState = location.state as Record<string, unknown> | null;
+  const isFromGroup =
+    new URLSearchParams(location.search).get("fromGroup") === "true" ||
+    Boolean(locationState?.fromGroup) ||
+    Boolean(locationState?.isFromGroup);
+
+  const wasInThisCareerAcademy = useMemo(() => {
+    if (!player) return false;
+    const normalizedName = player.name?.trim().toLowerCase();
+    return (
+      Boolean(
+        career?.clubData?.some((s) =>
+          s.academyPlayers?.some(
+            (ap) => ap.name?.trim().toLowerCase() === normalizedName,
+          ),
+        ),
+      ) ||
+      Boolean(
+        career?.clubData?.some((s) =>
+          s.players?.some(
+            (p) =>
+              p.name?.trim().toLowerCase() === normalizedName &&
+              p.contract?.some((c) => c.fromClub === "Base"),
+          ),
+        ),
+      )
+    );
+  }, [career?.clubData, player]);
+
+  if (
+    !player ||
+    !player.isAcademy ||
+    !academyPlayer ||
+    (!isFromGroup && !wasInThisCareerAcademy)
+  ) {
     return (
       <NoStatsMessage
         textOne="Jogador não é da base"
@@ -138,8 +166,7 @@ const AcademyPlayerTab: React.FC<AcademyPlayerTabProps> = ({
     },
   });
 
-  const countryCode =
-    FIFA_COUNTRY_CODES[academyPlayer.nationality?.toUpperCase()];
+  const countryCode = resolveCountryFlagCode(academyPlayer.nationality);
 
   return (
     <AcademyContext.Provider value={mockContext}>

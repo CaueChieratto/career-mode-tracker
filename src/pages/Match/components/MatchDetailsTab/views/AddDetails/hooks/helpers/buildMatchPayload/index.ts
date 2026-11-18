@@ -1,8 +1,11 @@
 import { Match } from "../../../../../../../../../common/interfaces/Match";
-import { buildOpponentEvents } from "../../../helpers/buildOpponentEvents";
-import { calculateMatchResult } from "../../../helpers/calculateMatchResult";
+import {
+  buildOpponentEvents,
+  OpponentPlayerInfo,
+} from "../../../helpers/buildOpponentEvents";
+import { calculateMatchResult } from "../../../../../../../../../common/services/ServiceTable/helpers/calculateMatchResult";
 import { MatchWithOpponentEvents } from "../../../../../../../../../common/interfaces/OpponentEventsMatches";
-import { countOpponentCards } from "../../../../../../../helpers/opponentCards";
+import { countOpponentCards } from "../../../../../../../../../common/services/ServiceOpponentPlayers/helpers/opponentCards";
 
 interface MatchPayloadResult {
   updatedMatch: MatchWithOpponentEvents;
@@ -15,6 +18,7 @@ export const buildMatchPayload = (
   booleanValues: Record<string, boolean>,
   isUserHome: boolean,
   playerMap?: Map<string, string> | Record<string, string>,
+  fieldPlayerInfoMap?: Record<string, OpponentPlayerInfo>,
 ): MatchPayloadResult => {
   const homeScoreNum = Number(formValues.homeScore) || 0;
   const awayScoreNum = Number(formValues.awayScore) || 0;
@@ -43,6 +47,7 @@ export const buildMatchPayload = (
     formValues,
     booleanValues,
     playerMap,
+    fieldPlayerInfoMap,
   );
 
   const { yellowCards, redCards } = countOpponentCards(opponentEvents.cards);
@@ -74,17 +79,30 @@ export const buildMatchPayload = (
     const trimmedMvp = formValues.opponentMvpName.trim();
     updatedMatch.opponentMvpName = trimmedMvp;
     updatedMatch.opponentMvpRating = Number(formValues.opponentMvpRating) || 0;
-    const normalized = trimmedMvp.toLowerCase();
-    const mvpId = playerMap instanceof Map
-      ? playerMap.get(normalized)
-      : playerMap?.[normalized];
-    if (mvpId) {
-      updatedMatch.opponentMvpPlayerId = mvpId;
+    const mvpInfo = fieldPlayerInfoMap?.["opponentMvpName"];
+    if (mvpInfo?.id) {
+      updatedMatch.opponentMvpPlayerId = mvpInfo.id;
+      if (mvpInfo.isFormerPlayer) {
+        updatedMatch.opponentMvpIsFormerPlayer = true;
+      } else {
+        delete updatedMatch.opponentMvpIsFormerPlayer;
+      }
+    } else {
+      const normalized = trimmedMvp.toLowerCase();
+      const mvpId =
+        playerMap instanceof Map
+          ? playerMap.get(normalized)
+          : playerMap?.[normalized];
+      if (mvpId) {
+        updatedMatch.opponentMvpPlayerId = mvpId;
+      }
+      delete updatedMatch.opponentMvpIsFormerPlayer;
     }
   } else {
     updatedMatch.opponentMvpName = "";
     updatedMatch.opponentMvpRating = 0;
     delete updatedMatch.opponentMvpPlayerId;
+    delete updatedMatch.opponentMvpIsFormerPlayer;
   }
 
   if (hasPenalties) {

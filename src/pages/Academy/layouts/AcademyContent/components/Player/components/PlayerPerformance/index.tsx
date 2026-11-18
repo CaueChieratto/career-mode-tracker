@@ -5,7 +5,7 @@ import { GeneralStatsFooter } from "./components/GeneralStatsFooter";
 import { ActiveStatCardProvider } from "./contexts/ActiveStatCardContext";
 import { useAcademyContext } from "../../../../../contexts/AcademyContext/hooks/useAcademyContext";
 import { isEuropeanSeason } from "../../../../utils/isEuropeanSeason";
-import { getSeasonMonthWeight } from "../PlayerDevelopment/utils/getSeasonMonthWeight";
+import { compareAcademyDates } from "../../../FeedItem/helpers/extractDateInfo";
 import { TournamentStats } from "./types";
 
 export const PlayerPerformance: React.FC = () => {
@@ -24,36 +24,7 @@ export const PlayerPerformance: React.FC = () => {
   const sortStatsByDate = (a: TournamentStats, b: TournamentStats) => {
     const dateA = getTournamentDate(a.tournamentId);
     const dateB = getTournamentDate(b.tournamentId);
-
-    const getYear = (dateStr: string) => {
-      const parts = dateStr.split(" - ");
-      if (parts.length > 1) {
-        return parseInt(parts[1].split("/")[0], 10) || 0;
-      }
-      return parseInt(dateStr.split("/")[2] || "0", 10) || 0;
-    };
-
-    const yearA = getYear(dateA);
-    const yearB = getYear(dateB);
-
-    if (yearA !== yearB) {
-      return yearA - yearB;
-    }
-
-    const monthA = dateA.split("/")[1]?.split(" ")[0] || "1";
-    const monthB = dateB.split("/")[1]?.split(" ")[0] || "1";
-
-    const weightA = getSeasonMonthWeight(monthA, isEurope);
-    const weightB = getSeasonMonthWeight(monthB, isEurope);
-
-    if (weightA !== weightB) {
-      return weightA - weightB;
-    }
-
-    const dayA = parseInt(dateA.split("/")[0] || "1", 10);
-    const dayB = parseInt(dateB.split("/")[0] || "1", 10);
-
-    return dayA - dayB;
+    return compareAcademyDates(dateA, dateB, isEurope, 0);
   };
 
   const tournamentsBySeason = tournamentStats.reduce(

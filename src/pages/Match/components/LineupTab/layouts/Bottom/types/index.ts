@@ -23,11 +23,15 @@ export interface PlayerChainInfo {
 
 export type PlayerPosition = Players["position"];
 
-export interface BottomProps extends BuildBenchRowsParams {
-  selectingSlotId: string | null;
-  openPlayerPicker: (slotId: string) => void;
-  removePlayer: (slotId: string) => void;
-  onPlayerClick: (playerId: string) => void;
+export interface BottomProps {
+  lineup: LineupState;
+  playerStats?: PlayerMatchStat[];
+  mvpId?: string | null;
+  allPlayers?: Players[];
+  selectingSlotId?: string | null;
+  openPlayerPicker?: (slotId: string) => void;
+  removePlayer?: (slotId: string) => void;
+  onPlayerClick?: (playerId: string) => void;
   onOpenModal?: (playerId: string) => void;
   isFromGeral?: boolean;
 }

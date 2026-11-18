@@ -1,0 +1,165 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--card-background);
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-input);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+}
+
+.cardRevenue {
+  border-left: 4px solid #0bb32a;
+}
+
+.cardExpense {
+  border-left: 4px solid #ef4444;
+}
+
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.categoryGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.categoryTitle {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--blackColor);
+}
+
+.sourceBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  letter-spacing: 0.3px;
+}
+
+.badgeTransfer {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badgeClause {
+  background-color: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.badgeManual {
+  background-color: var(--color-background-subtle);
+  color: var(--color);
+  border: 1px solid var(--border-input);
+}
+
+.amountRevenue {
+  font-weight: 700;
+  font-size: 14px;
+  color: #0bb32a;
+  white-space: nowrap;
+}
+
+.amountExpense {
+  font-weight: 700;
+  font-size: 14px;
+  color: #ef4444;
+  white-space: nowrap;
+}
+
+.description {
+  font-size: 13px;
+  color: var(--color);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.footerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.date {
+  font-size: 12px;
+  color: var(--color-tertiary);
+}
+
+.actionsGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-input);
+  background-color: transparent;
+  color: var(--blackColor);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.editBtn:hover {
+  background-color: var(--color-background-subtle);
+}
+
+.deleteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.deleteBtn:hover {
+  background-color: rgba(239, 68, 68, 0.18);
+}
+
+.redirectBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  background-color: rgba(59, 130, 246, 0.08);
+  color: #3b82f6;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.redirectBtn:hover {
+  background-color: rgba(59, 130, 246, 0.18);
+}
+
+.cardHighlighted {
+  border-color: #1e88e5;
+  outline: 1px solid #1e88e5;
+}

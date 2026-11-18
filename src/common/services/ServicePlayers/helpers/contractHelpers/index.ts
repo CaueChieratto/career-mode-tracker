@@ -82,6 +82,7 @@ export const buildSellContractHistory = (
   lastContract.sellValue = parseValue(sellValue);
   lastContract.leftClub = toClub;
   lastContract.dataExit = parsedExit;
+  lastContract.isLoan = false;
 
   if (contractHistory.length > 0) {
     contractHistory[contractHistory.length - 1] = lastContract;
@@ -128,7 +129,12 @@ export const buildLoanContractHistory = (
 
   if (!parsedLoanDate) throw new Error("Data de empréstimo inválida");
 
-  lastContract.buyOptionValue = parseValue(buyOption);
+  const parsedBuyOption = buyOption ? parseValue(buyOption) : 0;
+  if (parsedBuyOption > 0) {
+    lastContract.buyOptionValue = parsedBuyOption;
+  } else {
+    delete lastContract.buyOptionValue;
+  }
   lastContract.leftClub = toClub;
   lastContract.dataExit = parsedLoanDate;
   lastContract.isLoan = true;
@@ -199,9 +205,24 @@ export const checkIsIncomingLoanExit = (
 ): boolean => {
   if (direction !== "exit" || !contract) return false;
 
+  if (
+    contract.fromLoanBuyOption ||
+    contract.loanTerms?.hasBuyOption ||
+    contract.loanTerms?.buyOptionExercised ||
+    (contract.buyOptionValue && contract.buyOptionValue > 0)
+  ) {
+    return false;
+  }
+
+  // Se o contrato possui loanBackDuration ou é uma venda com valor e isLoan === false,
+  // trata-se de uma venda (eventualmente com empréstimo de volta), NUNCA de um retorno de empréstimo.
+  if (contract.transferClauses?.loanBackDuration) return false;
+  if (contract.isLoan === false) return false;
+  if ((contract.sellValue ?? 0) > 0) return false;
+
   if (contract.leftClub === "Fim de Empréstimo") return true;
 
-  if (player?.incomingLoan && Boolean(contract.leftClub)) return true;
+  if (player?.incomingLoan && contract.isLoan === true && Boolean(contract.leftClub)) return true;
 
   if (
     contract.fromClub &&
@@ -338,4 +359,39 @@ export const checkIsLoanReturnArrival = (
   }
 
   return false;
+};
+
+export const getContractBuyOptionFee = (
+  contract?: Partial<Contract> | null,
+): number => {
+  if (!contract || !contract.isLoan) return 0;
+  if (contract.loanTerms && contract.loanTerms.hasBuyOption === false) {
+    return 0;
+  }
+
+  const candidates: Array<number | string | undefined> = [
+    contract.loanTerms?.buyOptionFee,
+    contract.buyOptionValue,
+  ];
+
+  for (const rawFee of candidates) {
+    if (typeof rawFee === "number") {
+      if (Number.isFinite(rawFee) && rawFee > 0) return rawFee;
+    } else if (typeof rawFee === "string" && rawFee.trim() !== "") {
+      const parsed = parseValue(rawFee);
+      if (Number.isFinite(parsed) && parsed > 0) return parsed;
+    }
+  }
+
+  return 0;
+};
+
+export const hasDefinedLoanBuyOption = (
+  contract?: Partial<Contract> | null,
+): boolean => {
+  if (!contract || !contract.isLoan) return false;
+  if (contract.loanTerms && contract.loanTerms.hasBuyOption === false) {
+    return false;
+  }
+  return getContractBuyOptionFee(contract) > 0;
 };

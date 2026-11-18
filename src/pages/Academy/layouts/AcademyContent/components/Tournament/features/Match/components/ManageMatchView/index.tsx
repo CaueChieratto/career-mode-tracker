@@ -1,5 +1,5 @@
 import Button from "../../../../../../../../../../components/Button";
-import { AcademyMatches } from "../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import { AcademyMatches } from "../../../../../../../../../../common/interfaces/AcademyData";
 import { useManageMatch } from "./hooks/useManageMatch";
 import { ScoreRow } from "./components/ScoreRow";
 import { LineupSection } from "./components/LineupSection";

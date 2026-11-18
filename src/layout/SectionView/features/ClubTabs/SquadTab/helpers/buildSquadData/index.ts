@@ -1,5 +1,6 @@
 import { POSITION_DATA } from "../../../../../../../common/types/Positions";
 import { Players } from "../../../../../../../common/interfaces/playersInfo/players";
+import { Match } from "../../../../../../../common/interfaces/Match";
 import { sortPlayers } from "../sortPlayers";
 import { groupAndSortPlayersByPosition } from "../groupAndSortPlayersByPosition";
 
@@ -7,8 +8,9 @@ export const buildSquadData = (
   players: Players[],
   criteria: string,
   isAsc: boolean,
+  matches?: Match[],
 ) => {
-  const baseGrouped = groupAndSortPlayersByPosition(players);
+  const baseGrouped = groupAndSortPlayersByPosition(players, matches);
 
   const groupedData = new Map<string, Players[]>();
 

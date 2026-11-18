@@ -1,0 +1,83 @@
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.row,
+.rowThree {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.row {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+.rowThree {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.selectTrigger {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  font-size: 16px;
+  background-color: var(--card-background);
+  border: 1px solid var(--border-input);
+  border-radius: 8px;
+  color: var(--blackColor);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.submitBtn {
+  margin-top: 8px;
+  background-color: var(--club-color);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-tertiary);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

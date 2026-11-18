@@ -1,4 +1,4 @@
-import { calculateTotalStats } from "../../components/PlayerStatsList/utils/calculateTotalStats";
+import { calculateTotalStats } from "../../../../../../../common/stats/helpers/calculateTotalStats";
 
 type Player = Parameters<typeof calculateTotalStats>[0];
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { buildPlayerCopyText } from "../pages/Academy/layouts/AcademyContent/components/Player/views/PlayerWorkspace/helpers/buildPlayerCopyText";
-import { AcademyPlayers } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
-import { AcademyTournaments } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyPlayers } from "../common/interfaces/AcademyData";
+import { AcademyTournaments } from "../common/interfaces/AcademyData";
 import { Career } from "../common/interfaces/Career";
 
 describe("buildPlayerCopyText", () => {

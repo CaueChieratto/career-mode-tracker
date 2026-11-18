@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 import { ServiceLineup } from "../../src/pages/Match/services/ServiceLineup";
 import { savePlayerMatchStats } from "../../src/pages/Match/components/LineupTab/views/AddMatchStatsPlayer/services/savePlayerMatchStats";
 import { buildLineupStatsUpdate } from "../../src/pages/Match/components/LineupTab/helpers/buildLineupStatsUpdate";
-import { ServiceMatches } from "../../src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../src/common/services/ServiceMatches";
 import {
   career,
   lineup,

@@ -26,6 +26,8 @@ export const TableRow = ({
 
   return (
     <tr
+      id={row.id ? `table-row-${row.id}` : undefined}
+      data-team-id={row.id || undefined}
       className={isCareerTeam ? Styles.highlight_row : Styles.row}
       onClick={onClick}
     >

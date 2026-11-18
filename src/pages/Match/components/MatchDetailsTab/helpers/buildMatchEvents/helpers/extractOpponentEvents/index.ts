@@ -7,7 +7,7 @@ import {
   OpponentGoal,
 } from "../../../../types";
 import { getEventDetails } from "../timeUtils";
-import { normalizeOpponentEvents } from "../../../../../../helpers/opponentCards";
+import { normalizeOpponentEvents } from "../../../../../../../../common/services/ServiceOpponentPlayers/helpers/opponentCards";
 
 export const extractOpponentEvents = (match: Match) => {
   const events: MatchEvent[] = [];

@@ -9,6 +9,7 @@ import { useMatchNavigation } from "./hooks/useMatchNavigation";
 import { buildMatchCopyText } from "./helpers/buildCopyText";
 import { Copy } from "../../../../../../../common/utils/Copy";
 import { useMatchesContext } from "../../contexts/MatchesContext";
+import { NavigationSessionStore } from "../../../../../../../common/services/NavigationSessionStore";
 
 type MatchCardProps = {
   match: Match;
@@ -27,15 +28,22 @@ export const MatchCard = ({ match, season, playerStat }: MatchCardProps) => {
     matchId: match.matchesId,
     isGeralPage,
     playerId: playerStat?.playerId,
+    careerId: career.id,
   });
 
   const handleEdit = onOpenScreen
-    ? () =>
+    ? () => {
+        NavigationSessionStore.saveClickAnchor("all_matches", {
+          scrollY: typeof window !== "undefined" ? window.scrollY : 0,
+          anchorSelector: `#match-card-${match.matchesId}`,
+          updatedAt: Date.now(),
+        });
         onOpenScreen({
           key: "addMatches",
           matchesId: match.matchesId,
           seasonId: season.id,
-        })
+        });
+      }
     : goToEdit;
 
   const copyText = async () => {
@@ -61,7 +69,10 @@ export const MatchCard = ({ match, season, playerStat }: MatchCardProps) => {
 
   return (
     <>
-      <Card className={Styles.card}>
+      <Card
+        id={match.matchesId ? `match-card-${match.matchesId}` : undefined}
+        className={Styles.card}
+      >
         <MatchHeader
           leagueName={match.league}
           leagueData={leagueData}

@@ -2,10 +2,9 @@ import { Players } from "../../../../../../../common/interfaces/playersInfo/play
 import { Match } from "../../../../../../../common/interfaces/Match";
 import { League } from "../../../../../../../common/interfaces/League";
 import { LeagueStats } from "../../../../../../../common/interfaces/playersStats/leagueStats";
-import {
-  matchPlayerStatToPlayer,
-  isSamePlayerId,
-} from "../../../../../../../common/utils/playerIdentity";
+import { SavedLineup } from "../../../../../../../common/interfaces/Lineup";
+import { matchPlayerStatToPlayer } from "../../../../../../../common/utils/playerIdentity";
+import { filterSupersededPlayers as sharedFilterSupersededPlayers } from "../../../../../../../common/stats/helpers/mergeMatchStats";
 import {
   AggregatedClubPlayer,
   AggregatedLeagueStats,
@@ -31,11 +30,8 @@ export interface AggregateSeasonClubStatsOptions {
   clubName: string;
 }
 
-export const getResilientMatchKey = (match: Match, fallbackIndex: number): string => {
-  if (match.matchesId) return match.matchesId;
-  if ((match as unknown as { id?: string }).id) return (match as unknown as { id?: string }).id as string;
-  return `${match.date || ""}_${match.homeTeam || ""}_${match.awayTeam || ""}_${match.league || ""}_${fallbackIndex}`;
-};
+import { getResilientMatchKey } from "../../../../../../../common/stats/helpers/getResilientMatchKey";
+export { getResilientMatchKey };
 
 /**
  * Motor puro de agregação de estatísticas para o StatsTab_Club.
@@ -48,6 +44,19 @@ export const getResilientMatchKey = (match: Match, fallbackIndex: number): strin
  * 5. Vinculação tolerante de atletas por ID, apelido de base e lineup.
  * 6. Marcação da origem dos dados (matches, manual, both) para orientar o comportamento da lixeira.
  */
+function extractLineupSlots(
+  lineup: unknown,
+): Array<{ playerId?: string | null; playerName?: string | null; id?: string; name?: string }> {
+  if (!lineup) return [];
+  if (Array.isArray(lineup)) return lineup;
+  const saved = lineup as Partial<SavedLineup>;
+  const slots: Array<{ playerId?: string | null; playerName?: string | null; id?: string; name?: string }> = [];
+  if (saved.goalkeeper) slots.push(saved.goalkeeper);
+  if (Array.isArray(saved.lines)) slots.push(...saved.lines);
+  if (Array.isArray(saved.bench)) slots.push(...saved.bench);
+  return slots;
+}
+
 export const aggregateSeasonClubStats = ({
   players,
   matches = [],
@@ -96,12 +105,14 @@ export const aggregateSeasonClubStats = ({
     (match.playerStats || []).forEach((pStat) => {
       // Identifica o atleta no elenco
       let matchedPlayer = matchPlayerStatToPlayer(pStat.playerId, players);
-      if (!matchedPlayer && (match as unknown as { lineup?: Array<{ id?: string; playerId?: string; name?: string }> }).lineup) {
-        const lineupPlayer = (match as unknown as { lineup: Array<{ id?: string; playerId?: string; name?: string }> }).lineup.find(
+      if (!matchedPlayer && match.lineup) {
+        const slots = extractLineupSlots(match.lineup);
+        const lineupPlayer = slots.find(
           (lp) => lp.id === pStat.playerId || lp.playerId === pStat.playerId,
         );
-        if (lineupPlayer?.name) {
-          const normName = lineupPlayer.name.trim().toLowerCase();
+        const playerName = lineupPlayer?.playerName || lineupPlayer?.name;
+        if (playerName) {
+          const normName = playerName.trim().toLowerCase();
           matchedPlayer = players.find(
             (p) => p.name?.trim().toLowerCase() === normName,
           );
@@ -277,21 +288,4 @@ export const aggregateSeasonClubStats = ({
  */
 export const filterSupersededPlayers = (
   players: AggregatedClubPlayer[],
-): AggregatedClubPlayer[] => {
-  return players.filter((p) => {
-    const isSuperseded = players.some((other) => {
-      if (other.id === p.id) return false;
-      if (other.playedWithUs === p.id) return true;
-      if (!other.sell && p.sell && isSamePlayerId(other, p)) return true;
-      if (
-        Boolean(other.playedWithUs) &&
-        isSamePlayerId(other, p) &&
-        (!other.sell || (other.overall || 0) >= (p.overall || 0))
-      ) {
-        return true;
-      }
-      return false;
-    });
-    return !isSuperseded;
-  });
-};
+): AggregatedClubPlayer[] => sharedFilterSupersededPlayers(players);

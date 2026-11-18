@@ -16,6 +16,7 @@ import { useClubPlayerStatsAggregation } from "./hooks/useClubPlayerStatsAggrega
 import { SectionScreen } from "../../../config/screens";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
 import { GroupCareerContext } from "../../../../../pages/GroupCareerPage/contexts/GroupCareerContext";
+import { useScrollAnchorRestore } from "../../../../../common/hooks/useScrollAnchorRestore";
 
 type StatsTab_ClubProps = {
   season: ClubData;
@@ -66,6 +67,8 @@ export const StatsTab_Club = ({
     );
   }, [playersWithStats, effectiveSortOption, isGeralPage, isReversed]);
 
+  useScrollAnchorRestore("stats", [sortedPlayerList]);
+
   const copyList = async () => {
     if (!sortedPlayerList.length) return;
     const text = buildPlayersCopyText(sortedPlayerList);
@@ -95,8 +98,10 @@ export const StatsTab_Club = ({
           players={sortedPlayerList}
           career={career}
           season={season}
+          isGeralPage={isGeralPage}
           onEditPlayerStats={handleEditPlayerStats}
           onUpdatePlayer={onUpdatePlayer}
+          onOpenScreen={onOpenScreen}
         />
       ) : (
         <NoStatsMessage

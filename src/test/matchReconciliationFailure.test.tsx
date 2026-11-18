@@ -4,11 +4,11 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useAddDetails } from "../pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/useAddDetails";
 import { useAddStatsMatch } from "../pages/Match/components/MatchStatsTab/views/AddStatsMatch/hooks/useAddStatsMatch";
-import { ServiceMatches } from "../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../common/services/ServiceMatches";
 import { career, match, season } from "./factories/domain";
 
 vi.mock(
-  "../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches",
+  "../common/services/ServiceMatches",
   () => ({
     ServiceMatches: {
       updateMatchDetailsInSeason: vi.fn(),

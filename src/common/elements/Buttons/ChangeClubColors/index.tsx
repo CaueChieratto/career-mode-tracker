@@ -1,26 +1,16 @@
 import { useContext } from "react";
-import Button from "../../../../components/Button";
-import { SeasonThemeContext } from "../../../../contexts/SeasonThemeContext";
 import { IoColorPalette } from "react-icons/io5";
+import { SeasonThemeContext } from "../../../../contexts/SeasonThemeContext";
+import { ThemedActionButton } from "../ThemedActionButton";
 
 export const ChangeClubColors = () => {
-  const { activeStyle, changeClubColor } = useContext(SeasonThemeContext)!;
+  const { changeClubColor } = useContext(SeasonThemeContext)!;
 
   return (
-    <Button
-      shadow="yes"
-      typeButton="addPlayer"
-      fontSize="large"
-      size="big"
-      style={{
-        backgroundColor: activeStyle.darkClubColor,
-        color: activeStyle.color,
-        fontWeight: activeStyle.fontWeight,
-        border: activeStyle.border,
-      }}
+    <ThemedActionButton
+      label="Trocar Cores"
+      icon={<IoColorPalette />}
       onClick={changeClubColor}
-    >
-      Trocar Cores <IoColorPalette />
-    </Button>
+    />
   );
 };

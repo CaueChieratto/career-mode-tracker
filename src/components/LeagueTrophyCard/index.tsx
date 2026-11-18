@@ -1,10 +1,11 @@
-import { Dispatch, SetStateAction, useMemo } from "react";
+import { Dispatch, SetStateAction, useMemo, useRef } from "react";
 import { ElementsCardTitles } from "../../common/elements/ElementsCardTitles";
 import { Career } from "../../common/interfaces/Career";
 import { Trophy } from "../../common/interfaces/club/trophy";
 import Styles from "./LeagueTrophyCard.module.css";
 import { ServiceCareer } from "../../common/services/ServiceCareer";
 import { sortTrophySeasons } from "../../common/utils/Sorts";
+import { useToast } from "../../common/hooks/UseToast";
 
 type LeagueTrophyCardProps = {
   trophy: Trophy;
@@ -19,6 +20,9 @@ const LeagueTrophyCard = ({
   setSelectedCareer,
   clubColor,
 }: LeagueTrophyCardProps) => {
+  const { confirm, error: showError, success: showSuccess } = useToast();
+  const isDeletingRef = useRef(false);
+
   const sortedSeasons = useMemo(
     () => sortTrophySeasons(trophy.seasons),
     [trophy.seasons],
@@ -31,21 +35,32 @@ const LeagueTrophyCard = ({
       <div className={Styles.container_season}>
         {sortedSeasons.map((season, index) => {
           const deleteSeason = async () => {
-            const ok = confirm(
+            if (isDeletingRef.current) return;
+            const ok = await confirm(
               `Deseja excluir permanentemente a temporada ${season}?`,
+              { tone: "danger", confirmLabel: "Excluir" },
             );
-            if (!ok) return;
+            if (!ok || isDeletingRef.current) return;
 
-            const updatedTrophies = await ServiceCareer.removeSeason(
-              selectedCareer.id,
-              trophy.leagueName,
-              season,
-            );
+            isDeletingRef.current = true;
+            try {
+              const updatedTrophies = await ServiceCareer.removeSeason(
+                selectedCareer.id,
+                trophy.leagueName,
+                season,
+              );
 
-            setSelectedCareer({
-              ...selectedCareer,
-              trophies: updatedTrophies,
-            });
+              setSelectedCareer({
+                ...selectedCareer,
+                trophies: updatedTrophies,
+              });
+              showSuccess("Temporada do troféu removida com sucesso!");
+            } catch (err) {
+              console.error("Erro ao excluir temporada do título:", err);
+              showError("Não foi possível excluir a temporada do título.");
+            } finally {
+              isDeletingRef.current = false;
+            }
           };
           return (
             <ElementsCardTitles.Span

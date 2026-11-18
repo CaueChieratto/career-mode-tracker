@@ -1,5 +1,5 @@
 import { Trophy } from "../../../../../../common/interfaces/club/trophy";
-import Styles from "../SeasonsPlayerTab.module.css";
+import Styles from "../../PlayerTabs.module.css";
 import LeagueStatsRow from "./LeagueStatsRow";
 import NoTitleSeason from "../../components/NoTitleSeason";
 import { Players } from "../../../../../../common/interfaces/playersInfo/players";

@@ -1,6 +1,7 @@
-import Styles from "./ConfirmModal.module.css";
-import Button from "../../../../components/Button";
 import { ReactNode } from "react";
+import Button from "../../../../components/Button";
+import Modal from "../../../../components/Modal";
+import Styles from "./ConfirmModal.module.css";
 
 type ConfirmModalProps = {
   title: string;
@@ -20,9 +21,13 @@ export const ConfirmModal = ({
   onConfirm,
 }: ConfirmModalProps) => {
   return (
-    <div className={Styles.modalOverlay}>
+    <Modal
+      isOpen
+      closeModal={onCancel}
+      animationContainer="grow"
+      text={title}
+    >
       <div className={Styles.modalContent}>
-        <h3 className={Styles.modalTitle}>{title}</h3>
         <p className={Styles.modalText}>{description}</p>
         <div className={Styles.modalActions}>
           <Button isActive={false} color="cancel" onClick={onCancel}>
@@ -33,6 +38,6 @@ export const ConfirmModal = ({
           </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 };

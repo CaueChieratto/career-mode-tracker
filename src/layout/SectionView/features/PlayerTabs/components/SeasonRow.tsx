@@ -1,7 +1,7 @@
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
 import CalculatedStatistics from "../../../../../components/Statistics/CalculatedStatistics";
 import StatisticsTable_Title from "../../../../../components/Statistics/StatisticsTable_Title";
-import Styles from "../SeasonsPlayerTab/SeasonsPlayerTab.module.css";
+import Styles from "../PlayerTabs.module.css";
 import { BsCopy } from "react-icons/bs";
 
 type SeasonRowProps = {

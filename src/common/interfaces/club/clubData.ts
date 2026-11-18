@@ -3,7 +3,8 @@ import { Teams } from "../Teams";
 import { League } from "../League";
 import { Players } from "../playersInfo/players";
 import { TableRowData } from "../Table";
-import { AcademyPlayers } from "../../../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../AcademyData";
+import { SeasonFinancialReport } from "../finance";
 
 export interface ClubData {
   players: Players[];
@@ -14,4 +15,6 @@ export interface ClubData {
   teams?: Teams[];
   table?: TableRowData[];
   academyPlayers?: AcademyPlayers[];
+  financialReport?: SeasonFinancialReport;
+  captains?: string[];
 }

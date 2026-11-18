@@ -2,21 +2,26 @@ import { useMemo } from "react";
 import { Career } from "../../../../../../common/interfaces/Career";
 import { Players } from "../../../../../../common/interfaces/playersInfo/players";
 import { useLocation, useParams } from "react-router-dom";
-import { getContinentByCountry } from "../../../../../../common/services/GetContinentByCountry";
+import { calculatePlayerAge } from "../../../../../../common/utils/calculatePlayerAge";
+import {
+  getSeasonStartYear,
+  getValidDate,
+  isEuropeanSeason,
+  parseFullBrasilDate,
+} from "../../../../../../common/utils/Date";
+import { findPlayerInList } from "../../../../../../common/utils/playerIdentity";
 
-interface FirestoreTimestamp {
-  seconds: number;
-  nanoseconds?: number;
-}
-
-const isFirestoreTimestamp = (val: unknown): val is FirestoreTimestamp => {
-  return typeof val === "object" && val !== null && "seconds" in val;
-};
-
-export const usePlayerInfo = (player?: Players, career?: Career) => {
+export const usePlayerInfo = (
+  player?: Players,
+  career?: Career,
+  seasonIdParam?: string,
+  isNotSeasonParam?: boolean,
+) => {
   const location = useLocation();
-  const { seasonId } = useParams<{ seasonId: string }>();
-  const isNotSeason = location.pathname.includes("/Geral") || !seasonId;
+  const { seasonId: routeSeasonId } = useParams<{ seasonId: string }>();
+  const seasonId = seasonIdParam ?? routeSeasonId;
+  const isNotSeason =
+    isNotSeasonParam ?? (location.pathname.includes("/Geral") || !seasonId);
 
   const getSeasonYear = (
     dateValue: unknown,
@@ -26,27 +31,11 @@ export const usePlayerInfo = (player?: Players, career?: Career) => {
 
     let d: Date | null = null;
 
-    if (dateValue instanceof Date) {
-      d = dateValue;
-    } else if (isFirestoreTimestamp(dateValue)) {
-      d = new Date(dateValue.seconds * 1000);
-    } else if (typeof dateValue === "string") {
-      if (dateValue.includes("/")) {
-        const parts = dateValue.split("/");
-        if (parts.length === 3) {
-          const day = parseInt(parts[0], 10);
-          const month = parseInt(parts[1], 10) - 1;
-          let year = parseInt(parts[2], 10);
-          if (year < 100) year += 2000;
-          d = new Date(year, month, day);
-        } else {
-          return null;
-        }
-      } else {
-        d = new Date(dateValue);
-      }
-    } else if (typeof dateValue === "number") {
-      d = new Date(dateValue);
+    if (typeof dateValue === "string" && dateValue.includes("/")) {
+      d = parseFullBrasilDate(dateValue);
+    } else {
+      const valid = getValidDate(dateValue);
+      d = valid.getTime() === 0 ? null : valid;
     }
 
     if (!d || isNaN(d.getTime())) return null;
@@ -64,17 +53,27 @@ export const usePlayerInfo = (player?: Players, career?: Career) => {
   const getPlayerAgeForTransaction = (transactionDate: unknown) => {
     if (!transactionDate || !career || !player) return player?.age;
 
-    const isEurope = getContinentByCountry(career.nation) === "Europa";
+    const isEurope = isEuropeanSeason(career.nation);
     const txSeasonYear = getSeasonYear(transactionDate, isEurope);
 
     const season = career.clubData.find((s) => {
-      const sYear =
-        new Date(career.createdAt).getFullYear() + s.seasonNumber - 1;
+      const sYear = getSeasonStartYear(career.createdAt, s.seasonNumber);
       return sYear === txSeasonYear;
     });
 
     if (season) {
-      const playerInSeason = season.players.find((p) => p.id === player.id);
+      const playerInSeason = findPlayerInList(season.players, player);
+      const targetPlayer = playerInSeason || player;
+      if (targetPlayer?.birthDate) {
+        const dynamicAge = calculatePlayerAge(
+          targetPlayer.birthDate,
+          career.createdAt,
+          season.seasonNumber,
+          career.nation,
+          season.matches,
+        );
+        if (dynamicAge > 0) return dynamicAge;
+      }
       return playerInSeason ? playerInSeason.age : player.age;
     }
     return player.age;
@@ -85,12 +84,10 @@ export const usePlayerInfo = (player?: Players, career?: Career) => {
 
     const currentSeason = career.clubData.find((s) => s.id === seasonId);
     const currentSeasonYear = currentSeason
-      ? new Date(career.createdAt).getFullYear() +
-        currentSeason.seasonNumber -
-        1
+      ? getSeasonStartYear(career.createdAt, currentSeason.seasonNumber)
       : null;
 
-    const isEurope = getContinentByCountry(career.nation) === "Europa";
+    const isEurope = isEuropeanSeason(career.nation);
 
     const processedContracts = player.contract
       .map((contract) => {

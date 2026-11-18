@@ -5,6 +5,7 @@ import { getTournamentTexts } from "./constants/TEXTS";
 import { getSeasonStartYear } from "../../../../utils/getSeasonStartYear";
 import { isEuropeanSeason } from "../../../../utils/isEuropeanSeason";
 import { TournamentDataPayload } from "../../forms/types/TournamentDataPayload";
+import { toast, markErrorAsNotified } from "../../../../../../../../common/services/ToastService";
 
 type CreateAcademyTournamentFormProps = {
   onComplete: () => void;
@@ -57,11 +58,12 @@ export const CreateAcademyTournamentForm = ({
         seasonId,
         tournamentData,
       );
+      toast.success("Torneio da base criado com sucesso!");
       onComplete();
     } catch (error) {
       console.error("Erro ao adicionar torneio:", error);
-      alert("Falha ao salvar o torneio. Tente novamente.");
-      throw error;
+      toast.error("Falha ao salvar o torneio. Tente novamente.");
+      throw markErrorAsNotified(error);
     }
   };
 

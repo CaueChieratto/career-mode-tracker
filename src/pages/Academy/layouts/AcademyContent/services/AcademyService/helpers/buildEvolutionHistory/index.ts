@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { AcademyPlayersHistory } from "../../../../interfaces/AcademyPlayers/AcademyPlayersHistory";
+import { AcademyPlayersHistory } from "../../../../../../../../common/interfaces/AcademyData";
 
 export const buildEvolutionHistory = (
   date: string,

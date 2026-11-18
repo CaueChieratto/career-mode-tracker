@@ -1,4 +1,4 @@
-import { OpponentEvents } from "../OpponentEventsMatches";
+import type { OpponentEvents } from "../OpponentEventsMatches";
 import { SavedLineup } from "../Lineup";
 import { MatchResult } from "../MatchResult";
 import { MatchStatus } from "../MatchStatus";
@@ -48,6 +48,7 @@ export type Match = {
   opponentMvpName?: string;
   opponentMvpRating?: number;
   opponentMvpPlayerId?: string;
+  opponentMvpIsFormerPlayer?: boolean;
   stadium?: string;
   stage?: string;
   isNeutral?: boolean;

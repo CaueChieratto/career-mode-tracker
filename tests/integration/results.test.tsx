@@ -6,7 +6,7 @@ import type { Field } from '../../src/components/FormSection';
 import type { Match } from '../../src/common/interfaces/Match';
 import type { TableTeamData } from '../../src/common/interfaces/TableTeamData';
 import { useAddDetails } from '../../src/pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/useAddDetails';
-import { ServiceMatches } from '../../src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches';
+import { ServiceMatches } from '../../src/common/services/ServiceMatches';
 import { career, match, season, stat } from '../../src/test/factories/domain';
 import { deferred, failOnce, list, matchPath, put, read, seasonPath, seedCareer } from './helpers';
 import { boundary } from './firestoreBoundary';

@@ -16,6 +16,7 @@ export const onSnapshot = vi.fn<(...args: unknown[]) => () => void>(blocked);
 export const setDoc = vi.fn<(...args: unknown[]) => Promise<void>>(blocked);
 export const updateDoc = vi.fn<(...args: unknown[]) => Promise<void>>(blocked);
 export const deleteDoc = vi.fn<(...args: unknown[]) => Promise<void>>(blocked);
+export const deleteField = vi.fn(() => ({ __op: "deleteField" }));
 export const writeBatch = vi.fn(blocked);
 export const runTransaction = vi.fn(blocked);
 export const arrayUnion = vi.fn((...elements: unknown[]) => ({

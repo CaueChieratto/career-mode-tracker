@@ -3,8 +3,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { TournamentWorkspace } from "../pages/Academy/layouts/AcademyContent/components/Tournament/views/TournamentWorkspace";
 import { useAcademyContext } from "../pages/Academy/layouts/contexts/AcademyContext/hooks/useAcademyContext";
-import { AcademyTournaments } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
-import { AcademyPlayers } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyTournaments } from "../common/interfaces/AcademyData";
+import { AcademyPlayers } from "../common/interfaces/AcademyData";
 import { Career } from "../common/interfaces/Career";
 
 afterEach(cleanup);

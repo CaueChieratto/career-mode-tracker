@@ -1,5 +1,5 @@
 import { Match } from "../../../../../../../../common/interfaces/Match";
-import { getDerivedOpponentCards } from "../../../../../../helpers/opponentCards";
+import { getDerivedOpponentCards } from "../../../../../../../../common/services/ServiceOpponentPlayers/helpers/opponentCards";
 
 const calcAcc = (success?: number, total?: number): string => {
   return success !== undefined && total !== undefined && total > 0

@@ -2,7 +2,7 @@ import type { Career } from "../../../../common/interfaces/Career";
 import type { ClubData } from "../../../../common/interfaces/club/clubData";
 import type { Players } from "../../../../common/interfaces/playersInfo/players";
 
-import { getAggregatedPlayersForCareer } from "../mergeMatchStats";
+import { getAggregatedPlayersForCareer } from "../../../../common/stats/helpers/mergeMatchStats";
 
 interface BuildSectionViewModelParams {
   career: Career;
@@ -10,6 +10,7 @@ interface BuildSectionViewModelParams {
   player?: Players;
   isPlayer?: boolean;
   notSeason?: boolean;
+  tabStorageKey?: string;
 }
 
 interface SectionViewModel {
@@ -48,7 +49,11 @@ const getStorageKey = (
   player?: Players,
   isPlayer?: boolean,
   notSeason?: boolean,
+  tabStorageKey?: string,
 ): string => {
+  if (tabStorageKey) {
+    return tabStorageKey;
+  }
   if (isPlayer) {
     return `player-tab-${career.id}-${player?.id}`;
   }
@@ -66,6 +71,7 @@ export function buildSectionViewModel({
   player,
   isPlayer,
   notSeason,
+  tabStorageKey,
 }: BuildSectionViewModelParams): SectionViewModel {
   const augmentedSeason =
     career.clubData.find((careerSeason) => careerSeason.id === season.id) ??
@@ -81,12 +87,14 @@ export function buildSectionViewModel({
   return {
     augmentedSeason,
     augmentedPlayer,
-    storageKey: getStorageKey(
-      career,
-      augmentedSeason,
-      augmentedPlayer,
-      isPlayer,
-      notSeason,
-    ),
+    storageKey:
+      tabStorageKey ||
+      getStorageKey(
+        career,
+        augmentedSeason,
+        augmentedPlayer,
+        isPlayer,
+        notSeason,
+      ),
   };
 }

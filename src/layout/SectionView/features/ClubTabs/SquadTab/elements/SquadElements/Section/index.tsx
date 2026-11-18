@@ -1,25 +1,32 @@
 import { useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import FooterSection_Player from "./components/FooterSection_Player";
 import HeaderSection_Player from "./components/HeaderSection_Player";
 import Data from "./Section.module.css";
 import { Match } from "../../../../../../../../common/interfaces/Match";
 import { Contract } from "../../../../../../../../common/interfaces/playersInfo/contract";
+import { Players } from "../../../../../../../../common/interfaces/playersInfo/players";
 import { PlayerModal } from "./ui/PlayerModal";
 import { SectionScreen } from "../../../../../../config/screens";
+import { calculatePlayerAge } from "../../../../../../../../common/utils/calculatePlayerAge";
 
-type SectionProps = {
-  id: string;
-  name: string;
-  position: string;
-  shirtNumber: string;
-  age: number;
-  nation: string;
-  playerValue: number;
-  salary: number;
-  captain: boolean;
-  contractTime: number;
-  matches: Match[];
+export type SectionProps = {
+  player?: Players;
+  latestFinishedMatchDate?: string | null;
+  onOpenScreen?: (screen: SectionScreen) => void;
+  careerCreatedAt?: Date | string | null;
+  seasonNumber?: number;
+  id?: string;
+  name?: string;
+  position?: string;
+  shirtNumber?: string;
+  age?: number;
+  nation?: string;
+  playerValue?: number;
+  salary?: number;
+  captain?: boolean;
+  contractTime?: number;
+  matches?: Match[];
   loan?: boolean;
   incomingLoan?: boolean;
   contract?: Contract[];
@@ -30,42 +37,73 @@ type SectionProps = {
   groupId?: string;
   careerNation?: string;
   isEuropean?: boolean;
-  onOpenScreen?: (screen: SectionScreen) => void;
+  sell?: boolean;
 };
 
 export const Section = ({
-  id,
-  age,
-  name,
-  nation,
-  position,
-  shirtNumber,
-  salary,
-  playerValue,
-  captain,
-  contractTime,
+  player,
+  latestFinishedMatchDate,
+  onOpenScreen,
+  id: propId,
+  age: propAge,
+  name: propName,
+  nation: propNation,
+  position: propPosition,
+  shirtNumber: propShirtNumber,
+  salary: propSalary,
+  playerValue: propPlayerValue,
+  captain: propCaptain,
+  contractTime: propContractTime,
   matches,
-  loan,
-  incomingLoan,
-  contract,
+  loan: propLoan,
+  incomingLoan: propIncomingLoan,
+  contract: propContract,
   currency,
-  isAcademy,
-  academyNickname,
+  isAcademy: propIsAcademy,
+  academyNickname: propAcademyNickname,
   careerId: propsCareerId,
   groupId: propsGroupId,
   careerNation,
   isEuropean,
-  onOpenScreen,
+  sell: propSell,
+  careerCreatedAt,
+  seasonNumber,
 }: SectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const navigate = useNavigate();
   const location = useLocation();
 
   const { careerId: paramsCareerId, groupId: paramsGroupId } = useParams<{
     careerId?: string;
     groupId?: string;
   }>();
+
+  const p = player;
+  const id = p?.id ?? propId ?? "";
+  const name = p?.name ?? propName ?? "";
+  const calculatedAge = p?.birthDate
+    ? calculatePlayerAge(
+        p.birthDate,
+        careerCreatedAt,
+        seasonNumber,
+        careerNation,
+        matches,
+      )
+    : 0;
+  const age = calculatedAge > 0 ? calculatedAge : (p?.age ?? propAge ?? 0);
+  const nation = p?.nation ?? propNation ?? "";
+  const position = (p?.position as string) ?? propPosition ?? "";
+  const shirtNumber = p?.shirtNumber ?? propShirtNumber ?? "";
+  const salary = p?.salary ?? propSalary;
+  const playerValue = p?.playerValue ?? propPlayerValue;
+  const captain = Boolean(p?.captain ?? propCaptain);
+  const contractTime = p?.contractTime ?? propContractTime;
+  const loan = Boolean(p?.loan ?? propLoan);
+  const incomingLoan = Boolean(p?.incomingLoan ?? propIncomingLoan);
+  const contract = p?.contract ?? propContract;
+  const isAcademy = Boolean(p?.isAcademy ?? propIsAcademy);
+  const sell = Boolean(p?.sell ?? propSell);
+  const academyNickname = p?.academyNickname ?? propAcademyNickname;
 
   const finalCareerId = propsCareerId || paramsCareerId;
   const finalGroupId = propsGroupId || paramsGroupId;
@@ -76,20 +114,21 @@ export const Section = ({
       setIsModalOpen(true);
       return;
     }
-    if (isGroup && finalGroupId && finalCareerId) {
-      navigate(
-        `/Career/${finalCareerId}/Geral/Player/${id}?fromGroup=true&groupId=${finalGroupId}`,
-      );
-      return;
-    }
-    if (finalCareerId) {
-      navigate(`/Career/${finalCareerId}/Geral/Player/${id}`);
+    if (onOpenScreen && finalCareerId) {
+      onOpenScreen({
+        key: "player",
+        playerId: id,
+        careerId: finalCareerId,
+        isNotSeason: true,
+        isFromGroup: isGroup,
+        groupId: isGroup ? finalGroupId : undefined,
+      });
     }
   };
 
   let displaySalary = salary;
 
-  if (loan && contract && contract.length > 0) {
+  if (loan && contract && contract.length > 0 && salary !== undefined) {
     const lastContract = contract[contract.length - 1];
 
     if (lastContract.isLoan && lastContract.wagePercentage !== undefined) {
@@ -97,11 +136,36 @@ export const Section = ({
     }
   }
 
+  const lastContract =
+    contract && contract.length > 0
+      ? contract[contract.length - 1]
+      : undefined;
+
+  const resolvedContractTime =
+    contractTime !== undefined && contractTime > 0
+      ? contractTime
+      : incomingLoan && (lastContract?.loanDuration || lastContract?.contractTime)
+      ? Number(lastContract?.loanDuration || lastContract?.contractTime)
+      : contractTime;
+
+  const arrivalDate = incomingLoan ? lastContract?.dataArrival : undefined;
+
   const finalNickname = isAcademy ? academyNickname : undefined;
+  const hasContractData =
+    (playerValue !== undefined && playerValue > 0) ||
+    (salary !== undefined && salary > 0) ||
+    (resolvedContractTime !== undefined && resolvedContractTime > 0) ||
+    (contract && contract.length > 0);
 
   return (
     <>
-      <section className={Data.player} onClick={handleNavigate}>
+      <section
+        id={id ? `player-row-${id}` : undefined}
+        data-player-id={id || undefined}
+        data-player-name={name || undefined}
+        className={Data.player}
+        onClick={handleNavigate}
+      >
         <HeaderSection_Player
           age={age}
           name={name}
@@ -113,23 +177,30 @@ export const Section = ({
           nickname={finalNickname}
         />
 
-        <FooterSection_Player
-          contractTime={contractTime}
-          salary={displaySalary}
-          playerValue={playerValue}
-          matches={matches}
-          currency={currency}
-          careerNation={careerNation}
-          isEuropean={isEuropean}
-        />
+        {hasContractData && (
+          <FooterSection_Player
+            contractTime={resolvedContractTime}
+            arrivalDate={arrivalDate}
+            salary={displaySalary}
+            playerValue={playerValue}
+            matches={matches}
+            latestFinishedMatchDate={latestFinishedMatchDate}
+            currency={currency}
+            careerNation={careerNation}
+            isEuropean={isEuropean}
+          />
+        )}
       </section>
 
       {isModalOpen && (
         <PlayerModal
+          player={player}
           id={id}
           playerName={name}
           incomingLoan={incomingLoan}
           loan={loan}
+          sell={sell}
+          contract={contract}
           onClose={() => setIsModalOpen(false)}
           onOpenScreen={onOpenScreen}
         />

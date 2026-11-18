@@ -12,8 +12,8 @@ export const useClubColor = ({
   selectedCareer,
   colorsTeams,
 }: UseClubColorProps) => {
-  const primaryClubColor = colorsTeams[0];
-  const secondaryClubColor = colorsTeams[1];
+  const primaryClubColor = colorsTeams?.[0] ?? "#ffffff";
+  const secondaryClubColor = colorsTeams?.[1] ?? "#000000";
 
   const [colorDefault, setColor] = useState<string>(
     () => ColorsService.getColorSaved(selectedCareer.id) || primaryClubColor,

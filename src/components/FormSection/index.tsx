@@ -1,47 +1,12 @@
 import { forwardRef } from "react";
 import { useSeasonTheme } from "../../common/hooks/Seasons/UseSeasonTheme";
-import { ModalType } from "../../common/types/enums/ModalType";
 import ContainerIcon from "../ContainerIcon";
 import FieldRenderer from "../FieldRenderer";
 import Label from "../Label";
 import Styles from "./FormSection.module.css";
+import { Field, FormSectionProps } from "./types";
 
-export type Field = {
-  id: string;
-  name: string;
-  icon: React.ReactNode;
-  checkbox?: boolean;
-  inputType?: string;
-  placeholder?: string;
-  options?: readonly string[];
-  disabled?: boolean;
-  transform?: "uppercase" | "capitalize";
-  maxLength?: number;
-  max?: number;
-  min?: number;
-  note?: string;
-  isSigningOnly?: boolean;
-  editOnly?: boolean;
-  addOnly?: boolean;
-  action?: ModalType | string;
-};
-
-export type FormSectionProps = {
-  title: string;
-  rows: readonly (readonly Field[])[];
-  formValues?: Record<string, string>;
-  isGoalkeeper?: boolean;
-  isMatch?: boolean;
-  isEditing?: boolean;
-  onInputChange?: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    field: Field,
-  ) => void;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  onKeyUp?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  onBooleanChange?: (name: string, value: boolean) => void;
-  onActionClick?: (modal: ModalType | string) => void;
-};
+export type * from "./types";
 
 const filterRowsByState = (
   rows: readonly (readonly Field[])[],
@@ -72,6 +37,7 @@ const FormSection = forwardRef<HTMLDivElement, FormSectionProps>(
   (props, ref) => {
     const {
       title,
+      hideTitle,
       rows,
       isEditing,
       isGoalkeeper,
@@ -82,6 +48,7 @@ const FormSection = forwardRef<HTMLDivElement, FormSectionProps>(
       onKeyDown,
       onKeyUp,
       onBooleanChange,
+      onSelectOption,
     } = props;
 
     const { clubColor } = useSeasonTheme();
@@ -99,43 +66,64 @@ const FormSection = forwardRef<HTMLDivElement, FormSectionProps>(
 
     return (
       <>
-        <h2 className={Styles.section_title} ref={ref}>
-          {title}
-        </h2>
+        {!hideTitle && title && (
+          <h2 className={Styles.section_title} ref={ref}>
+            {title}
+          </h2>
+        )}
         <div className={Styles.form_section}>
           {visibleRows.map((fields, rowIndex) => {
-            const isNationRow = fields.some((field) => field.id === "nation");
+            const isMatchRow =
+              isMatch ||
+              fields.some((field) => field.isMatch || field.id === "nation");
 
             return (
               <div
                 key={rowIndex}
-                style={isMatch ? { alignItems: "flex-end" } : {}}
+                style={isMatchRow ? { alignItems: "flex-end" } : {}}
                 className={`${fields.length > 1 ? Styles.form_row : ""} ${
-                  isNationRow ? Styles.isMatch : ""
+                  isMatchRow ? Styles.isMatch : ""
                 }`}
               >
-                {fields.map((field) => (
-                  <div key={field.id} className={Styles.form_group}>
-                    <Label htmlFor={field.id} className={Styles.label}>
-                      <ContainerIcon className={Styles.icon}>
-                        {field.icon}
-                      </ContainerIcon>
-                      {field.name}
-                    </Label>
-                    <FieldRenderer
-                      onActionClick={onActionClick}
-                      field={field}
-                      formValues={formValues}
-                      clubColor={clubColor}
-                      isSelectDisabled={field.disabled}
-                      onInputChange={onInputChange}
-                      onKeyDown={onKeyDown}
-                      onKeyUp={onKeyUp}
-                      onBooleanChange={onBooleanChange}
-                    />
-                    {field.note && <p className={Styles.note}>{field.note}</p>}
-                  </div>
-                ))}
+                {fields.map((field) => {
+                  const isVertical = field.orientation === "vertical";
+                  return (
+                    <div
+                      key={field.id}
+                      className={`${Styles.form_group} ${
+                        isVertical ? Styles.vertical_group : ""
+                      }`}
+                      style={isMatchRow ? { justifyContent: "flex-end" } : {}}
+                    >
+                      <Label
+                        htmlFor={field.id}
+                        className={`${Styles.label} ${
+                          isVertical ? Styles.centered_label : ""
+                        }`}
+                      >
+                        <ContainerIcon className={Styles.icon}>
+                          {field.icon}
+                        </ContainerIcon>
+                        {field.name}
+                      </Label>
+                      <FieldRenderer
+                        onActionClick={onActionClick}
+                        field={field}
+                        formValues={formValues}
+                        clubColor={clubColor}
+                        isSelectDisabled={field.disabled}
+                        onInputChange={onInputChange}
+                        onKeyDown={onKeyDown}
+                        onKeyUp={onKeyUp}
+                        onBooleanChange={onBooleanChange}
+                        onSelectOption={onSelectOption}
+                      />
+                      {field.note && (
+                        <p className={Styles.note}>{field.note}</p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             );
           })}

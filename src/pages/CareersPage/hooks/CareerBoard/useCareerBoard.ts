@@ -5,6 +5,7 @@ import {
   CareerGroup,
 } from "../../../../common/interfaces/CareerGroup";
 import { ServiceCareer } from "../../../../common/services/ServiceCareer";
+import { toast } from "../../../../common/services/ToastService";
 
 export const useCareerBoard = (initialCareers: Career[]) => {
   const [boardItems, setBoardItems] = useState<BoardItem[]>([]);
@@ -24,9 +25,8 @@ export const useCareerBoard = (initialCareers: Career[]) => {
     groupId: string;
   } | null>(null);
 
-  const [toastError, setToastError] = useState<string | null>(null);
-
   useEffect(() => {
+    if (isProcessing) return;
     const newBoardItems: BoardItem[] = [];
     const groupsMap = new Map<string, Career[]>();
 
@@ -55,7 +55,7 @@ export const useCareerBoard = (initialCareers: Career[]) => {
     });
 
     setBoardItems(newBoardItems);
-  }, [initialCareers]);
+  }, [initialCareers, isProcessing]);
 
   const requestMerge = (sourceId: string, targetId: string) => {
     const source = boardItems.find((i) => i.id === sourceId);
@@ -67,8 +67,7 @@ export const useCareerBoard = (initialCareers: Career[]) => {
     const targetManager = target.data.managerName;
 
     if (sourceManager !== targetManager) {
-      setToastError("Só é possível agrupar carreiras do mesmo treinador.");
-      setTimeout(() => setToastError(null), 3000);
+      toast.warning("Só é possível agrupar carreiras do mesmo treinador.");
       return;
     }
 
@@ -121,13 +120,13 @@ export const useCareerBoard = (initialCareers: Career[]) => {
 
       if (targetItem.type === "single") {
         const newGroupId = `save-${Date.now()}`;
-        sourceItem.data.groupId = newGroupId;
-        targetItem.data.groupId = newGroupId;
+        const updatedSourceCareer = { ...sourceItem.data, groupId: newGroupId };
+        const updatedTargetCareer = { ...targetItem.data, groupId: newGroupId };
 
         groupToSave = {
           id: newGroupId,
           managerName: targetItem.data.managerName,
-          careers: [targetItem.data, sourceItem.data],
+          careers: [updatedTargetCareer, updatedSourceCareer],
           careerIds: [targetItem.data.id, sourceItem.data.id],
           createdAt: new Date(),
         };
@@ -138,11 +137,14 @@ export const useCareerBoard = (initialCareers: Career[]) => {
           data: groupToSave,
         };
       } else {
-        sourceItem.data.groupId = targetItem.data.id;
+        const updatedSourceCareer = {
+          ...sourceItem.data,
+          groupId: targetItem.data.id,
+        };
 
         groupToSave = {
           ...targetItem.data,
-          careers: [...targetItem.data.careers, sourceItem.data],
+          careers: [...targetItem.data.careers, updatedSourceCareer],
           careerIds: [...targetItem.data.careerIds, sourceItem.data.id],
           updatedAt: Date.now(),
         };
@@ -159,10 +161,10 @@ export const useCareerBoard = (initialCareers: Career[]) => {
       setPendingMerge(null);
 
       await ServiceCareer.saveCareerGroup(groupToSave);
+      toast.success("Carreiras agrupadas com sucesso!");
     } catch (error) {
       console.error("Erro ao salvar grupo de carreiras no banco: ", error);
-      setToastError("Erro ao salvar o grupo de carreiras.");
-      setTimeout(() => setToastError(null), 3000);
+      toast.error("Erro ao salvar o grupo de carreiras.");
     } finally {
       setIsProcessing(false);
     }
@@ -192,21 +194,21 @@ export const useCareerBoard = (initialCareers: Career[]) => {
 
       if (!removedCareer) return;
 
-      removedCareer.groupId = null;
+      const cleanRemovedCareer = { ...removedCareer, groupId: null };
       const updatedCareersIds = updatedCareers.map((c) => c.id);
 
       const removedSingle: BoardItem = {
         type: "single",
-        id: removedCareer.id,
-        data: removedCareer,
+        id: cleanRemovedCareer.id,
+        data: cleanRemovedCareer,
       };
 
       if (updatedCareers.length === 1) {
-        updatedCareers[0].groupId = null;
+        const cleanLastCareer = { ...updatedCareers[0], groupId: null };
         const lastSingle: BoardItem = {
           type: "single",
-          id: updatedCareers[0].id,
-          data: updatedCareers[0],
+          id: cleanLastCareer.id,
+          data: cleanLastCareer,
         };
         newItems.splice(groupIndex, 1, removedSingle, lastSingle);
       } else {
@@ -230,8 +232,10 @@ export const useCareerBoard = (initialCareers: Career[]) => {
         pendingRemoval.groupId,
         updatedCareersIds,
       );
+      toast.success("Carreira removida da save com sucesso!");
     } catch (error) {
       console.error("Erro ao remover carreira do grupo no banco: ", error);
+      toast.error("Erro ao remover carreira da save.");
     } finally {
       setIsProcessing(false);
     }
@@ -249,7 +253,6 @@ export const useCareerBoard = (initialCareers: Career[]) => {
     pendingRemoval,
     confirmRemoval,
     cancelRemoval,
-    toastError,
     isProcessing,
   };
 };

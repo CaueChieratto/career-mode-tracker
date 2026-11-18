@@ -1,8 +1,6 @@
 import { Players } from "../playersInfo/players";
 import { Match } from "../Match";
-import { getAggregatedPlayersForCareer } from "../../../layout/SectionView/helpers/mergeMatchStats";
-
-type BaseCareer = Parameters<typeof getAggregatedPlayersForCareer>[0];
+import { Career } from "../Career";
 
 export interface PlayerStatsDisplay {
   age: string;
@@ -85,7 +83,7 @@ export interface PlayerStatsDisplay {
   ownGoals: number;
 }
 
-export type AugmentedCareer = BaseCareer & {
+export type AugmentedCareer = Career & {
   clubData: Array<{
     id: string | number;
     seasonNumber: number;

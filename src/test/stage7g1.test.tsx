@@ -2,14 +2,14 @@
 import { act, render, renderHook } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { useTableData } from "../layout/SectionView/features/ClubTabs/TableTab/hooks/useTableData";
-import { ServiceTable } from "../layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable";
+import { ServiceTable } from "../common/services/ServiceTable";
 import { ServiceSeasons } from "../common/services/ServiceSeasons";
 import CompetitionsCard from "../layout/SectionView/features/ClubTabs/GeneralTab/components/CompetitionsCard";
 import { career, season } from "./factories/domain";
 import type { TableTeamData } from "../common/interfaces/TableTeamData";
 
 vi.mock(
-  "../layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable",
+  "../common/services/ServiceTable",
   () => ({
     ServiceTable: {
       getTableBySeason: vi.fn(),

@@ -1,6 +1,6 @@
 import { Players } from "../../../../../../../../common/interfaces/playersInfo/players";
-import { AcademyPlayers } from "../../../../interfaces/AcademyPlayers/AcademyPlayers";
-import { AcademyTournaments } from "../../../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyPlayers } from "../../../../../../../../common/interfaces/AcademyData";
+import { AcademyTournaments } from "../../../../../../../../common/interfaces/AcademyData";
 
 export const buildPromotedPlayer = (
   academyPlayer: AcademyPlayers,
@@ -37,6 +37,9 @@ export const buildPromotedPlayer = (
     position: academyPlayer.position,
     sector: academyPlayer.sector,
     overall: academyPlayer.overall,
+    height: academyPlayer.height ? String(academyPlayer.height) : "",
+    weight: academyPlayer.weight ? String(academyPlayer.weight) : "",
+    birthDate: academyPlayer.birthDate || "",
     salary: 0,
     playerValue: 0,
     shirtNumber: "",

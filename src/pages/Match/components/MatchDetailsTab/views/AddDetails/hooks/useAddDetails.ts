@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { useForm } from "../../../../../../../common/hooks/UseForm";
 import { formatRating } from "../../../../../../../common/utils/FormatRating";
 import { Field } from "../../../../../../../components/FormSection";
-import { ServiceMatches } from "../../../../../../../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../../../../../../common/services/ServiceMatches";
 import { buildFormFields } from "../helpers/buildFormFields";
 import { buildInitialFormValues } from "./helpers/buildInitialFormValues";
 import { buildMatchPayload } from "./helpers/buildMatchPayload";
@@ -14,6 +15,7 @@ import { ServiceCareer } from "../../../../../../../common/services/ServiceCaree
 import { getSeasonName } from "../../../../../../../common/utils/GetSeasonName";
 import { ServiceOpponentPlayers } from "../../../../../../../common/services/ServiceOpponentPlayers";
 import { OpponentPlayer } from "../../../../../../../common/interfaces/OpponentPlayer";
+import { toast } from "../../../../../../../common/services/ToastService";
 
 type UseAddDetailsProps = {
   career: Career;
@@ -32,6 +34,9 @@ export const useAddDetails = ({
 }: UseAddDetailsProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const [opponentPlayers, setOpponentPlayers] = useState<OpponentPlayer[]>([]);
+  const [explicitSelectedPlayers, setExplicitSelectedPlayers] = useState<
+    Record<string, { id: string; name: string; isFormerPlayer?: boolean }>
+  >({});
   const {
     formValues,
     setFormValues,
@@ -41,11 +46,81 @@ export const useAddDetails = ({
   } = useForm();
   const initializedMatchId = useRef<string | null>(null);
 
+  const isUserHome = match?.homeTeam === career?.clubName;
+  const opponentTeam = isUserHome ? match?.awayTeam : match?.homeTeam;
+
+  const formerClubPlayers = useMemo<OpponentPlayer[]>(() => {
+    if (!career?.clubData) return [];
+    const seen = new Set<string>();
+    const exPlayers: OpponentPlayer[] = [];
+
+    const activeCurrentSeasonIds = new Set<string>();
+    const activeCurrentSeasonNames = new Set<string>();
+    (season?.players || []).forEach((p) => {
+      if (!p.sell) {
+        if (p.id) activeCurrentSeasonIds.add(p.id);
+        if (p.playedWithUs) activeCurrentSeasonIds.add(p.playedWithUs);
+        if (p.name) activeCurrentSeasonNames.add(p.name.trim().toLowerCase());
+      }
+    });
+
+    for (const s of career.clubData) {
+      const isPastSeason = s.seasonNumber < (season?.seasonNumber || 1);
+      for (const p of s.players || []) {
+        const normalizedName = p.name?.trim().toLowerCase() || "";
+        if (
+          activeCurrentSeasonIds.has(p.id) ||
+          (p.playedWithUs && activeCurrentSeasonIds.has(p.playedWithUs)) ||
+          activeCurrentSeasonNames.has(normalizedName)
+        ) {
+          continue;
+        }
+
+        const hasLeftInSeason =
+          Boolean(p.sell) ||
+          (p.contract || []).some((c) => Boolean(c.leftClub) && !c.isLoan);
+
+        if ((isPastSeason || hasLeftInSeason) && p.name && !seen.has(p.id)) {
+          seen.add(p.id);
+          exPlayers.push({
+            id: p.id,
+            name: p.name.trim(),
+            team: opponentTeam,
+            isFormerPlayer: true,
+            careerId: career.id,
+          });
+        }
+      }
+    }
+    return exPlayers;
+  }, [
+    career?.clubData,
+    career?.id,
+    opponentTeam,
+    season?.players,
+    season?.seasonNumber,
+  ]);
+
+  const combinedOpponentPlayers = useMemo<OpponentPlayer[]>(() => {
+    const list = [...opponentPlayers];
+    for (const fp of formerClubPlayers) {
+      const existing = list.find(
+        (p) =>
+          p.id === fp.id ||
+          p.name.trim().toLowerCase() === fp.name.trim().toLowerCase(),
+      );
+      if (existing) {
+        existing.isFormerPlayer = true;
+      } else {
+        list.push(fp);
+      }
+    }
+    return list;
+  }, [opponentPlayers, formerClubPlayers]);
+
   useEffect(() => {
     let isActive = true;
     if (!career?.id) return;
-    const opponentTeam =
-      match?.homeTeam === career.clubName ? match?.awayTeam : match?.homeTeam;
 
     const loadOpponentPlayers = async () => {
       try {
@@ -70,22 +145,51 @@ export const useAddDetails = ({
   }, [
     career?.id,
     career?.groupId,
-    career?.clubName,
-    match?.homeTeam,
-    match?.awayTeam,
+    opponentTeam,
   ]);
 
   useEffect(() => {
     if (!match || !career || initializedMatchId.current === match.matchesId)
       return;
-    const { initialFormValues, booleansToSet } = buildInitialFormValues(
-      match,
-      career.clubName,
-    );
+    const { initialFormValues, booleansToSet, initialSelectedPlayers } =
+      buildInitialFormValues(match, career.clubName);
     setFormValues(initialFormValues);
+    if (initialSelectedPlayers) {
+      setExplicitSelectedPlayers(initialSelectedPlayers);
+    }
     booleansToSet.forEach(({ key, value }) => handleBooleanChange(key, value));
     initializedMatchId.current = match.matchesId;
   }, [match, career, setFormValues, handleBooleanChange]);
+
+  const handleSelectOption = useCallback(
+    (optionValue: string, field: Field) => {
+      const normalizedValue = optionValue.trim().toLowerCase();
+      const found =
+        combinedOpponentPlayers.find(
+          (p) =>
+            p.name.trim().toLowerCase() === normalizedValue &&
+            (p.team?.trim().toLowerCase() ===
+              opponentTeam?.trim().toLowerCase() ||
+              p.isFormerPlayer),
+        ) ||
+        combinedOpponentPlayers.find(
+          (p) => p.name.trim().toLowerCase() === normalizedValue,
+        );
+
+      if (found) {
+        setExplicitSelectedPlayers((prev) => ({
+          ...prev,
+          [field.id]: {
+            id: found.id,
+            name: found.name,
+            isFormerPlayer: found.isFormerPlayer,
+          },
+        }));
+      }
+      setFormValues((prev) => ({ ...prev, [field.id]: optionValue }));
+    },
+    [combinedOpponentPlayers, opponentTeam, setFormValues],
+  );
 
   const handleLocalInputChange = useCallback(
     (
@@ -98,9 +202,28 @@ export const useAddDetails = ({
         setFormValues((prev) => ({ ...prev, [field.id]: value }));
         return;
       }
+
+      const isExplicit =
+        "isExplicitSelection" in e.target
+          ? Boolean(
+              (e.target as { isExplicitSelection?: boolean })
+                .isExplicitSelection,
+            )
+          : false;
+      if (isExplicit) {
+        handleSelectOption(value, field);
+      } else {
+        setExplicitSelectedPlayers((prev) => {
+          if (!prev[field.id]) return prev;
+          const next = { ...prev };
+          delete next[field.id];
+          return next;
+        });
+      }
+
       handleInputChange(e, field);
     },
-    [handleInputChange, setFormValues],
+    [handleInputChange, handleSelectOption, setFormValues],
   );
 
   const handleLocalBooleanChange = useCallback(
@@ -112,7 +235,6 @@ export const useAddDetails = ({
     [handleBooleanChange],
   );
 
-  const isUserHome = match?.homeTeam === career?.clubName;
   const opponentScore =
     Number(isUserHome ? formValues.awayScore : formValues.homeScore) || 0;
   const userScore =
@@ -121,8 +243,8 @@ export const useAddDetails = ({
   const opponentOwnGoalCount = Number(formValues.opponentOwnGoalCount) || 0;
 
   const opponentPlayerOptions = useMemo(() => {
-    return opponentPlayers.map((p) => p.name);
-  }, [opponentPlayers]);
+    return combinedOpponentPlayers.map((p) => p.name);
+  }, [combinedOpponentPlayers]);
 
   const saveDetails = useCallback(async () => {
     if (!career || !season || !match) return;
@@ -131,32 +253,74 @@ export const useAddDetails = ({
       const isUserHome = match.homeTeam === career.clubName;
       const opponentTeam = isUserHome ? match.awayTeam : match.homeTeam;
 
-      const namesToSave: { name: string; team?: string }[] = [];
+      const fieldPlayerInfoMap: Record<
+        string,
+        { id: string; isFormerPlayer?: boolean }
+      > = {};
+      const newPlayersToSave: {
+        id: string;
+        name: string;
+        team?: string;
+        isFormerPlayer?: boolean;
+      }[] = [];
+
+      const processPlayerField = (fieldKey: string) => {
+        const rawName = formValues[fieldKey];
+        if (!rawName || !rawName.trim()) return;
+        const trimmedName = rawName.trim();
+
+        const explicit = explicitSelectedPlayers[fieldKey];
+        if (
+          explicit &&
+          explicit.name.trim().toLowerCase() === trimmedName.toLowerCase()
+        ) {
+          fieldPlayerInfoMap[fieldKey] = {
+            id: explicit.id,
+            isFormerPlayer: explicit.isFormerPlayer,
+          };
+          newPlayersToSave.push({
+            id: explicit.id,
+            name: trimmedName,
+            team: opponentTeam,
+            isFormerPlayer: explicit.isFormerPlayer,
+          });
+        } else {
+          const newId = uuidv4();
+          fieldPlayerInfoMap[fieldKey] = {
+            id: newId,
+            isFormerPlayer: false,
+          };
+          newPlayersToSave.push({
+            id: newId,
+            name: trimmedName,
+            team: opponentTeam,
+            isFormerPlayer: false,
+          });
+        }
+      };
+
       for (let i = 0; i < opponentScore; i++) {
-        const goalP = formValues[`opponentGoalPlayer_${i}`];
-        if (goalP?.trim()) namesToSave.push({ name: goalP.trim(), team: opponentTeam });
-        const assistP = formValues[`opponentAssistPlayer_${i}`];
-        if (assistP?.trim()) namesToSave.push({ name: assistP.trim(), team: opponentTeam });
+        processPlayerField(`opponentGoalPlayer_${i}`);
+        processPlayerField(`opponentAssistPlayer_${i}`);
       }
       for (let i = 0; i < opponentCardCount; i++) {
-        const cardP = formValues[`opponentCardPlayer_${i}`];
-        if (cardP?.trim()) namesToSave.push({ name: cardP.trim(), team: opponentTeam });
+        processPlayerField(`opponentCardPlayer_${i}`);
       }
       for (let i = 0; i < opponentOwnGoalCount; i++) {
-        const ogP = formValues[`opponentOwnGoalPlayer_${i}`];
-        if (ogP?.trim()) namesToSave.push({ name: ogP.trim(), team: opponentTeam });
+        processPlayerField(`opponentOwnGoalPlayer_${i}`);
       }
       if (formValues.opponentMvpName?.trim()) {
-        namesToSave.push({ name: formValues.opponentMvpName.trim(), team: opponentTeam });
+        processPlayerField("opponentMvpName");
       }
 
-      let allKnownPlayers = opponentPlayers;
-      if (namesToSave.length > 0) {
+      let allKnownPlayers = combinedOpponentPlayers;
+      if (newPlayersToSave.length > 0) {
         try {
           const savedList = await ServiceOpponentPlayers.saveOpponentPlayers(
             career.id,
-            namesToSave,
+            newPlayersToSave,
             career.groupId,
+            { skipCareerWrite: !career.groupId },
           );
           if (savedList && savedList.length > 0) {
             allKnownPlayers = savedList;
@@ -167,17 +331,13 @@ export const useAddDetails = ({
         }
       }
 
-      const playerMap = new Map<string, string>();
-      allKnownPlayers.forEach((p) => {
-        playerMap.set(p.name.trim().toLowerCase(), p.id);
-      });
-
       const { updatedMatch } = buildMatchPayload(
         match,
         formValues,
         booleanValues,
         isUserHome,
-        playerMap,
+        undefined,
+        fieldPlayerInfoMap,
       );
       await ServiceMatches.updateMatchDetailsInSeason(
         career,
@@ -185,6 +345,7 @@ export const useAddDetails = ({
         match,
         updatedMatch as Match,
         !booleanValues.hasPenalties,
+        allKnownPlayers,
       );
       if (
         (updatedMatch.stage?.trim().toLowerCase() === "final" ||
@@ -204,10 +365,14 @@ export const useAddDetails = ({
           );
         } catch (trophyErr) {
           console.error("Erro ao adicionar título na final:", trophyErr);
+          toast.warning(
+            "Detalhes salvos, mas houve falha ao registrar o título da temporada.",
+          );
         }
       }
-      onClose();
+      toast.success("Detalhes da partida salvos com sucesso!");
       onSaved?.(updatedMatch as Match);
+      onClose();
     } finally {
       setIsSaving(false);
     }
@@ -220,7 +385,8 @@ export const useAddDetails = ({
     opponentScore,
     opponentCardCount,
     opponentOwnGoalCount,
-    opponentPlayers,
+    combinedOpponentPlayers,
+    explicitSelectedPlayers,
     onClose,
     onSaved,
   ]);
@@ -251,6 +417,8 @@ export const useAddDetails = ({
         match?.awayTeam,
         formValues,
         opponentPlayerOptions,
+        combinedOpponentPlayers,
+        opponentTeam,
       ),
     [
       booleanValues,
@@ -263,6 +431,8 @@ export const useAddDetails = ({
       match?.awayTeam,
       formValues,
       opponentPlayerOptions,
+      combinedOpponentPlayers,
+      opponentTeam,
     ],
   );
 
@@ -272,6 +442,7 @@ export const useAddDetails = ({
     formValues,
     handleInputChange: handleLocalInputChange,
     handleBooleanChange: handleLocalBooleanChange,
+    handleSelectOption,
     saveDetails,
   };
 };

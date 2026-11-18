@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import { ClubData } from "../../../../../../common/interfaces/club/clubData";
 import { Career } from "../../../../../../common/interfaces/Career";
 import { AggregatedPlayerStats } from "../../../../../../common/interfaces/AggregatedPlayerStats/AggregatedPlayerStats";
@@ -10,19 +10,14 @@ export const useBestPlayersStats = (
   isGeralPage: boolean,
   minPercentage: number = 0.2,
 ): AggregatedPlayerStats[] => {
-  const [careerSeasonsData, setCareerSeasonsData] = useState<
-    { clubName: string; season: ClubData }[]
-  >([]);
+  const careerSeasonsData = useMemo(() => {
+    if (!isGeralPage) return [];
 
-  useEffect(() => {
-    if (!isGeralPage) return;
-
-    const localData = (career.clubData || []).map((s) => ({
+    return (career.clubData || []).map((s) => ({
       clubName:
         (s as unknown as { clubName?: string }).clubName || career.clubName,
       season: s,
     }));
-    setCareerSeasonsData(localData);
   }, [career, isGeralPage]);
 
   return useMemo(() => {

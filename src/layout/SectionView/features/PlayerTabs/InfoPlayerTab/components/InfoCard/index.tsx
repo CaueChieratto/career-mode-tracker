@@ -1,5 +1,5 @@
-import Card from "../../../../../../../ui/Card";
-import Styles from "../../InfoPlayerTab.module.css";
+import React from "react";
+import { SectionSummaryCard } from "../../../../../ui/SectionSummaryCard";
 
 type InfoCardProps = {
   title: string;
@@ -7,12 +7,7 @@ type InfoCardProps = {
 };
 
 const InfoCard: React.FC<InfoCardProps> = ({ title, children }) => (
-  <Card className={Styles.card}>
-    <div className={Styles.container}>
-      <h1 className={Styles.title}>{title}</h1>
-      {children}
-    </div>
-  </Card>
+  <SectionSummaryCard title={title}>{children}</SectionSummaryCard>
 );
 
 export default InfoCard;

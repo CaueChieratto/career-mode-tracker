@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ThemeProvider } from "../contexts/LightThemeContext";
 import { TournamentMatchLineup } from "../pages/Academy/layouts/AcademyContent/components/Tournament/features/Match/components/TournamentMatchList/components/TournamentMatchLineup";
 import { LineupList } from "../pages/Academy/layouts/AcademyContent/components/FeedItem/components/FeedItemModal/components/MatchDetails/ui/LineupList";
-import type { AcademyPlayers } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
-import type { PlayerMatchesStats } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
+import type { AcademyPlayers } from "../common/interfaces/AcademyData";
+import type { PlayerMatchesStats } from "../common/interfaces/AcademyData";
 import type { FeedEvent } from "../pages/Academy/layouts/AcademyContent/components/FeedItem/types/FeedEvent";
 
 vi.mock("react-icons/gi", async () => {

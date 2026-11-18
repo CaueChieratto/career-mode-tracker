@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { FaChartLine, FaTrophy, FaUserEdit } from "react-icons/fa";
 import LazyFlag from "../../../../../../../../components/LazyFlag";
-import { FIFA_COUNTRY_CODES } from "../../../../../../../../common/constants/FIFA_COUNTRY_CODES";
+import { resolveCountryFlagCode } from "../../../../../../../../common/constants/FIFA_COUNTRY_CODES";
 import { FocusedCard } from "../../../Cards/FocusedCard";
 import { AddPlayerAnnotations } from "../../components/AddPlayerAnnotations";
 import { PlayerDevelopment } from "../../components/PlayerDevelopment";
 import { PlayerEditor } from "../../components/PlayerEditor";
-import { AcademyPlayers } from "../../../../interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../../../../../../../common/interfaces/AcademyData";
 import { EntityWorkspace } from "../../../EntityWorkspace";
 import { PlayerPerformance } from "../../components/PlayerPerformance";
 import { getPlayerActions } from "./constants/playerActions";
@@ -86,15 +86,9 @@ export const PlayerWorkspace = ({ selectedPlayer }: PlayerWorkspaceProps) => {
             <div ref={activeContentRef}>
               <FocusedCard
                 iconNode={
-                  FIFA_COUNTRY_CODES[
-                    selectedPlayer.nationality?.toUpperCase()
-                  ] ? (
+                  resolveCountryFlagCode(selectedPlayer.nationality) ? (
                     <LazyFlag
-                      code={
-                        FIFA_COUNTRY_CODES[
-                          selectedPlayer.nationality?.toUpperCase()
-                        ]
-                      }
+                      code={resolveCountryFlagCode(selectedPlayer.nationality)}
                       style={{
                         width: "28px",
                         height: "20px",

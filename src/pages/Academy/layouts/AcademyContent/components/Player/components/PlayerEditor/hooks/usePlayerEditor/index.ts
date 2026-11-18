@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Career } from "../../../../../../../../../../common/interfaces/Career";
-import { AcademyPlayers } from "../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../../../../../../../../../common/interfaces/AcademyData";
 import { PlayerDataPayload } from "../../../../forms/types/PlayerDataPayload";
 import { generateEvolutionHistory } from "../../utils/playerEvolution";
 import { EditMode } from "../../types";
@@ -8,6 +8,8 @@ import { ServicePlayers } from "../../../../../../../../../../common/services/Se
 import { getSeasonStartYear } from "../../../../../../utils/getSeasonStartYear";
 import { isEuropeanSeason } from "../../../../../../utils/isEuropeanSeason";
 import { useAcademyContext } from "../../../../../../../contexts/AcademyContext/hooks/useAcademyContext";
+import { resolveSeasonDate } from "../../../../../../../../../../common/services/ServicePlayers/helpers/resolveSeasonDate";
+import { toast } from "../../../../../../../../../../common/services/ToastService";
 
 type UsePlayerEditorProps = {
   player: AcademyPlayers;
@@ -62,6 +64,19 @@ export const usePlayerEditor = ({
     document.body.classList.remove("modal-open");
   };
 
+  const formatSeasonDate = (dayMonth: string) => {
+    if (!dayMonth || dayMonth.length < 5) return dayMonth;
+    const startYear = getSeasonStartYear(career, seasonId);
+    const isEurope = isEuropeanSeason(career);
+    const start = new Date(startYear, isEurope ? 6 : 0, 1);
+    const end = new Date(
+      isEurope ? startYear + 1 : startYear,
+      isEurope ? 5 : 11,
+      30,
+    );
+    return resolveSeasonDate(dayMonth, start, end);
+  };
+
   const handleUpdate = async (newData: PlayerDataPayload) => {
     let updatedPlayer: AcademyPlayers;
 
@@ -76,14 +91,7 @@ export const usePlayerEditor = ({
       let finalArrivalDate = player.arrivalDate;
 
       if (newData.arrivalDate && newData.arrivalDate.length === 5) {
-        const [day, month] = newData.arrivalDate.split("/");
-        let year = getSeasonStartYear(career, seasonId);
-        const isEurope = isEuropeanSeason(career);
-
-        if (isEurope && Number(month) < 7) {
-          year += 1;
-        }
-        finalArrivalDate = `${day}/${month}/${year}`;
+        finalArrivalDate = formatSeasonDate(newData.arrivalDate);
       }
 
       const updatedHistory =
@@ -103,6 +111,7 @@ export const usePlayerEditor = ({
     }
 
     await onUpdatePlayer(updatedPlayer);
+    toast.success("Dados do jogador atualizados com sucesso!");
   };
 
   const handleEditEvolution = async (newData: PlayerDataPayload) => {
@@ -123,11 +132,7 @@ export const usePlayerEditor = ({
     let evolutionDateFinal =
       newData.evolutionDate || new Date().toLocaleDateString("pt-BR");
     if (newData.evolutionDate && newData.evolutionDate.length === 5) {
-      const [day, month] = newData.evolutionDate.split("/");
-      const startYear = getSeasonStartYear(career, seasonId);
-      const isEurope = isEuropeanSeason(career);
-      const year = isEurope && Number(month) < 7 ? startYear + 1 : startYear;
-      evolutionDateFinal = `${day}/${month}/${year}`;
+      evolutionDateFinal = formatSeasonDate(newData.evolutionDate);
     } else if (newData.evolutionDate) {
       evolutionDateFinal = newData.evolutionDate;
     }
@@ -147,6 +152,7 @@ export const usePlayerEditor = ({
     };
 
     await onUpdatePlayer(updatedPlayer);
+    toast.success("Dados do jogador atualizados com sucesso!");
     setEditingEvolutionEvent(null);
     setEditMode("evolution");
   };
@@ -154,18 +160,12 @@ export const usePlayerEditor = ({
   const handleUpdateDates = async (e: React.FormEvent) => {
     e.preventDefault();
     if (exitDate.length < 5) {
-      alert("Por favor, preencha a data corretamente (DD/MM).");
+      toast.warning("Por favor, preencha a data corretamente (DD/MM).");
       return;
     }
     setIsLoadingStatus(true);
     try {
-      const [day, month] = exitDate.split("/");
-      let year = getSeasonStartYear(career, seasonId);
-      const isEurope = isEuropeanSeason(career);
-      if (isEurope && Number(month) < 7) {
-        year += 1;
-      }
-      const finalExitDate = `${day}/${month}/${year}`;
+      const finalExitDate = formatSeasonDate(exitDate);
 
       const newHistory =
         player.evolutionHistory?.map((h) => {
@@ -182,6 +182,7 @@ export const usePlayerEditor = ({
       };
 
       await onUpdatePlayer(updatedPlayer);
+      toast.success("Dados do jogador atualizados com sucesso!");
 
       if (player.status === "promoted") {
         const proPlayers = await ServicePlayers.getPlayersBySeason(
@@ -194,11 +195,12 @@ export const usePlayerEditor = ({
 
         if (proPlayer && proPlayer.contract && proPlayer.contract.length > 0) {
           const updatedContract = [...proPlayer.contract];
+          const [exitD, exitM, exitY] = finalExitDate.split("/");
 
           updatedContract[0].dataArrival = new Date(
-            Number(year),
-            Number(month) - 1,
-            Number(day),
+            Number(exitY),
+            Number(exitM) - 1,
+            Number(exitD),
           );
 
           await ServicePlayers.editPlayerInSeason(
@@ -211,7 +213,7 @@ export const usePlayerEditor = ({
       }
     } catch (error) {
       console.error(error);
-      alert("Erro ao atualizar data.");
+      toast.error("Erro ao atualizar data.");
     } finally {
       setIsLoadingStatus(false);
     }
@@ -250,10 +252,11 @@ export const usePlayerEditor = ({
       delete updatedPlayer.exitDate;
 
       await onUpdatePlayer(updatedPlayer);
+      toast.success("Ação desfeita com sucesso!");
       handleCloseModal();
     } catch (error) {
       console.error(error);
-      alert("Erro ao desfazer ação.");
+      toast.error("Erro ao desfazer ação.");
     } finally {
       setIsLoadingStatus(false);
     }

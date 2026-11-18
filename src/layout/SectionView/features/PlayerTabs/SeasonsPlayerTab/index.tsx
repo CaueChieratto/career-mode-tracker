@@ -8,7 +8,9 @@ import { useLocation } from "react-router-dom";
 import { ClubData } from "../../../../../common/interfaces/club/clubData";
 import { useMemo } from "react";
 import { useGroupAggregatedPlayers } from "../../../../../common/hooks/Players/useGroupAggregatedPlayers";
+import { usePlayerGroupStatsContext } from "../../../../../contexts/PlayerGroupStatsContext";
 import { PlayerSeasonSkeleton } from "../ui/PlayerSeasonSkeleton";
+import { findPlayerInList } from "../../../../../common/utils/playerIdentity";
 
 type SeasonsPlayerTabProps = {
   career: Career;
@@ -23,10 +25,13 @@ const SeasonsPlayerTab = ({
 }: SeasonsPlayerTabProps) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
+  const groupStatsCtx = usePlayerGroupStatsContext();
   const isFromGroup =
-    searchParams.get("fromGroup") === "true" ||
-    location.pathname.includes("/CareerGroup");
-  const isNotSeason = location.pathname.includes("/Geral");
+    groupStatsCtx?.isFromGroup ??
+    (searchParams.get("fromGroup") === "true" ||
+      location.pathname.includes("/CareerGroup"));
+  const isNotSeason =
+    groupStatsCtx?.isGeralPage ?? location.pathname.includes("/Geral");
 
   const { groupPlayers, isLoadingGroup } = useGroupAggregatedPlayers(
     career,
@@ -35,16 +40,7 @@ const SeasonsPlayerTab = ({
 
   const player = useMemo(() => {
     if (!isNotSeason || !isFromGroup || !propPlayer) return propPlayer;
-    const normalizedName = propPlayer.name.trim().toLowerCase();
-    const normalizedNation = propPlayer.nation.trim().toLowerCase();
-
-    return (
-      groupPlayers.find(
-        (p) =>
-          p.name.trim().toLowerCase() === normalizedName &&
-          p.nation.trim().toLowerCase() === normalizedNation,
-      ) || propPlayer
-    );
+    return findPlayerInList(groupPlayers, propPlayer) || propPlayer;
   }, [isNotSeason, isFromGroup, propPlayer, groupPlayers]);
 
   const {

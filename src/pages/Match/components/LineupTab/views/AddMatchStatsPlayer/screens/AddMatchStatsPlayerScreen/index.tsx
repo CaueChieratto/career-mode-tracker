@@ -1,13 +1,9 @@
 import { useRef } from "react";
-import Form from "../../../../../../../../components/Form";
 import FormSection from "../../../../../../../../components/FormSection";
-import Load from "../../../../../../../../components/Load";
-import HeaderSeason from "../../../../../../../../components/HeaderSeason";
-import Navbar from "../../../../../../../../ui/Navbar";
 import { Career } from "../../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../../common/interfaces/club/clubData";
 import { Match } from "../../../../../../../../common/interfaces/Match";
-import Styles from "./AddMatchStatsPlayerScreen.module.css";
+import { MatchFormSubScreen } from "../../../../../MatchFormSubScreen";
 import { useAddMatchStatsPlayer } from "../../hooks/useAddMatchStatsPlayer";
 
 type AddMatchStatsPlayerScreenProps = {
@@ -50,44 +46,30 @@ export const AddMatchStatsPlayerScreen = ({
     onSaved,
   });
 
-  if (isSaving || !player || !isPlayerInLineup) {
-    return <Load />;
-  }
-
   return (
-    <>
-      <HeaderSeason
-        careerId={career.id}
-        career={career}
-        backSeasons={onClose}
-        titleText={player.name}
-      />
-
-      <Navbar
-        save={savePlayerStats}
-        options={["", "Salvar", ""]}
-        activeOption={1}
-        onOptionClick={() => {}}
-      />
-
-      <div className={Styles.container} style={{ paddingBottom: "350px" }}>
-        <Form className={Styles.form} ref={formRef}>
-          {formFields.map((section, index) => (
-            <FormSection
-              key={index}
-              title={section.title}
-              rows={section.fields}
-              formValues={formValues}
-              isEditing={true}
-              isGoalkeeper={isGoalkeeper}
-              onBooleanChange={handleLocalBooleanChange}
-              onKeyDown={handleKeyDown}
-              onKeyUp={handleKeyUp}
-              onInputChange={handleLocalInputChange}
-            />
-          ))}
-        </Form>
-      </div>
-    </>
+    <MatchFormSubScreen
+      career={career}
+      titleText={player?.name || ""}
+      onClose={onClose}
+      onSave={savePlayerStats}
+      isLoading={isSaving || !player || !isPlayerInLineup}
+      containerStyle={{ paddingBottom: "350px" }}
+      formRef={formRef}
+    >
+      {formFields.map((section, index) => (
+        <FormSection
+          key={index}
+          title={section.title}
+          rows={section.fields}
+          formValues={formValues}
+          isEditing={true}
+          isGoalkeeper={isGoalkeeper}
+          onBooleanChange={handleLocalBooleanChange}
+          onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
+          onInputChange={handleLocalInputChange}
+        />
+      ))}
+    </MatchFormSubScreen>
   );
 };

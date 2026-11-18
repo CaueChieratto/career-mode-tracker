@@ -4,7 +4,7 @@ import {
   augmentCareerWithMatchStats,
   getAggregatedPlayersForCareer,
   toRawPlayer,
-} from "../layout/SectionView/helpers/mergeMatchStats";
+} from "../common/stats/helpers/mergeMatchStats";
 import { aggregatePlayerStats } from "../common/services/ServicePlayers/helpers/statsHelpers";
 import {
   career,

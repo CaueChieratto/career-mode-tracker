@@ -1,24 +1,38 @@
-import { getCareerById } from "../../helpers/Getters";
+import { getCareerById, updateCachedCareer } from "../../helpers/Getters";
 import { updateCareerFirestore } from "../../helpers/Setters";
+import { removeAllTrophiesForSeason } from "../../helpers/Deleters";
+import { getSeasonName } from "../../utils/GetSeasonName";
 import { ClubData } from "../../interfaces/club/clubData";
 import { Career } from "../../interfaces/Career";
 import { League } from "../../interfaces/League";
-import { Players } from "../../interfaces/playersInfo/players";
 import { auth, db } from "../Firebase";
 import {
   arrayUnion,
   collection,
   deleteDoc,
+  deleteField,
   doc,
+  DocumentReference,
   getDoc,
   getDocsFromServer,
+  setDoc,
+  updateDoc,
   writeBatch,
 } from "firebase/firestore";
 import { stripHeavyData } from "../../utils/stripHeavyData";
 import { getSeasonDateRange } from "../../utils/GetSeasonDateRange";
 import { withFirestoreRetry } from "../../utils/firestoreRetry";
-import { AcademyData } from "../../interfaces/AcademyData";
-import { AcademyPlayers } from "../../../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
+import { sanitizeFirestoreData } from "../../utils/sanitizeFirestore";
+import { AcademyData, AcademyPlayers } from "../../interfaces/AcademyData";
+import { Players } from "../../interfaces/playersInfo/players";
+import { buildNextSeasonPlayers } from "./helpers/buildNextSeasonPlayers";
+import { TransferDraftService } from "../TransferDraftService";
+import { notifyCareersUpdated } from "../../hooks/Career/UseCareer";
+import { ServiceFinance } from "../ServiceFinance";
+import {
+  isNextWindowTiming,
+  resolveNextWindowTimingSchedule,
+} from "../ServicePlayers/helpers/transferTimingHelpers";
 
 export class SeasonCreationConflictError extends Error {
   code = "SEASON_CREATION_CONFLICT";
@@ -27,6 +41,20 @@ export class SeasonCreationConflictError extends Error {
     this.name = "SeasonCreationConflictError";
   }
 }
+
+const batchDeleteRefs = async (
+  refs: Array<DocumentReference | { path: string }>,
+): Promise<void> => {
+  const BATCH_SIZE = 450;
+  for (let i = 0; i < refs.length; i += BATCH_SIZE) {
+    const chunk = refs.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+    for (const ref of chunk) {
+      batch.delete(ref as DocumentReference);
+    }
+    await withFirestoreRetry(() => batch.commit());
+  }
+};
 
 export const ServiceSeasons = {
   addSeason: async (career: Career): Promise<void> => {
@@ -53,104 +81,89 @@ export const ServiceSeasons = {
       career.createdAt,
       career.nation,
     );
-    const playersForNewSeason: Players[] = (previousSeason?.players || [])
-      .filter((player) => !player.sell)
-      .map((player) => {
-        const lastContract = player.contract?.[player.contract.length - 1];
-        const isIncoming = !!player.incomingLoan;
-        const remainingLoan =
-          lastContract?.loanDuration ?? (isIncoming ? player.contractTime : 0) ?? 0;
-        const shouldReturnLoan =
-          player.loan &&
-          !isIncoming &&
-          remainingLoan <= 1;
-        const updatedPlayer: Players = {
-          ...player,
-          age: (player.age || 0) + 1,
-          contractTime: Math.max(
-            0,
-            Math.round(((player.contractTime || 0) - 1) * 10) / 10,
-          ),
-          statsLeagues: [],
-          ballonDor: 0,
-          buy: false,
-        };
 
-        if (shouldReturnLoan) {
-          updatedPlayer.loan = false;
-          updatedPlayer.contract = [
-            ...player.contract,
-            {
-              buyValue: 0,
-              sellValue: 0,
-              fromClub: lastContract?.leftClub || "Fim de Empréstimo",
-              leftClub: "",
-              dataArrival: returnDate,
-              dataExit: null,
-            },
-            {
-              buyValue: 0,
-              sellValue: 0,
-              fromClub: "",
-              leftClub: "",
-              dataArrival: null,
-              dataExit: null,
-            },
-          ];
-        } else if (
-          player.loan &&
-          !isIncoming &&
-          remainingLoan > 1
-        ) {
-          updatedPlayer.contract = player.contract.map((contract, index) =>
-            index === player.contract.length - 1
-              ? {
-                  ...contract,
-                  loanDuration:
-                    Math.round(((contract.loanDuration || 0) - 1) * 10) / 10,
-                }
-              : contract,
+    // Se houver transferências de 'Próxima Janela' agendadas na temporada anterior que pelo
+    // calendário deveriam ter ocorrido durante a temporada anterior (ex: janela de inverno),
+    // consolida-as na temporada anterior com a data exata da respectiva janela.
+    let updatedPreviousPlayers: Players[] = previousSeason?.players || [];
+    const modifiedPreviousPlayers: Players[] = [];
+
+    if (previousSeason && Array.isArray(previousSeason.players)) {
+      updatedPreviousPlayers = previousSeason.players.map((player) => {
+        let playerModified = false;
+        const updatedContracts = (player.contract || []).map((c) => {
+          if (isNextWindowTiming(c.timing)) {
+            const sched = resolveNextWindowTimingSchedule(
+              c,
+              previousSeason.seasonNumber,
+              career.createdAt,
+              career.nation,
+            );
+            if (sched.belongsToPreviousSeason) {
+              playerModified = true;
+              return {
+                ...c,
+                timing: "Imediata" as const,
+                ...(c.leftClub ? { dataExit: sched.effectiveDate } : {}),
+                ...(c.fromClub ? { dataArrival: sched.effectiveDate } : {}),
+              };
+            }
+          }
+          return c;
+        });
+
+        if (playerModified) {
+          const hasExit = updatedContracts.some(
+            (c) => Boolean(c.leftClub) && !c.isLoan,
           );
-        } else if (isIncoming && remainingLoan > 1) {
-          updatedPlayer.contract = player.contract.map((contract, index) =>
-            index === player.contract.length - 1
-              ? {
-                  ...contract,
-                  loanDuration: Math.round((remainingLoan - 1) * 10) / 10,
-                }
-              : contract,
+          const hasArrival = updatedContracts.some(
+            (c) => Boolean(c.fromClub) && !c.isLoan,
           );
-        } else if (isIncoming && lastContract) {
-          updatedPlayer.sell = true;
-          updatedPlayer.incomingLoan = false;
-          updatedPlayer.loan = false;
-          updatedPlayer.contract = player.contract.map((contract, index) =>
-            index === player.contract.length - 1
-              ? {
-                  ...contract,
-                  dataExit: returnDate,
-                  leftClub: contract.fromClub || "Fim de Empréstimo",
-                }
-              : contract,
-          );
+          const updatedPlayer: Players = {
+            ...player,
+            contract: updatedContracts,
+            ...(hasExit ? { sell: true } : {}),
+            ...(hasArrival ? { buy: true } : {}),
+          };
+          modifiedPreviousPlayers.push(updatedPlayer);
+          return updatedPlayer;
         }
-
-        return updatedPlayer;
+        return player;
       });
+    }
+
+    const newSeasonId = `season-${seasonNumber}`;
+    const playersForNewSeason = buildNextSeasonPlayers(
+      updatedPreviousPlayers,
+      returnDate,
+      {
+        seasonNumber,
+        newSeasonId,
+        careerCreatedAt: career.createdAt,
+        careerNation: career.nation,
+        previousSeasonNumber: previousSeason?.seasonNumber ?? 1,
+      },
+    );
+
     const academyPlayersToCopy: AcademyPlayers[] = (
       previousSeason?.academyPlayers || []
     )
       .filter((player) => player.status === "academy")
       .map((player) => ({ ...player, evolutionHistory: [] }));
 
-    if (1 + playersForNewSeason.length + academyPlayersToCopy.length > 500) {
+    if (
+      1 +
+        playersForNewSeason.length +
+        academyPlayersToCopy.length +
+        modifiedPreviousPlayers.length >
+      500
+    ) {
       throw new Error(
         "A temporada excede o limite de 500 escritas para criação atômica.",
       );
     }
 
     const careerId = career.id;
-    const newSeasonId = `season-${seasonNumber}`;
     const newSeason: ClubData = {
       players: [],
       seasonNumber,
@@ -158,6 +171,7 @@ export const ServiceSeasons = {
       leagues: previousSeason?.leagues || [],
     };
     const batch = writeBatch(db);
+
     for (const player of playersForNewSeason) {
       batch.set(
         doc(
@@ -165,7 +179,7 @@ export const ServiceSeasons = {
           `users/${user.uid}/careers/${careerId}/seasons/${newSeasonId}/players`,
           player.id,
         ),
-        player,
+        sanitizeFirestoreData(player),
       );
     }
     for (const academyPlayer of academyPlayersToCopy) {
@@ -175,16 +189,122 @@ export const ServiceSeasons = {
           `users/${user.uid}/careers/${careerId}/seasons/${newSeasonId}/academyPlayers`,
           academyPlayer.id,
         ),
-        academyPlayer,
+        sanitizeFirestoreData(academyPlayer),
       );
     }
+    const now = Math.max(Date.now(), (career.updatedAt || 0) + 1);
     batch.update(doc(db, `users/${user.uid}/careers/${careerId}`), {
       clubData: arrayUnion(newSeason),
-      updatedAt: Math.max(Date.now(), (career.updatedAt || 0) + 1),
+      updatedAt: now,
     });
 
     try {
       await withFirestoreRetry(() => batch.commit());
+
+      // Grava no Firestore atletas da temporada anterior se houve consolidação de Próxima Janela
+      if (previousSeason && modifiedPreviousPlayers.length > 0) {
+        for (const player of modifiedPreviousPlayers) {
+          try {
+            await withFirestoreRetry(() =>
+              setDoc(
+                doc(
+                  db,
+                  `users/${user.uid}/careers/${careerId}/seasons/${previousSeason.id}/players`,
+                  player.id,
+                ),
+                sanitizeFirestoreData(player),
+              ),
+            );
+          } catch {
+            // Ignora falha de gravação individual em offline ou fallback
+          }
+        }
+      }
+
+      // Sincroniza o relatório financeiro da temporada anterior se jogadores foram consolidados
+      if (previousSeason && modifiedPreviousPlayers.length > 0) {
+        previousSeason.players = updatedPreviousPlayers;
+        void ServiceFinance.syncReconciledReport(
+          careerId,
+          previousSeason.id,
+          previousSeason,
+          false,
+          career,
+        );
+      }
+
+      // Sincroniza parcelas liquidadas automaticamente na virada para a nova temporada
+      const hasNewSeasonInstallments = playersForNewSeason.some((p) =>
+        (p.contract || []).some(
+          (c) =>
+            c.installments?.paidSeasonId === newSeasonId ||
+            c.installments?.installmentsList?.some(
+              (item) => item.paid && item.paidSeasonId === newSeasonId,
+            ),
+        ),
+      );
+      if (hasNewSeasonInstallments) {
+        void ServiceFinance.syncReconciledReport(
+          careerId,
+          newSeasonId,
+          { ...newSeason, players: playersForNewSeason },
+          false,
+          career,
+        ).catch(() => {});
+      }
+
+      notifyCareersUpdated((prev) =>
+        prev.map((c) => {
+          if (c.id !== careerId) return c;
+
+          const currentClubData = c.clubData || [];
+          const seasonAlreadyExists = currentClubData.some(
+            (s) =>
+              s.id === newSeason.id || s.seasonNumber === newSeason.seasonNumber,
+          );
+
+          const updatedClubData = currentClubData.map((s) => {
+            if (
+              previousSeason &&
+              s.id === previousSeason.id &&
+              modifiedPreviousPlayers.length > 0
+            ) {
+              return { ...s, players: updatedPreviousPlayers };
+            }
+            if (
+              s.id === newSeason.id ||
+              s.seasonNumber === newSeason.seasonNumber
+            ) {
+              return newSeason;
+            }
+            return s;
+          });
+
+          const mergedClubData = seasonAlreadyExists
+            ? updatedClubData
+            : [...updatedClubData, newSeason];
+
+          const seen = new Set<string>();
+          const deduplicatedClubData: ClubData[] = [];
+          for (const s of mergedClubData) {
+            const key = s.id || `season-${s.seasonNumber}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              deduplicatedClubData.push(s);
+            }
+          }
+
+          const updatedCareer: Career = {
+            ...c,
+            clubData: deduplicatedClubData,
+            updatedAt: now,
+          };
+          if (typeof updateCachedCareer === "function") {
+            updateCachedCareer(updatedCareer);
+          }
+          return updatedCareer;
+        }),
+      );
     } catch (error) {
       console.error(
         `[addSeason] ERRO ao tentar criar e salvar a temporada:`,
@@ -202,9 +322,24 @@ export const ServiceSeasons = {
     const career = await getCareerById(user.uid, careerId, (seasons) => {
       storedSeasons = seasons;
     });
+
+    const seasonToDelete =
+      storedSeasons.find((s) => s.id === seasonId) ||
+      career.clubData.find((s) => s.id === seasonId);
+
     const updatedClubData = career.clubData.filter(
       (season) => season.id !== seasonId,
     );
+
+    let updatedTrophies = career.trophies || [];
+    if (seasonToDelete && typeof seasonToDelete.seasonNumber === "number") {
+      const seasonName = getSeasonName(
+        seasonToDelete.seasonNumber,
+        career.createdAt,
+        career.nation,
+      );
+      updatedTrophies = removeAllTrophiesForSeason(career, seasonName);
+    }
 
     const seasonPath = `users/${user.uid}/careers/${careerId}/seasons/${seasonId}`;
 
@@ -213,28 +348,66 @@ export const ServiceSeasons = {
       "academyPlayers",
       "table",
       "academyTournaments",
+      "proposals",
+      "finance",
     ]) {
       const snapshot = await getDocsFromServer(
         collection(db, `${seasonPath}/${name}`),
       );
-      for (const child of snapshot.docs) await deleteDoc(child.ref);
+      if (snapshot.docs.length > 0) {
+        await batchDeleteRefs(snapshot.docs.map((child) => child.ref));
+      }
     }
 
     const matches = await getDocsFromServer(
       collection(db, `${seasonPath}/matches`),
     );
+    const playerStatsRefs: DocumentReference[] = [];
     for (const match of matches.docs) {
       const stats = await getDocsFromServer(
         collection(match.ref, "playerStats"),
       );
-      for (const stat of stats.docs) await deleteDoc(stat.ref);
-      await deleteDoc(match.ref);
+      for (const stat of stats.docs) {
+        playerStatsRefs.push(stat.ref as DocumentReference);
+      }
+    }
+    if (playerStatsRefs.length > 0) {
+      await batchDeleteRefs(playerStatsRefs);
+    }
+    if (matches.docs.length > 0) {
+      await batchDeleteRefs(
+        matches.docs.map((match) => match.ref as DocumentReference),
+      );
     }
 
+    const now = Date.now();
     await deleteDoc(doc(db, seasonPath));
+    TransferDraftService.clearDraft(careerId, seasonId);
+    try {
+      if (typeof localStorage !== "undefined") {
+        localStorage.removeItem(`finance_report_${careerId}_${seasonId}`);
+      }
+    } catch {
+      // ignore
+    }
+
     await updateCareerFirestore(user.uid, careerId, {
       clubData: stripHeavyData(updatedClubData, storedSeasons),
+      trophies: updatedTrophies,
+      updatedAt: now,
     });
+    notifyCareersUpdated((prev) =>
+      prev.map((c) =>
+        c.id === careerId
+          ? {
+              ...c,
+              clubData: c.clubData.filter((season) => season.id !== seasonId),
+              trophies: updatedTrophies,
+              updatedAt: now,
+            }
+          : c,
+      ),
+    );
   },
 
   updateSeasonLeagues: async (
@@ -255,9 +428,145 @@ export const ServiceSeasons = {
       season.id === seasonId ? { ...season, leagues } : season,
     );
 
+    const now = Date.now();
     await updateCareerFirestore(user.uid, careerId, {
       clubData: updatedClubData,
+      updatedAt: now,
     });
+    notifyCareersUpdated((prev) =>
+      prev.map((c) => {
+        if (c.id !== careerId) return c;
+        const updatedClubData = (c.clubData || []).map((season) =>
+          season.id === seasonId ? { ...season, leagues } : season,
+        );
+        const updatedCareer: Career = {
+          ...c,
+          clubData: updatedClubData,
+          updatedAt: now,
+        };
+        updateCachedCareer(updatedCareer);
+        return updatedCareer;
+      }),
+    );
+  },
+
+  updateSeasonCaptains: async (
+    careerId: string,
+    seasonId: string,
+    captainPlayerIds: string[],
+  ): Promise<void> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("Usuário não autenticado");
+
+    const careerRef = doc(db, `users/${user.uid}/careers/${careerId}`);
+    const careerSnap = await getDoc(careerRef);
+    if (!careerSnap.exists()) throw new Error("Carreira não encontrada");
+
+    const rawData = careerSnap.data() as Career;
+    const storedClubData = (rawData?.clubData || []) as ClubData[];
+    const targetSeason = storedClubData.find((season) => season.id === seasonId);
+    if (!targetSeason) throw new Error("Temporada não encontrada");
+
+    const validCaptainIds = captainPlayerIds.slice(0, 5);
+
+    const updatedClubData = storedClubData.map((season) => {
+      if (season.id !== seasonId) return season;
+      const updated: ClubData = {
+        ...season,
+        captains: validCaptainIds,
+      };
+      if (Array.isArray(season.players) && season.players.length > 0) {
+        updated.players = season.players.map((player) => {
+          const rankIndex = validCaptainIds.indexOf(player.id);
+          if (rankIndex !== -1) {
+            return {
+              ...player,
+              captain: true,
+              captainRank: rankIndex + 1,
+            };
+          } else if (player.captain) {
+            const copy = { ...player, captain: false };
+            delete copy.captainRank;
+            return copy;
+          }
+          return player;
+        });
+      }
+      return updated;
+    });
+
+    const now = Date.now();
+    await updateCareerFirestore(user.uid, careerId, {
+      clubData: updatedClubData,
+      updatedAt: now,
+    });
+    notifyCareersUpdated((prev) =>
+      prev.map((c) => {
+        if (c.id !== careerId) return c;
+        const memoryClubData = (c.clubData || []).map((season) => {
+          if (season.id !== seasonId) return season;
+          const currentPlayers = season.players || [];
+          const updatedPlayersInMemory = currentPlayers.map((player) => {
+            const rankIndex = validCaptainIds.indexOf(player.id);
+            if (rankIndex !== -1) {
+              return {
+                ...player,
+                captain: true,
+                captainRank: rankIndex + 1,
+              };
+            } else if (player.captain) {
+              const copy = { ...player, captain: false };
+              delete copy.captainRank;
+              return copy;
+            }
+            return player;
+          });
+          return {
+            ...season,
+            captains: validCaptainIds,
+            players: updatedPlayersInMemory,
+          };
+        });
+        const updatedCareer: Career = {
+          ...c,
+          clubData: memoryClubData,
+          updatedAt: now,
+        };
+        updateCachedCareer(updatedCareer);
+        return updatedCareer;
+      }),
+    );
+
+    try {
+      const seasonPath = `users/${user.uid}/careers/${careerId}/seasons/${seasonId}`;
+      const seasonDocRef = doc(db, seasonPath);
+      await updateDoc(seasonDocRef, {
+        captains: validCaptainIds,
+      }).catch(() => {});
+
+      for (let i = 0; i < validCaptainIds.length; i++) {
+        const captainId = validCaptainIds[i];
+        const playerDocRef = doc(db, `${seasonPath}/players/${captainId}`);
+        await updateDoc(playerDocRef, {
+          captain: true,
+          captainRank: i + 1,
+        }).catch(() => {});
+      }
+
+      const previousCaptains = (targetSeason.captains || []) as string[];
+      const demotedCaptainIds = previousCaptains.filter(
+        (id) => !validCaptainIds.includes(id),
+      );
+      for (const demotedId of demotedCaptainIds) {
+        const playerDocRef = doc(db, `${seasonPath}/players/${demotedId}`);
+        await updateDoc(playerDocRef, {
+          captain: false,
+          captainRank: deleteField(),
+        }).catch(() => {});
+      }
+    } catch {
+      // Subcoleções opcionais
+    }
   },
 
   updateCurrency: async (careerId: string, currency: string): Promise<void> => {

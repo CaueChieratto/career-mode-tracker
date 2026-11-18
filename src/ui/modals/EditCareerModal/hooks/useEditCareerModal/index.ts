@@ -1,25 +1,33 @@
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect } from "react";
 import { Career } from "../../../../../common/interfaces/Career";
-import { CloudinaryService } from "../../../AddBadgeClub/services/CloudinaryService";
+import {
+  ClubCatalogItem,
+  ServiceClubBadges,
+  normalizeClubKey,
+} from "../../../../../common/services/ServiceClubBadges";
 import { convertDateToString } from "../../helpers/convertDateToString";
-import { convertStringToDate } from "../../helpers/convertStringToDate";
-import { SaveEditClub } from "../SaveEditClub";
-import { useClubImgAndColor } from "../useClubImgAndColor";
+import {
+  CareerModalMode,
+  normalizeHex,
+  useClubImgAndColor,
+} from "../useClubImgAndColor";
+import { useCareerModalActions } from "../useCareerModalActions";
 
 type UseEditCareerModalProps = {
-  selectedCareer: Career;
-  setSelectedCareer: React.Dispatch<React.SetStateAction<Career>>;
+  mode: CareerModalMode;
+  selectedCareer?: Career;
+  setSelectedCareer?: React.Dispatch<React.SetStateAction<Career>>;
   closeModal: () => void;
 };
 
 export const useEditCareerModal = ({
+  mode,
   selectedCareer,
   setSelectedCareer,
   closeModal,
 }: UseEditCareerModalProps) => {
   const {
     file,
-    fileDataUrl,
     pickFile,
     onFileChange,
     inputRef,
@@ -27,59 +35,101 @@ export const useEditCareerModal = ({
     secondaryColor,
     setPrimaryColor,
     setSecondaryColor,
-  } = useClubImgAndColor(selectedCareer);
+  } = useClubImgAndColor(mode, selectedCareer);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [clubName, setClubName] = useState(selectedCareer.clubName || "");
-  const [managerName, setManagerName] = useState(
-    selectedCareer.managerName || "",
+  const [clubName, setClubName] = useState(() =>
+    mode !== "create" && selectedCareer?.clubName
+      ? selectedCareer.clubName
+      : "",
   );
-  const [createdAt, setCreatedAt] = useState<string>("");
+  const [managerName, setManagerName] = useState(() =>
+    mode !== "create" && selectedCareer?.managerName
+      ? selectedCareer.managerName
+      : "",
+  );
+  const [nation, setNation] = useState(() =>
+    mode !== "create" && selectedCareer?.nation ? selectedCareer.nation : "",
+  );
+  const [createdAt, setCreatedAt] = useState<string>(() =>
+    mode !== "create" && selectedCareer?.createdAt
+      ? convertDateToString(selectedCareer.createdAt)
+      : "",
+  );
+  const [availableClubs, setAvailableClubs] = useState<string[]>([]);
+  const [clubsCatalog, setClubsCatalog] = useState<
+    Record<string, ClubCatalogItem>
+  >({});
 
   useEffect(() => {
-    setClubName(selectedCareer.clubName || "");
-    setManagerName(selectedCareer.managerName || "");
-    setCreatedAt(convertDateToString(selectedCareer.createdAt));
-  }, [selectedCareer]);
+    let isMounted = true;
+    ServiceClubBadges.getAvailableClubsCatalog()
+      .then((catalog) => {
+        if (!isMounted) return;
+        setClubsCatalog(catalog);
+        const names = Object.values(catalog)
+          .filter((c) => Boolean(c.badge?.trim() || c.colors?.length))
+          .map((c) => c.name)
+          .sort((a, b) => a.localeCompare(b, "pt-BR"));
+        setAvailableClubs(names);
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  const badge = selectedCareer?.teamBadge;
-
-  const handleSave = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      let finalImageUrl = fileDataUrl ?? undefined;
-
-      if (file) {
-        finalImageUrl = await CloudinaryService.uploadImage(file);
-      }
-
-      const dateToSave = convertStringToDate(createdAt);
-
-      const updatedCareer = await SaveEditClub(
-        selectedCareer,
-        primaryColor,
-        secondaryColor,
-        finalImageUrl,
-        clubName,
-        managerName,
-        dateToSave,
-      );
-
-      setSelectedCareer(updatedCareer);
-      closeModal();
-    } catch (error) {
-      console.error("Erro: ", error);
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (mode === "create") {
+      setClubName("");
+      setManagerName("");
+      setNation("");
+      setCreatedAt("");
+    } else if (selectedCareer) {
+      setClubName(selectedCareer.clubName || "");
+      setManagerName(selectedCareer.managerName || "");
+      setNation(selectedCareer.nation || "");
+      setCreatedAt(convertDateToString(selectedCareer.createdAt));
     }
-  };
+  }, [mode, selectedCareer]);
+
+  // Quando o usuário escolhe um time existente no modo "create",
+  // associa automaticamente as cores desse clube aos seletores.
+  useEffect(() => {
+    if (mode !== "create") return;
+    const trimmed = clubName.trim();
+    if (!trimmed) return;
+    const key = normalizeClubKey(trimmed);
+    const item = clubsCatalog[key];
+    if (item?.colors && item.colors.length >= 2) {
+      setPrimaryColor(normalizeHex(item.colors[0], "#52a383"));
+      setSecondaryColor(normalizeHex(item.colors[1], "#ffffff"));
+    }
+  }, [clubName, clubsCatalog, mode, setPrimaryColor, setSecondaryColor]);
+
+  const badge = mode !== "create" ? selectedCareer?.teamBadge : undefined;
+
+  const { handleSave } = useCareerModalActions({
+    mode,
+    selectedCareer,
+    setSelectedCareer,
+    closeModal,
+    setIsLoading,
+    clubName,
+    nation,
+    managerName,
+    createdAt,
+    primaryColor,
+    secondaryColor,
+    file,
+  });
 
   return {
     isLoading,
     clubName,
     setClubName,
+    nation,
+    setNation,
     managerName,
     setManagerName,
     createdAt,
@@ -93,6 +143,7 @@ export const useEditCareerModal = ({
     setPrimaryColor,
     secondaryColor,
     setSecondaryColor,
+    availableClubs,
     handleSave,
   };
 };

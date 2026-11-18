@@ -1,13 +1,10 @@
-import Form from "../../../../../../../../components/Form";
 import FormSection from "../../../../../../../../components/FormSection";
-import Load from "../../../../../../../../components/Load";
-import HeaderSeason from "../../../../../../../../components/HeaderSeason";
-import Navbar from "../../../../../../../../ui/Navbar";
-import Styles from "./AddDetailsScreen.module.css";
 import { useAddDetails } from "../../hooks/useAddDetails";
 import { Career } from "../../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../../common/interfaces/club/clubData";
 import { Match } from "../../../../../../../../common/interfaces/Match";
+import { toast } from "../../../../../../../../common/services/ToastService";
+import { MatchFormSubScreen } from "../../../../../MatchFormSubScreen";
 
 type AddDetailsScreenProps = {
   career: Career;
@@ -30,49 +27,39 @@ export const AddDetailsScreen = ({
     formValues,
     handleInputChange,
     handleBooleanChange,
+    handleSelectOption,
     saveDetails,
   } = useAddDetails({ career, season, match, onClose, onSaved });
 
   const handleSave = () => {
     void saveDetails().catch((error) => {
       console.error("Erro ao salvar detalhes da partida:", error);
-      window.alert("NÃ£o foi possÃ­vel salvar os detalhes da partida.");
+      toast.error("Não foi possível salvar os detalhes da partida.");
     });
   };
 
-  if (isSaving) return <Load />;
-
   return (
-    <>
-      <HeaderSeason
-        match={match}
-        careerId={career.id}
-        career={career}
-        backSeasons={onClose}
-        titleText={`${match.homeTeam} x ${match.awayTeam}`}
-      />
-      <Navbar
-        save={handleSave}
-        options={["", "Salvar", ""]}
-        activeOption={1}
-        onOptionClick={() => {}}
-      />
-      <div className={Styles.container}>
-        <Form className={Styles.form}>
-          {fields.map((section, index) => (
-            <FormSection
-              isMatch
-              key={index}
-              title={section.title}
-              rows={section.fields}
-              formValues={formValues}
-              isEditing={true}
-              onInputChange={handleInputChange}
-              onBooleanChange={handleBooleanChange}
-            />
-          ))}
-        </Form>
-      </div>
-    </>
+    <MatchFormSubScreen
+      career={career}
+      match={match}
+      titleText={`${match.homeTeam} x ${match.awayTeam}`}
+      onClose={onClose}
+      onSave={handleSave}
+      isLoading={isSaving}
+    >
+      {fields.map((section, index) => (
+        <FormSection
+          isMatch
+          key={index}
+          title={section.title}
+          rows={section.fields}
+          formValues={formValues}
+          isEditing={true}
+          onInputChange={handleInputChange}
+          onBooleanChange={handleBooleanChange}
+          onSelectOption={handleSelectOption}
+        />
+      ))}
+    </MatchFormSubScreen>
   );
 };

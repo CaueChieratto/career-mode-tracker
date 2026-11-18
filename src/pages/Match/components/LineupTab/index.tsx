@@ -5,6 +5,7 @@ import { Section } from "./layouts/Section";
 import { PlayerPicker } from "./components/PlayerPicker";
 import { useLineupTabController } from "./hooks/useLineupTabController";
 import type { LineupTabProps } from "./types";
+import { LineupTabProvider } from "./contexts/LineupTabContext";
 import Styles from "./LineupTab.module.css";
 
 export const LineupTab = ({
@@ -52,54 +53,45 @@ export const LineupTab = ({
   }, [onPickerOpenChange]);
 
   return (
-    <div
-      className={Styles.wrapper}
-      style={isFromGeral ? { gap: "0" } : undefined}
+    <LineupTabProvider
+      isFromGeral={isFromGeral}
+      selectingSlotId={selectingSlotId}
+      mvpId={mvpId}
+      playerStats={playerStats}
+      allPlayers={season.players}
+      openPlayerPicker={openPlayerPicker}
+      removePlayer={removePlayer}
+      swapPlayers={swapPlayers}
+      onPlayerClick={handlePlayerClick}
+      onOpenModal={onOpenPlayerModal}
     >
-      <div>
-        <Header
-          isFromGeral={isFromGeral}
-          career={career}
-          selectedFormation={selectedFormation}
-          handleFormationChange={handleFormationChange}
-        />
-
-        <Section
-          isFromGeral={isFromGeral}
-          lineup={lineup}
-          selectingSlotId={selectingSlotId}
-          openPlayerPicker={openPlayerPicker}
-          removePlayer={removePlayer}
-          swapPlayers={swapPlayers}
-          onPlayerClick={handlePlayerClick}
-          onOpenModal={onOpenPlayerModal}
-          playerStats={playerStats}
-          mvpId={mvpId}
-        />
-
-        {selectingSlotId && !isFromGeral && (
-          <PlayerPicker
-            players={activePlayers}
-            assignedIds={assignedPlayerIds}
-            activeSlotId={selectingSlotId}
-            onSelect={assignPlayer}
-            onClose={closePlayerPicker}
+      <div
+        className={Styles.wrapper}
+        style={isFromGeral ? { gap: "0" } : undefined}
+      >
+        <div>
+          <Header
+            isFromGeral={isFromGeral}
+            career={career}
+            selectedFormation={selectedFormation}
+            handleFormationChange={handleFormationChange}
           />
-        )}
-      </div>
 
-      <Bottom
-        isFromGeral={isFromGeral}
-        lineup={lineup}
-        selectingSlotId={selectingSlotId}
-        openPlayerPicker={openPlayerPicker}
-        removePlayer={removePlayer}
-        onPlayerClick={handlePlayerClick}
-        onOpenModal={onOpenPlayerModal}
-        playerStats={playerStats}
-        mvpId={mvpId}
-        allPlayers={season.players}
-      />
-    </div>
+          <Section lineup={lineup} />
+
+          {selectingSlotId && !isFromGeral && (
+            <PlayerPicker
+              players={activePlayers}
+              assignedIds={assignedPlayerIds}
+              activeSlotId={selectingSlotId}
+              onSelect={assignPlayer}
+              onClose={closePlayerPicker}
+            />
+          )}
+        </div>
+
+        <Bottom lineup={lineup} />
+      </div>
+    </LineupTabProvider>
   );
 };

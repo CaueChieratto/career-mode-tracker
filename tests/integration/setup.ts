@@ -6,6 +6,24 @@ import { login, resetData } from "./helpers";
 const ids = vi.hoisted(() => ({ count: 0 }));
 vi.mock("uuid", () => ({ v4: () => `generated-${++ids.count}` }));
 
+if (typeof globalThis.localStorage === "undefined") {
+  const store = new Map<string, string>();
+  globalThis.localStorage = {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, val: string) => {
+      store.set(key, String(val));
+    },
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+    key: (i: number) => Array.from(store.keys())[i] ?? null,
+    length: 0,
+  } as Storage;
+}
+
 beforeAll(async () => {
   if (
     !(globalThis as { __EMULATOR_NETWORK_GUARD__?: boolean })

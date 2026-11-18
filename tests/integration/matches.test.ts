@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { ServiceMatches } from '../../src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches';
+import { ServiceMatches } from '../../src/common/services/ServiceMatches';
 import { getCareerById, getAllCareers } from '../../src/common/helpers/Getters';
 import { buildMatchPayload } from '../../src/pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/helpers/buildMatchPayload';
 import { match, stat, career, season } from '../../src/test/factories/domain';

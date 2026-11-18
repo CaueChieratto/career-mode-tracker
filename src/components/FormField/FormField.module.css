@@ -1,9 +1,11 @@
 .input {
+  box-sizing: border-box;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 14px;
   font-size: 16px;
   width: 100%;
+  max-width: 100%;
   background-color: var(--card-background);
   color: var(--blackColor);
 }

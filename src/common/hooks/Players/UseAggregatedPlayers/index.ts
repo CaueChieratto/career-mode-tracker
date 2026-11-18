@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Career } from "../../../interfaces/Career";
 import { Players } from "../../../interfaces/playersInfo/players";
-import { getAggregatedPlayersForCareer } from "../../../../layout/SectionView/helpers/mergeMatchStats";
+import { getAggregatedPlayersForCareer } from "../../../stats/helpers/mergeMatchStats";
 
 export const useAggregatedPlayers = (career: Career | undefined): Players[] => {
   return useMemo(() => {
@@ -12,4 +12,3 @@ export const useAggregatedPlayers = (career: Career | undefined): Players[] => {
     return getAggregatedPlayersForCareer(career);
   }, [career]);
 };
-

@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, FormEvent } from "react";
 import { Career } from "../../../interfaces/Career";
 import { useSave } from "../UseSave";
 import { ClubData } from "../../../interfaces/club/clubData";
+import { League } from "../../../interfaces/League";
 
 type useAddTrophiesProps = {
   setView: React.Dispatch<React.SetStateAction<"titles" | "add" | "menu">>;
@@ -48,11 +49,27 @@ export const useAddTrophies = ({
     setSelectedTrophies(selectedTrophies.filter((t) => t !== trophyName));
   };
 
-  const { saveTrophies, isSaving } = useSave({
+  const { saveTrophies: rawSaveTrophies, isSaving } = useSave({
     setView,
     selectedCareer,
     setSelectedCareer,
   });
+
+  const saveTrophies = (
+    event: FormEvent<HTMLFormElement>,
+    targetCareerId?: string,
+    targetSelectedTrophies?: string[],
+    targetSeasonName?: string,
+    availableLeagues?: League[],
+  ) => {
+    return rawSaveTrophies(
+      event,
+      targetCareerId ?? careerId,
+      targetSelectedTrophies ?? selectedTrophies,
+      targetSeasonName ?? seasonName,
+      availableLeagues ?? season?.leagues,
+    );
+  };
 
   return {
     selectedTrophies,

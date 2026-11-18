@@ -1,13 +1,14 @@
-import Card from "../../../../../../../ui/Card";
-import Titles from "../../GeneralTab.module.css";
 import { ClubData } from "../../../../../../../common/interfaces/club/clubData";
 import SummaryItem from "./components/SummaryItem";
-
 import { BsCalendar4 } from "react-icons/bs";
 import { FaMoneyBillWave, FaHandHoldingUsd } from "react-icons/fa";
 import { FaUserGroup } from "react-icons/fa6";
 import { useSummaryData } from "./hooks/UseSummaryData";
 import { Career } from "../../../../../../../common/interfaces/Career";
+import {
+  SectionSummaryCard,
+  SectionSummaryGrid,
+} from "../../../../../ui/SectionSummaryCard";
 
 type SummaryCardProps = {
   season: ClubData;
@@ -22,24 +23,21 @@ const iconMap: { [key: string]: React.ReactNode } = {
 };
 
 const SummaryCard = ({ season, career }: SummaryCardProps) => {
-  const { content } = useSummaryData(season, career.currency);
+  const { content } = useSummaryData(season, career);
 
   return (
-    <Card className={Titles.card}>
-      <div className={Titles.container_card}>
-        <h1 className={Titles.h1}>Resumo da equipe</h1>
-        <div className={Titles.container_info}>
-          {content.map((item) => (
-            <SummaryItem
-              key={item.info}
-              info={item.info}
-              number={item.number}
-              icon={iconMap[item.info]}
-            />
-          ))}
-        </div>
-      </div>
-    </Card>
+    <SectionSummaryCard title="Resumo da equipe">
+      <SectionSummaryGrid>
+        {content.map((item) => (
+          <SummaryItem
+            key={item.info}
+            info={item.info}
+            number={item.number}
+            icon={iconMap[item.info]}
+          />
+        ))}
+      </SectionSummaryGrid>
+    </SectionSummaryCard>
   );
 };
 

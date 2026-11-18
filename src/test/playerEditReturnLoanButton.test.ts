@@ -25,12 +25,12 @@ describe("Botão de retorno de empréstimo manual na tela de edição do jogador
       hasGroupId: false,
     });
 
-    const contractSection = sections.find(
-      (s) => s.title === "Detalhes Contratuais",
+    const sectionWithLoan = sections.find(
+      (s) => s.title === "Status" || s.title === "Detalhes Contratuais",
     );
-    expect(contractSection).toBeDefined();
+    expect(sectionWithLoan).toBeDefined();
 
-    const allFields = contractSection!.fields.flat();
+    const allFields = sectionWithLoan!.fields.flat();
     const returnLoanField = allFields.find((f) => f.id === "returnLoan");
 
     expect(returnLoanField).toBeDefined();
@@ -39,6 +39,10 @@ describe("Botão de retorno de empréstimo manual na tela de edição do jogador
     expect(returnLoanField?.action).toBe(ModalType.RETURN_LOAN_CONFIRM);
 
     // Confirma que fica após 'Esse jogador ja jogou conosco antes?'
+    const knownPlayerField = allFields.find((f) => f.id === "isKnownPlayer");
+    expect(knownPlayerField).toBeDefined();
+    expect(knownPlayerField?.name).toBe("Esse jogador ja jogou conosco antes?");
+
     const knownPlayerIndex = allFields.findIndex(
       (f) => f.id === "isKnownPlayer",
     );
@@ -58,12 +62,12 @@ describe("Botão de retorno de empréstimo manual na tela de edição do jogador
       hasGroupId: false,
     });
 
-    const contractSection = sections.find(
-      (s) => s.title === "Detalhes Contratuais",
+    const sectionWithLoan = sections.find(
+      (s) => s.title === "Status" || s.title === "Detalhes Contratuais",
     );
-    expect(contractSection).toBeDefined();
+    expect(sectionWithLoan).toBeDefined();
 
-    const allFields = contractSection!.fields.flat();
+    const allFields = sectionWithLoan!.fields.flat();
     const returnLoanField = allFields.find((f) => f.id === "returnLoan");
 
     expect(returnLoanField).toBeDefined();
@@ -72,6 +76,10 @@ describe("Botão de retorno de empréstimo manual na tela de edição do jogador
     expect(returnLoanField?.action).toBe(ModalType.RETURN_LOAN_CONFIRM);
 
     // Confirma que fica após 'Esse jogador ja jogou conosco antes?'
+    const knownPlayerField = allFields.find((f) => f.id === "isKnownPlayer");
+    expect(knownPlayerField).toBeDefined();
+    expect(knownPlayerField?.name).toBe("Esse jogador ja jogou conosco antes?");
+
     const knownPlayerIndex = allFields.findIndex(
       (f) => f.id === "isKnownPlayer",
     );
@@ -91,12 +99,12 @@ describe("Botão de retorno de empréstimo manual na tela de edição do jogador
       hasGroupId: false,
     });
 
-    const contractSection = sections.find(
-      (s) => s.title === "Detalhes Contratuais",
+    const sectionWithLoan = sections.find(
+      (s) => s.title === "Status" || s.title === "Detalhes Contratuais",
     );
-    expect(contractSection).toBeDefined();
+    expect(sectionWithLoan).toBeDefined();
 
-    const allFields = contractSection!.fields.flat();
+    const allFields = sectionWithLoan!.fields.flat();
     const returnLoanField = allFields.find((f) => f.id === "returnLoan");
 
     expect(returnLoanField).toBeUndefined();

@@ -4,11 +4,13 @@ import {
   fetchAllTeamsFromCareers,
   processTeamAction,
 } from "../../services/EditTeamsService";
+import { useToast } from "../../../../../common/hooks/UseToast";
 
 export const useEditTeams = () => {
   const [teams, setTeams] = useState<EditableTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingTeamId, setSavingTeamId] = useState<string | null>(null);
+  const { confirm, error: showError, success: showSuccess } = useToast();
 
   useEffect(() => {
     const loadTeams = async () => {
@@ -52,8 +54,9 @@ export const useEditTeams = () => {
 
   const handleActionTeam = async (team: EditableTeam, isDeleting = false) => {
     if (isDeleting) {
-      const confirmDelete = window.confirm(
+      const confirmDelete = await confirm(
         `Deseja realmente excluir o time "${team.name}" de todas as carreiras?`,
+        { tone: "danger", confirmLabel: "Excluir" },
       );
       if (!confirmDelete) return;
     }
@@ -67,6 +70,7 @@ export const useEditTeams = () => {
         setTeams((prev) =>
           prev.filter((t) => t.originalName !== team.originalName),
         );
+        showSuccess("Time excluído do catálogo!");
       } else {
         setTeams((prev) =>
           prev.map((t) =>
@@ -82,9 +86,14 @@ export const useEditTeams = () => {
               : t,
           ),
         );
+        showSuccess("Time atualizado com sucesso!");
       }
     } catch {
-      alert("Ocorreu um erro ao salvar este time.");
+      showError(
+        isDeleting
+          ? "Ocorreu um erro ao excluir este time."
+          : "Ocorreu um erro ao salvar este time.",
+      );
     } finally {
       setSavingTeamId(null);
     }

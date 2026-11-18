@@ -32,7 +32,7 @@ const targets = {
     "default",
   ],
   "/pages/CareersPage/index.tsx": ["CareersPage", "default"],
-  "/pages/Players/index.tsx": ["Player", "default"],
+  "/layout/SectionView/views/Players/index.tsx": ["Player", "default"],
   "/layout/SectionView/features/ClubTabs/AllMatchesTab/index.tsx": [
     "AllMatchesTab",
     "named",

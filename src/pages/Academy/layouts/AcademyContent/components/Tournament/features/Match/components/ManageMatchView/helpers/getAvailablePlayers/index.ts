@@ -1,5 +1,5 @@
-import { AcademyPlayers } from "../../../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
-import { PlayerMatchesStats } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
+import { AcademyPlayers } from "../../../../../../../../../../../../common/interfaces/AcademyData";
+import { PlayerMatchesStats } from "../../../../../../../../../../../../common/interfaces/AcademyData";
 import { isEuropeanSeason } from "../../../../../../../../utils/isEuropeanSeason";
 import { Career } from "../../../../../../../../../../../../common/interfaces/Career";
 

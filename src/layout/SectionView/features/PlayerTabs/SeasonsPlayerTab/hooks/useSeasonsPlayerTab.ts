@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { LeagueLevels } from "../../../../../../common/constants/LeagueLevels";
 import { Career } from "../../../../../../common/interfaces/Career";
 import { Players } from "../../../../../../common/interfaces/playersInfo/players";
-import { getContinentByCountry } from "../../../../../../common/services/GetContinentByCountry";
 import { League } from "../../../../../../common/interfaces/League";
-import { leaguesByContinent } from "../../../../../../common/utils/league";
+import { getAllLeaguesFlat } from "../../../../../../common/utils/league";
+import { formatSeasonShortLabel } from "../../../../../../common/utils/Date";
 import { SeasonCareerData } from "./useRenderableSeasons";
 import { PlayersGroupService } from "../../../../../../common/services/ServicePlayers/PlayersGroupService";
-import { isSamePlayerId } from "../../../../../../common/utils/playerIdentity";
+import { findPlayerInList } from "../../../../../../common/utils/playerIdentity";
 
 export const useSeasonsPlayerTab = (
   career: Career,
@@ -48,45 +48,22 @@ export const useSeasonsPlayerTab = (
   };
 
   const playerId = player?.id;
-  const normalizedName = player?.name.trim().toLowerCase();
-  const normalizedNation = player?.nation.trim().toLowerCase();
 
   const seasonsPlayerPlayed = allSeasonsData.filter(({ season }) =>
-    season.players.some(
-      (p) =>
-        (player && isSamePlayerId(p, player)) ||
-        (Boolean(normalizedName && normalizedNation) &&
-          p.name.trim().toLowerCase() === normalizedName &&
-          p.nation.trim().toLowerCase() === normalizedNation),
-    ),
+    Boolean(findPlayerInList(season.players, player)),
   );
 
   const getSeasonString = (
     seasonNumber: number,
     specificCareer: Career,
-  ): string => {
-    const dateVal: unknown = specificCareer.createdAt;
-    let createdDate = new Date();
-    if (dateVal && typeof dateVal === "object" && "seconds" in dateVal) {
-      createdDate = new Date((dateVal as { seconds: number }).seconds * 1000);
-    } else if (dateVal) {
-      createdDate = new Date(dateVal as string | Date | number);
-    }
+  ): string =>
+    formatSeasonShortLabel(
+      specificCareer.createdAt,
+      specificCareer.nation,
+      seasonNumber,
+    );
 
-    const startYear = createdDate.getFullYear() + seasonNumber - 1;
-    const continent = getContinentByCountry(specificCareer.nation);
-
-    if (continent === "Europa") {
-      const endYear = (startYear + 1).toString().slice(-2);
-      return `${startYear.toString().slice(-2)}/${endYear}`;
-    } else {
-      return startYear.toString();
-    }
-  };
-
-  const allLeagues: League[] = Object.values(leaguesByContinent)
-    .flatMap((countryLeagues) => Object.values(countryLeagues))
-    .flat();
+  const allLeagues: League[] = getAllLeaguesFlat();
 
   const getTrophiesWonInSeason = (
     seasonString: string,

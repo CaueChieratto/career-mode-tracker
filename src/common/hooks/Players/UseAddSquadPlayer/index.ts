@@ -29,7 +29,7 @@ export const useAddSquadPlayer = ({
   const addPlayer = async (formData: FormData) => {
     validateMonetaryInput(
       formData.get("playerValue") as string,
-      "Valor do Jogador",
+      "Valor de mercado",
     );
     validateMonetaryInput(
       formData.get("buyValue") as string,
@@ -37,7 +37,7 @@ export const useAddSquadPlayer = ({
     );
     validateMonetaryInput(
       formData.get("salary") as string,
-      "Salário (Semanal)",
+      "Salário semanal",
     );
     validateRequiredFields(formData);
 
@@ -55,8 +55,12 @@ export const useAddSquadPlayer = ({
     const isAcademy = formData.get("isAcademy") === "true";
     if (isAcademy) {
       playerData.isAcademy = true;
-      playerData.academyNickname =
-        (formData.get("academyNickname") as string) || undefined;
+      const nick = (formData.get("academyNickname") as string)?.trim();
+      if (nick) {
+        playerData.academyNickname = nick;
+      } else {
+        delete playerData.academyNickname;
+      }
 
       const academyDataStr = formData.get("academyData") as string;
       if (academyDataStr) playerData.academyData = JSON.parse(academyDataStr);
@@ -73,13 +77,14 @@ export const useAddSquadPlayer = ({
     }
 
     try {
-      await ServicePlayers.addPlayerToSeason(
+      const created = await ServicePlayers.addPlayerToSeason(
         careerId,
         seasonId,
         playerData,
         globalId || undefined,
       );
       onPlayerAdded();
+      return created;
     } catch (error) {
       console.error("Erro ao adicionar jogador:", error);
       throw new Error("Falha ao adicionar jogador.");

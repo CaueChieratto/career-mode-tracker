@@ -1,0 +1,1335 @@
+.searchContainer {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 43px 12px 0 12px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 100;
+}
+
+[class*="searchContainer"]:has([class*="container"]) [class*="container"] {
+  width: 100%;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 12px 300px 12px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.hubContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 43px 12px 300px 12px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+.container input,
+.container select,
+.container textarea,
+.hubContainer input,
+.hubContainer select,
+.hubContainer textarea {
+  font-size: 16px !important;
+}
+
+.emptyState {
+  background-color: var(--card-background);
+  border: 1px dashed var(--border-input);
+  border-radius: 14px;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--color);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.transfersList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* CARD PRINCIPAL COM O DESIGN RESTAURADO E VAR(--CARD-BACKGROUND) */
+.card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-input);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cardHighlight {
+  border-color: var(--club-color) !important;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--club-color) 35%, transparent),
+    0 8px 24px color-mix(in srgb, var(--club-color) 25%, transparent) !important;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0 16px 0;
+  border-bottom: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.2));
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.agreementDate {
+  text-align: center;
+  font-size: 14px;
+  color: #61d4d4;
+  font-weight: bold;
+}
+
+.cardHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cardHeaderRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.headerTypeTitle {
+  color: var(--color-quaternary);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.headerBadge {
+  color: var(--color-tertiary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.headerBadge strong {
+  color: #10b981;
+}
+
+.gridContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 10px;
+}
+
+.clubSection {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 6px;
+}
+
+.clubBadge {
+  width: 35px;
+  height: 35px;
+  border-radius: 12px;
+  background: var(--bg-overlay, rgba(59, 130, 246, 0.12));
+  border: 1px solid var(--border-overlay, rgba(59, 130, 246, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  color: #3b82f6;
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.clubBadgeImg {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.clubName {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--blackColor);
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnEditClubTransfer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #3b82f6;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  vertical-align: middle;
+}
+
+.btnEditClubTransfer:hover {
+  color: #2563eb;
+  background-color: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.5);
+  transform: scale(1.05);
+}
+
+.transferFeeText {
+  font-size: 14px;
+  color: var(--color);
+  margin-top: 4px;
+}
+
+.transferFeeText strong {
+  color: var(--blackColor);
+}
+
+.breakdownSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.15));
+  padding-bottom: 12px;
+}
+
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.breakdownLabel {
+  color: var(--color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotGreen {
+  background-color: #10b981;
+}
+
+.dotBlue {
+  background-color: #3b82f6;
+}
+
+.dotAmber {
+  background-color: #f59e0b;
+}
+
+.valueWhite {
+  font-weight: 700;
+  color: var(--blackColor);
+  font-size: 14px;
+}
+
+.valueBlue {
+  font-weight: 700;
+  color: #3b82f6;
+  font-size: 14px;
+}
+
+.valueAmber {
+  font-weight: 700;
+  color: #f59e0b;
+  font-size: 14px;
+}
+
+.totalSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.totalLabel {
+  font-size: 14px;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--color);
+}
+
+.totalAmount {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--blackColor);
+  letter-spacing: -0.02em;
+  margin-top: 2px;
+}
+
+.renewalHudBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background-color: var(--bgTable);
+  border-radius: 8px;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.renewalHudItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.renewalHudIndicator {
+  width: 3px;
+  height: 32px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.indicatorBlue {
+  background-color: #38bdf8;
+}
+
+.indicatorGreen {
+  background-color: #34d399;
+}
+
+.indicatorAmber {
+  background-color: #fbbf24;
+}
+
+.renewalHudTextGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.renewalHudLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color);
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.renewalHudValue {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--blackColor);
+  line-height: 1.2;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+.swapNotice {
+  font-size: 14px;
+  font-weight: 600;
+  color: #10b981;
+  margin-top: 6px;
+}
+
+.specialClausesNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  width: 100%;
+}
+
+.specialClausesTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #8b5cf6;
+}
+
+.specialClausesList {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.specialClausesItem {
+  font-size: 14px;
+  color: var(--color);
+  font-weight: 600;
+}
+
+.noClausesText {
+  font-size: 14px;
+  color: var(--color);
+  font-style: italic;
+  margin-top: 6px;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.15));
+  flex-wrap: wrap;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  color: #ffffff;
+  transition:
+    opacity 0.2s ease,
+    transform 0.15s ease;
+}
+
+.btnPrimary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  background-color: transparent;
+  color: var(--color);
+  border: 1px solid var(--border-input);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnSecondary:hover {
+  background-color: var(--color-background-subtle, rgba(0, 0, 0, 0.04));
+  color: var(--blackColor);
+}
+
+.cardActionsScope {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.btnBackLeft {
+  margin-right: auto;
+  flex-shrink: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  min-height: 36px;
+  white-space: nowrap;
+}
+
+.scopeButtonsGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.btnClubClauses {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: #0284c7;
+  color: #ffffff;
+  min-height: 36px;
+  white-space: nowrap;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.btnClubClauses:hover {
+  background: #0369a1;
+}
+
+.btnClubClauses:active {
+  transform: scale(0.98);
+}
+
+.btnPlayerTerms {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  background: #8b5cf6;
+  color: #ffffff;
+  min-height: 36px;
+  white-space: nowrap;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.btnPlayerTerms:hover {
+  background: #7c3aed;
+}
+
+.btnPlayerTerms:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 420px) {
+  .cardActionsScope {
+    gap: 5px;
+  }
+
+  .scopeButtonsGroup {
+    gap: 5px;
+  }
+
+  .btnBackLeft,
+  .btnClubClauses,
+  .btnPlayerTerms {
+    padding: 7px 8px;
+    font-size: 12px;
+    gap: 4px;
+    min-height: 34px;
+  }
+}
+
+.dedicatedScreenContainer {
+  padding: 32px 16px 240px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  gap: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.managePanelBox {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background-color: var(--card-background);
+  border: 1px solid var(--border-input);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.btnSettle {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btnSettle:hover {
+  opacity: 0.9;
+}
+
+.progressBarContainer {
+  width: 100%;
+  height: 8px;
+  background-color: var(--bg-overlay, rgba(128, 128, 128, 0.15));
+  border-radius: 9999px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: #10b981;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.manageTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background-color: var(--bg-overlay, rgba(128, 128, 128, 0.08));
+  border: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.2));
+  color: var(--color-quaternary);
+}
+
+/* REDESIGN OPERACIONAL MODERNO DE CLÁUSULAS */
+.manageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.15));
+}
+
+.manageHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.manageHeaderIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.manageHeaderTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blackColor);
+  margin: 0;
+}
+
+.manageHeaderSubtitle {
+  font-size: 12px;
+  color: var(--color-tertiary);
+  margin: 2px 0 0 0;
+}
+
+.operationalCard {
+  background-color: var(--groupCard);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.operationalCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.operationalTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.operationalIconBox {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.iconBlue {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #3b82f6;
+}
+
+.iconEmerald {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #10b981;
+}
+
+.iconPurple {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: #a855f7;
+}
+
+.iconAmber {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #f59e0b;
+}
+
+.operationalTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blackColor);
+  margin: 0;
+}
+
+.operationalTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.operationalTargetPillPlayer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  width: fit-content;
+}
+
+.operationalTargetPillClub {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  width: fit-content;
+}
+
+.operationalTargetPillClubReceivable {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  width: fit-content;
+}
+
+.operationalMetaText {
+  font-size: 12px;
+  color: var(--color-tertiary);
+  font-weight: 500;
+}
+
+.statusPill {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.statusPillPending {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.statusPillPaid {
+  background: rgba(16, 185, 129, 0.14);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.operationalProgressSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.operationalProgressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--color-secondary);
+}
+
+.financialMetricsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 100%;
+}
+
+@media (min-width: 480px) {
+  .financialMetricsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.metricBoxHighlight {
+  background: var(--bg-overlay, rgba(16, 185, 129, 0.06));
+  border: 1px solid var(--border-overlay, rgba(16, 185, 129, 0.2));
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metricBoxSecondary {
+  background: var(--bg-overlay, rgba(128, 128, 128, 0.05));
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metricLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-tertiary);
+  letter-spacing: 0.03em;
+}
+
+.metricValuePrimary {
+  font-size: 18px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.metricValueSecondary {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--blackColor);
+}
+
+.metricSubText {
+  font-size: 11px;
+  color: var(--color-tertiary);
+}
+
+.actionButtonWrapper {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.btnSettlePrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    transform 0.15s ease;
+}
+
+.btnSettlePrimary:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.btnSettlePrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.drawerActionButtonWrapper {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.btnRevertWageAdjustment {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background-color: #f59e0b;
+  color: #111827;
+  border: none;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    transform 0.15s ease;
+}
+
+.btnRevertWageAdjustment:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.btnRevertWageAdjustment:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnRevertSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background-color: rgba(245, 158, 11, 0.14);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.15s ease;
+}
+
+.btnRevertSecondary:hover {
+  background-color: rgba(245, 158, 11, 0.22);
+  transform: translateY(-1px);
+}
+
+.btnRevertSecondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnEditSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  background-color: var(--bg-overlay, rgba(128, 128, 128, 0.06));
+  color: var(--color-quaternary);
+  border: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.25));
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.15s ease;
+}
+
+.btnEditSecondary:hover {
+  background-color: var(--bg-overlay, rgba(128, 128, 128, 0.12));
+  transform: translateY(-1px);
+}
+
+.tagDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #8b5cf6;
+  display: inline-block;
+}
+
+.swapPlayerDetailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-overlay, rgba(128, 128, 128, 0.05));
+  border: 1px solid var(--border-input);
+  border-radius: 10px;
+  padding: 10px 14px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.swapPlayerNameText {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blackColor);
+}
+
+.swapPlayerValueBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.manageFooterActions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.15));
+}
+
+.btnBackToList {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--color-secondary);
+  border: 1px solid var(--border-input);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnBackToList:hover {
+  background: var(--color-background-subtle, rgba(0, 0, 0, 0.04));
+  color: var(--blackColor);
+}
+
+.specialAgreementsList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.specialAgreementRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.specialAgreementBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.btnExerciseAgreement {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  background-color: var(--primaryColor, #3b82f6);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition:
+    opacity 0.2s ease,
+    transform 0.15s ease;
+}
+
+.btnExerciseAgreement:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.drawerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.sellOnDrawerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.sellOnDrawerInfo {
+  background: var(--bg-overlay, rgba(128, 128, 128, 0.05));
+  border: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.15));
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.sellOnDrawerDesc {
+  font-size: 13px;
+  color: var(--color-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.sellOnInputsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sellOnFieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sellOnLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-tertiary);
+  text-transform: uppercase;
+}
+
+.sellOnInput {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-input);
+  background-color: var(
+    --card-background-modal,
+    var(--card-background, #ffffff)
+  );
+  color: var(--blackColor, #010127);
+  font-size: 14px;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.sellOnInput:focus {
+  border-color: var(--primaryColor, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.sellOnInput::placeholder {
+  color: var(--text-placeholder, #888888);
+}
+
+.sellOnPreview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--color-secondary);
+}
+
+.sellOnPreviewValue {
+  font-size: 16px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+/* Redesign de Renovação na Seção do Clube */
+.renewalComparisonSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.renewalComparisonGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-hover, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.15));
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.comparisonRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (min-width: 480px) {
+  .comparisonRow {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.comparisonLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color);
+}
+
+.comparisonValues {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.comparisonOld {
+  color: var(--color-tertiary, #9ca3af);
+  text-decoration: line-through;
+  opacity: 0.85;
+}
+
+.comparisonArrow {
+  font-size: 11px;
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.comparisonNew {
+  font-weight: 700;
+  color: var(--blackColor);
+}
+
+/* Botão Excluir Renovação */
+.btnDeleteContract {
+  margin-right: auto;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnDeleteContract:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+}
+
+.selectedPlayerInfoCard {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.selectedPlayerDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.selectedPlayerName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--blackColor, #ffffff);
+}
+
+.selectedPlayerMeta {
+  font-size: 13px;
+  color: var(--color, rgba(255, 255, 255, 0.7));
+}
+
+.removeSwapButton {
+  margin-top: 6px;
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #ef4444;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.removeSwapButton:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #ef4444;
+}

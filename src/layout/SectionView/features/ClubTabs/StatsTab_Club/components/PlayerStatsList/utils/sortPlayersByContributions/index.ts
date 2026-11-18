@@ -1,6 +1,6 @@
 import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
 
-import { calculateTotalStats } from "../calculateTotalStats";
+import { calculateTotalStats } from "../../../../../../../../../common/stats/helpers/calculateTotalStats";
 
 export const sortPlayersByContributions = (players: Players[]) => {
   return [...players].sort((a, b) => {

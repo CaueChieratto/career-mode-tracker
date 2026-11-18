@@ -6,14 +6,14 @@ import { LineupState } from "../../types";
 
 type SectionProps = {
   lineup: LineupState;
-  selectingSlotId: string | null;
-  openPlayerPicker: (slotId: string) => void;
-  removePlayer: (slotId: string) => void;
-  swapPlayers: (idA: string, idB: string) => void;
-  onPlayerClick: (playerId: string) => void;
+  selectingSlotId?: string | null;
+  openPlayerPicker?: (slotId: string) => void;
+  removePlayer?: (slotId: string) => void;
+  swapPlayers?: (idA: string, idB: string) => void;
+  onPlayerClick?: (playerId: string) => void;
   onOpenModal?: (playerId: string) => void;
-  playerStats: PlayerMatchStat[];
-  mvpId: string | null;
+  playerStats?: PlayerMatchStat[];
+  mvpId?: string | null;
   isFromGeral?: boolean;
 };
 
@@ -55,12 +55,28 @@ export const Section = ({
               {line.map((slot) => (
                 <div key={slot.slotId} className={Styles.field_slot}>
                   <SlotButton
-                    isFromGeral={isFromGeral}
                     slot={slot}
-                    isSelecting={selectingSlotId === slot.slotId}
-                    onOpen={() => openPlayerPicker(slot.slotId)}
-                    onRemove={() => removePlayer(slot.slotId)}
-                    onSwap={(targetId) => swapPlayers(slot.slotId, targetId)}
+                    isFromGeral={isFromGeral}
+                    isSelecting={
+                      selectingSlotId !== undefined
+                        ? selectingSlotId === slot.slotId
+                        : undefined
+                    }
+                    onOpen={
+                      openPlayerPicker
+                        ? () => openPlayerPicker(slot.slotId)
+                        : undefined
+                    }
+                    onRemove={
+                      removePlayer
+                        ? () => removePlayer(slot.slotId)
+                        : undefined
+                    }
+                    onSwap={
+                      swapPlayers
+                        ? (targetId) => swapPlayers(slot.slotId, targetId)
+                        : undefined
+                    }
                     onPlayerClick={handleSlotClick}
                     playerStats={playerStats}
                     mvpId={mvpId}
@@ -74,12 +90,28 @@ export const Section = ({
         <div className={Styles.field_line}>
           <div className={Styles.field_slot}>
             <SlotButton
-              isFromGeral={isFromGeral}
               slot={lineup.goalkeeper}
-              isSelecting={selectingSlotId === "gk-0"}
-              onOpen={() => openPlayerPicker("gk-0")}
-              onRemove={() => removePlayer("gk-0")}
-              onSwap={(targetId) => swapPlayers("gk-0", targetId)}
+              isFromGeral={isFromGeral}
+              isSelecting={
+                selectingSlotId !== undefined
+                  ? selectingSlotId === "gk-0"
+                  : undefined
+              }
+              onOpen={
+                openPlayerPicker
+                  ? () => openPlayerPicker("gk-0")
+                  : undefined
+              }
+              onRemove={
+                removePlayer
+                  ? () => removePlayer("gk-0")
+                  : undefined
+              }
+              onSwap={
+                swapPlayers
+                  ? (targetId) => swapPlayers("gk-0", targetId)
+                  : undefined
+              }
               onPlayerClick={handleSlotClick}
               playerStats={playerStats}
               mvpId={mvpId}

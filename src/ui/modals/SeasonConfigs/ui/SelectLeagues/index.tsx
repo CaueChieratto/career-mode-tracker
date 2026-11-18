@@ -1,12 +1,14 @@
 import { Dispatch, SetStateAction } from "react";
 import { League } from "../../../../../common/interfaces/League";
 import { Career } from "../../../../../common/interfaces/Career";
-import Button from "../../../../../components/Button";
 import CustomSelect from "../../../../../components/CustomSelect";
-import Styles from "./SelectLeagues.module.css";
-import { FaTimes } from "react-icons/fa";
 import { useSelectLeagues } from "./hooks/useSelectLeagues";
 import { buildConfirmLabel } from "./helpers/buildConfirmLabel";
+import {
+  SeasonConfigLeagueCard,
+  SeasonConfigSubScreen,
+  SeasonConfigSubScreenStyles as Styles,
+} from "../../components/SeasonConfigSubScreen";
 
 type SelectLeaguesProps = {
   careerId: string;
@@ -48,85 +50,46 @@ export const SelectLeagues = ({
   });
 
   return (
-    <div
-      className={Styles.container}
-      style={
-        {
-          "--club-color": clubColor,
-        } as React.CSSProperties
-      }
+    <SeasonConfigSubScreen
+      title="Selecionar Ligas"
+      subtitle="Escolha os torneios da temporada"
+      clubColor={clubColor}
+      confirmLabel={buildConfirmLabel(isSaving, selectedLeagues.length)}
+      onConfirm={handleConfirm}
+      onBack={onClose}
+      isSaving={isSaving}
     >
-      <div className={Styles.wrapper}>
-        <div className={Styles.header}>
-          <h2 className={Styles.title}>Selecionar Ligas</h2>
-          <p className={Styles.subtitle}>Escolha os torneios da temporada</p>
-        </div>
-
-        <div className={Styles.select_wrapper}>
-          <CustomSelect
-            name="leagueQuickSelect"
-            options={leaguesOptions}
-            value={selectValue}
-            placeholder={
-              leaguesOptions.length > 0
-                ? "Buscar e adicionar liga..."
-                : "Todas as ligas adicionadas"
-            }
-            onChange={handleSelectChange}
-            disabled={leaguesOptions.length === 0}
-          />
-        </div>
-
-        <div className={Styles.grid_scroll}>
-          <div className={Styles.leagues_grid}>
-            {selectedLeagues.length > 0 ? (
-              selectedLeagues.map((league) => (
-                <div key={league.name} className={Styles.league_card}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeLeague(league.name);
-                    }}
-                    className={Styles.remove_button}
-                  >
-                    <FaTimes />
-                  </button>
-
-                  <div className={Styles.container_league_img}>
-                    <img
-                      src={league.logo}
-                      alt={league.name}
-                      className={Styles.league_img}
-                    />
-                  </div>
-
-                  <span className={Styles.league_name}>{league.name}</span>
-                </div>
-              ))
-            ) : (
-              <p className={Styles.empty}>Nenhuma liga selecionada ainda.</p>
-            )}
-          </div>
-        </div>
+      <div className={Styles.select_wrapper}>
+        <CustomSelect
+          name="leagueQuickSelect"
+          options={leaguesOptions}
+          value={selectValue}
+          placeholder={
+            leaguesOptions.length > 0
+              ? "Buscar e adicionar liga..."
+              : "Todas as ligas adicionadas"
+          }
+          onChange={handleSelectChange}
+          disabled={leaguesOptions.length === 0}
+        />
       </div>
 
-      <div className={Styles.footer}>
-        <Button
-          onClick={handleConfirm}
-          disabled={isSaving}
-          style={{
-            backgroundColor: clubColor,
-            color: "var(--blackColor)",
-            border: `1px solid ${clubColor}`,
-          }}
-        >
-          {buildConfirmLabel(isSaving, selectedLeagues.length)}
-        </Button>
-
-        <button type="button" onClick={onClose} className={Styles.back}>
-          Voltar
-        </button>
+      <div className={Styles.grid_scroll}>
+        <div className={Styles.leagues_grid}>
+          {selectedLeagues.length > 0 ? (
+            selectedLeagues.map((league) => (
+              <SeasonConfigLeagueCard
+                key={league.name}
+                name={league.name}
+                imageSrc={league.logo}
+                onRemove={() => removeLeague(league.name)}
+              />
+            ))
+          ) : (
+            <p className={Styles.empty}>Nenhuma liga selecionada ainda.</p>
+          )}
+        </div>
       </div>
-    </div>
+    </SeasonConfigSubScreen>
   );
 };

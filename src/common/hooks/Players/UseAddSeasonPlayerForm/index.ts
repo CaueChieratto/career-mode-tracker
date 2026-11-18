@@ -1,6 +1,7 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Field } from "../../../../components/FormSection";
 import { formatRating } from "../../../utils/FormatRating";
+import { mergeFormValues } from "../../UseForm";
 
 export const useAddSeasonPlayerForm = () => {
   const [formValues, setFormValues] = useState<Record<string, string>>({});
@@ -35,11 +36,17 @@ export const useAddSeasonPlayerForm = () => {
     }));
   }, []);
 
+  const mergedFormValues = useMemo(
+    () => mergeFormValues(formValues, booleanValues),
+    [formValues, booleanValues],
+  );
+
   return {
     formValues,
     setFormValues,
     handleInputChange,
     booleanValues,
+    mergedFormValues,
     handleBooleanChange,
   };
 };

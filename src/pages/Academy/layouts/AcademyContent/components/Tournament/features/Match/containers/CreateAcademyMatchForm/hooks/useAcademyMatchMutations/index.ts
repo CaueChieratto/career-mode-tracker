@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useAcademyContext } from "../../../../../../../../../contexts/AcademyContext/hooks/useAcademyContext";
-import { AcademyMatches } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import { AcademyMatches } from "../../../../../../../../../../../../common/interfaces/AcademyData";
 import { getSeasonStartYear } from "../../../../../../../../utils/getSeasonStartYear";
 import { MatchDataPayload } from "../../../../forms/types/MatchDataPayload";
 import { isEuropeanSeason } from "../../../../../../../../utils/isEuropeanSeason";
+import { evaluateTournamentStatus } from "../../../../../../helpers/evaluateTournamentStatus";
+import { toast } from "../../../../../../../../../../../../common/services/ToastService";
 
 export const useAcademyMatchMutations = (
   initialData?: Partial<AcademyMatches>,
@@ -14,56 +16,13 @@ export const useAcademyMatchMutations = (
     useAcademyContext();
   const [formKey, setFormKey] = useState(0);
 
-  const getRecalculatedStatus = (matches: AcademyMatches[]) => {
-    let isFinished = false;
-    let isChampion = false;
-    let tournamentResult = "Em andamento";
-
-    if (matches.length === 0 || matches.every((m) => m.result !== "FINISHED")) {
-      tournamentResult = "Torneio Marcado";
-    }
-
-    for (const m of matches) {
-      if (m.result !== "FINISHED") continue;
-      const mStatus = m.status?.trim().toLowerCase() || "";
-      const isFinalMatch = mStatus === "final";
-      const isGroupStageMatch = mStatus === "fase de grupos";
-      const uG = Number(m.userGoals) || 0;
-      const oG = Number(m.opponentGoals) || 0;
-
-      let isDefeat = uG < oG;
-      let isVictory = uG > oG;
-
-      if (
-        uG === oG &&
-        m.userPenalties !== undefined &&
-        m.opponentPenalties !== undefined
-      ) {
-        isDefeat = m.userPenalties < m.opponentPenalties;
-        isVictory = m.userPenalties > m.opponentPenalties;
-      }
-
-      if (isDefeat && !isGroupStageMatch) {
-        isFinished = true;
-        isChampion = false;
-        tournamentResult = isFinalMatch ? "Vice-Campeão" : `Eliminado`;
-        break;
-      }
-
-      if (isFinalMatch && isVictory) {
-        isFinished = true;
-        isChampion = true;
-        tournamentResult = "Campeão";
-        break;
-      }
-    }
-    return { isFinished, isChampion, tournamentResult };
-  };
+  const getRecalculatedStatus = (matches: AcademyMatches[]) =>
+    evaluateTournamentStatus(matches);
 
   const handleSubmitMatch = async (data: MatchDataPayload) => {
     if (!selectedTournament || !onUpdateTournament) return;
     if (!data.opponentTeam || data.opponentTeam.trim() === "") {
-      alert("Por favor, selecione um adversário.");
+      toast.warning("Por favor, selecione um adversário.");
       return;
     }
 
@@ -114,11 +73,12 @@ export const useAcademyMatchMutations = (
       };
 
       await onUpdateTournament(updatedTournament, true);
+      toast.success("Partida da base salva com sucesso!");
       setFormKey((prev) => prev + 1);
       if (onMatchAdded) onMatchAdded();
     } catch (error) {
       console.error("Erro ao salvar partida:", error);
-      alert("Falha ao salvar a partida. Tente novamente.");
+      toast.error("Falha ao salvar a partida. Tente novamente.");
     }
   };
 
@@ -140,10 +100,11 @@ export const useAcademyMatchMutations = (
       };
 
       await onUpdateTournament(updatedTournament, true);
+      toast.success("Partida da base excluída com sucesso!");
       if (onMatchAdded) onMatchAdded();
     } catch (error) {
       console.error("Erro ao deletar partida:", error);
-      alert("Falha ao deletar a partida. Tente novamente.");
+      toast.error("Falha ao deletar a partida. Tente novamente.");
       throw error;
     }
   };

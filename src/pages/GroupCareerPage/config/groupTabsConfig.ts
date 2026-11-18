@@ -1,4 +1,4 @@
-import { TabConfig } from "../../../layout/SectionView/config/seasonTabsConfig";
+import { TabConfig } from "../../../common/config/seasonTabsConfig";
 import GroupSquadTab from "../components/GroupSquadTab";
 import { StatsTab_Club } from "../../../layout/SectionView/features/ClubTabs/StatsTab_Club";
 import { BestPlayersTab } from "../../../layout/SectionView/features/ClubTabs/BestPlayersTab";

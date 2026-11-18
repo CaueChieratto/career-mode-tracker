@@ -5,6 +5,7 @@ import type { SavedLineup } from "../../../../../../common/interfaces/Lineup";
 import { buildLineupStatsUpdate } from "../../helpers/buildLineupStatsUpdate";
 import type { MatchSavedCallback, RegisterLineupSave } from "../../types";
 import { useSaveLineup } from "../useSaveLineup";
+import { toast } from "../../../../../../common/services/ToastService";
 
 interface UseLineupPersistenceParams {
   match: Match;
@@ -55,6 +56,8 @@ export const useLineupPersistence = ({
       if (!saved) return;
 
       savedLineupRef.current = currentSavedLineup;
+
+      toast.success("Escalação salva com sucesso!");
 
       onSaved?.({
         lineup: currentSavedLineup,

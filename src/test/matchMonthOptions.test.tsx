@@ -6,7 +6,7 @@ import { AllMatchesTab } from '../layout/SectionView/features/ClubTabs/AllMatche
 import { MONTH_OPTIONS, MONTH_TO_NUM } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/constants/MONTH_OPTIONS';
 import { useMatchActions } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/hooks/useMatchActions';
 import { useAddMatchesContext } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/contexts/context';
-import { ServiceMatches } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches';
+import { ServiceMatches } from '../common/services/ServiceMatches';
 import { getSeasonName } from '../common/utils/GetSeasonName';
 import { career, deepFreeze, match, season } from './factories/domain';
 import type { Match } from '../common/interfaces/Match';
@@ -34,7 +34,7 @@ vi.mock('../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/
   useAddMatchesContext: vi.fn(),
 }));
 // No Firebase or external team API is executed by these tests.
-vi.mock('../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches', () => ({
+vi.mock('../common/services/ServiceMatches', () => ({
   ServiceMatches: { addMatchToSeason: vi.fn().mockResolvedValue(undefined) },
 }));
 vi.mock('../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/helpers/buildTeamData', () => ({
@@ -52,6 +52,7 @@ const createAddMatchesContextMock = (
   career: career(),
   season: season(),
   formValues: {},
+  mergedFormValues: {},
   booleanValues: {},
   onClose: vi.fn(),
   setFormValues: vi.fn(),

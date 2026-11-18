@@ -1,10 +1,9 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { collection, getDocs } from "firebase/firestore";
-import { auth, db } from "../../../../common/services/Firebase";
 import { useSeasonData } from "../../../../common/hooks/Seasons/UseSeasonData";
 import { Match } from "../../../../common/interfaces/Match";
 import { PlayerMatchStat } from "../../../../common/interfaces/PlayerMatchStat";
+import { ServiceMatches } from "../../../../common/services/ServiceMatches";
 
 export const useMatchData = () => {
   const { careerId, seasonId, matchesId } = useParams<{
@@ -27,34 +26,40 @@ export const useMatchData = () => {
   const [match, setMatch] = useState<Match | undefined>(initialMatch);
   const [loading, setLoading] = useState(true);
 
+  const requestIdRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const fetchSubcollectionStats = useCallback(async () => {
     if (seasonLoading) return;
 
-    if (!initialMatch || !careerId || !seasonId || !matchesId) {
-      setMatch(initialMatch);
-      setLoading(false);
-      return;
-    }
+    const currentRequestId = ++requestIdRef.current;
 
-    const user = auth.currentUser;
-    if (!user) {
-      setMatch(initialMatch);
-      setLoading(false);
+    if (!initialMatch || !careerId || !seasonId || !matchesId) {
+      if (currentRequestId === requestIdRef.current && isMountedRef.current) {
+        setMatch(initialMatch);
+        setLoading(false);
+      }
       return;
     }
 
     try {
-      const statsRef = collection(
-        db,
-        `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/matches/${matchesId}/playerStats`,
-      );
-      const statsSnap = await getDocs(statsRef);
-      const subcollectionStats = statsSnap.docs.map(
-        (doc) => doc.data() as PlayerMatchStat,
+      const subcollectionStats = await ServiceMatches.getMatchPlayerStats(
+        careerId,
+        seasonId,
+        matchesId,
       );
 
+      if (currentRequestId !== requestIdRef.current || !isMountedRef.current) return;
+
       if (subcollectionStats.length === 0) {
-        setMatch(initialMatch);
+        setMatch((prev) => prev ?? initialMatch);
       } else {
         const statsMap = new Map<string, PlayerMatchStat>();
 
@@ -66,16 +71,20 @@ export const useMatchData = () => {
 
         subcollectionStats.forEach((stat) => statsMap.set(stat.playerId, stat));
 
-        setMatch({
-          ...initialMatch,
+        setMatch((prev) => ({
+          ...(prev ?? initialMatch),
           playerStats: Array.from(statsMap.values()),
-        });
+        }));
       }
     } catch (error) {
-      console.error("Erro ao buscar as estatísticas da subcoleção:", error);
-      setMatch(initialMatch);
+      if (currentRequestId === requestIdRef.current && isMountedRef.current) {
+        console.error("Erro ao buscar as estatísticas da subcoleção:", error);
+        setMatch((prev) => prev ?? initialMatch);
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [initialMatch, careerId, seasonId, matchesId, seasonLoading]);
 
@@ -92,6 +101,7 @@ export const useMatchData = () => {
   };
 
   const updateLocalMatch = useCallback((updatedFields: Partial<Match>) => {
+    requestIdRef.current++;
     setMatch((prev) => (prev ? { ...prev, ...updatedFields } : prev));
   }, []);
 

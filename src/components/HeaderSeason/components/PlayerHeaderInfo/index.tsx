@@ -1,6 +1,6 @@
 import { Players } from "../../../../common/interfaces/playersInfo/players";
 import { Match } from "../../../../common/interfaces/Match";
-import { PlayerCircle } from "../../../../pages/Match/components/LineupTab/layouts/Section/components/SlotButton/components/PlayerDetails/PlayerCircle";
+import { PlayerCircle } from "../../../PlayerCircle";
 import Styles from "./PlayerHeaderInfo.module.css";
 
 type PlayerHeaderInfoProps = {

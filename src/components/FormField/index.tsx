@@ -1,4 +1,4 @@
-import { Field } from "../FormSection";
+import { Field } from "../FormSection/types";
 import Input from "../Input";
 import Styles from "./FormField.module.css";
 
@@ -16,19 +16,24 @@ const FormField = ({
   onChange,
   onKeyDown,
   onKeyUp,
-}: FormFieldProps) => (
-  <Input
-    className={Styles.input}
-    id={field.id}
-    name={field.id}
-    type={field.inputType || "text"}
-    placeholder={field.placeholder}
-    value={value}
-    disabled={field.disabled}
-    onChange={onChange}
-    onKeyDown={onKeyDown}
-    onKeyUp={onKeyUp}
-  />
-);
+}: FormFieldProps) => {
+  return (
+    <Input
+      id={field.id}
+      name={field.id}
+      type={field.inputType || "text"}
+      placeholder={field.placeholder}
+      className={Styles.input}
+      value={value}
+      onChange={onChange}
+      disabled={field.disabled}
+      maxLength={field.maxLength}
+      max={field.max}
+      min={field.min}
+      onKeyDown={onKeyDown}
+      onKeyUp={onKeyUp}
+    />
+  );
+};
 
 export default FormField;

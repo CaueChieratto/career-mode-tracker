@@ -1,5 +1,5 @@
 import CustomSelect from "../CustomSelect";
-import { Field } from "../FormSection";
+import { Field } from "../FormSection/types";
 
 type FormSelectProps = {
   field: Field;

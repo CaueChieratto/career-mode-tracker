@@ -1,6 +1,6 @@
 import { Career } from "../../../../../../../../../../common/interfaces/Career";
-import { AcademyPlayers } from "../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
-import { AcademyPlayersHistory } from "../../../../../../interfaces/AcademyPlayers/AcademyPlayersHistory";
+import { AcademyPlayers } from "../../../../../../../../../../common/interfaces/AcademyData";
+import { AcademyPlayersHistory } from "../../../../../../../../../../common/interfaces/AcademyData";
 import { PlayerDataPayload } from "../../../../forms/types/PlayerDataPayload";
 import { getSeasonStartYear } from "../../../../../../utils/getSeasonStartYear";
 import { isEuropeanSeason } from "../../../../../../utils/isEuropeanSeason";

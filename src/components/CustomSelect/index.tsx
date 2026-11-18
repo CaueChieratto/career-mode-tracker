@@ -52,9 +52,12 @@ const CustomSelect = ({
   useEffect(() => {
     if (isOpen) {
       const currentIndex = options.indexOf(value);
-      setHighlightedIndex(currentIndex >= 0 ? currentIndex : 0);
+      const targetIndex = currentIndex >= 0 ? currentIndex : 0;
+      setHighlightedIndex((prev) =>
+        prev === targetIndex ? prev : targetIndex,
+      );
     } else {
-      setHighlightedIndex(-1);
+      setHighlightedIndex((prev) => (prev === -1 ? prev : -1));
     }
   }, [isOpen, options, value]);
 
@@ -140,7 +143,13 @@ const CustomSelect = ({
         aria-haspopup="listbox"
         aria-expanded={isOpen}
       >
-        <span>{displayValue}</span>
+        <span
+          className={
+            !value && Boolean(placeholder) ? Styles.placeholder : undefined
+          }
+        >
+          {displayValue}
+        </span>
         <FaChevronDown
           className={`${Styles.chevron} ${isOpen ? Styles.open : ""}`}
         />

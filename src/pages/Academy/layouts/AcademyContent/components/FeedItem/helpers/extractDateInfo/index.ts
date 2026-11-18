@@ -1,14 +1,32 @@
 import { getSeasonMonthWeight } from "../../../Player/components/PlayerDevelopment/utils/getSeasonMonthWeight";
 
-export const extractDateInfo = (dateStr: string, isEurope: boolean) => {
-  if (!dateStr)
+export interface ExtractedAcademyDateInfo {
+  day: number;
+  month: number;
+  monthWeight: number;
+  formattedDate: string;
+  year: number;
+  seasonYear: number;
+}
+
+export const extractDateInfo = (
+  dateStr: string,
+  isEurope: boolean,
+  fallbackYear?: number,
+): ExtractedAcademyDateInfo => {
+  const defaultYear = fallbackYear ?? new Date().getFullYear();
+
+  if (!dateStr) {
     return {
       day: 0,
       month: 1,
       monthWeight: 0,
       formattedDate: "",
-      year: new Date().getFullYear(),
+      year: defaultYear,
+      seasonYear: defaultYear,
     };
+  }
+
   try {
     let dayStr = "";
     let monthStr = "";
@@ -31,17 +49,21 @@ export const extractDateInfo = (dateStr: string, isEurope: boolean) => {
       const parts = dateStr.split("/");
       dayStr = parts[0];
       monthStr = parts[1];
-      yearStr = parts[2] || new Date().getFullYear().toString();
+      yearStr = parts[2] || "";
     }
 
     const day = parseInt(dayStr, 10) || 0;
     const month = parseInt(monthStr, 10) || 1;
     const monthWeight = getSeasonMonthWeight(month, isEurope);
 
-    let rawYear = parseInt(yearStr, 10) || new Date().getFullYear();
-    if (rawYear < 100) rawYear += 2000;
+    const parsedYear = yearStr ? parseInt(yearStr, 10) : NaN;
+    let rawYear = !isNaN(parsedYear) ? parsedYear : defaultYear;
+    if (rawYear > 0 && rawYear < 100) rawYear += 2000;
 
-    const finalYear = String(rawYear).slice(-2);
+    const seasonYear =
+      isEurope && month < 7 && rawYear > 0 ? rawYear - 1 : rawYear;
+
+    const finalYear = String(rawYear).slice(-2).padStart(2, "0");
     const formattedDay = String(day).padStart(2, "0");
     const formattedMonth = String(month).padStart(2, "0");
 
@@ -51,6 +73,7 @@ export const extractDateInfo = (dateStr: string, isEurope: boolean) => {
       monthWeight,
       formattedDate: `${formattedDay}/${formattedMonth}/${finalYear}`,
       year: rawYear,
+      seasonYear,
     };
   } catch {
     return {
@@ -58,7 +81,26 @@ export const extractDateInfo = (dateStr: string, isEurope: boolean) => {
       month: 1,
       monthWeight: 0,
       formattedDate: dateStr,
-      year: new Date().getFullYear(),
+      year: defaultYear,
+      seasonYear: defaultYear,
     };
   }
+};
+
+export const compareAcademyDates = (
+  dateA: string,
+  dateB: string,
+  isEurope: boolean,
+  fallbackYear?: number,
+): number => {
+  const infoA = extractDateInfo(dateA, isEurope, fallbackYear);
+  const infoB = extractDateInfo(dateB, isEurope, fallbackYear);
+
+  if (infoA.seasonYear !== infoB.seasonYear) {
+    return infoA.seasonYear - infoB.seasonYear;
+  }
+  if (infoA.monthWeight !== infoB.monthWeight) {
+    return infoA.monthWeight - infoB.monthWeight;
+  }
+  return infoA.day - infoB.day;
 };

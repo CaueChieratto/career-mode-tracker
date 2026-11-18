@@ -4,7 +4,7 @@ import { CareerGroup } from "../../../../common/interfaces/CareerGroup";
 import { ClubData } from "../../../../common/interfaces/club/clubData";
 import { PlayersGroupService } from "../../../../common/services/ServicePlayers/PlayersGroupService";
 import { auth } from "../../../../common/services/Firebase";
-import { getValidDate } from "../../helper/getValidDate";
+import { getValidDate } from "../../../../common/utils/Date";
 
 export type SeasonByCareer = {
   clubName: string;
@@ -68,7 +68,7 @@ export const useGroupSeasonView = (save: CareerGroup) => {
       ...latestCareer,
       id: latestCareer.id,
       clubName: save.managerName,
-      clubData: seasonsByCareer.map((s) => ({
+      clubData: (seasonsByCareer ?? []).map((s) => ({
         ...s.season,
         clubName: s.clubName,
       })),

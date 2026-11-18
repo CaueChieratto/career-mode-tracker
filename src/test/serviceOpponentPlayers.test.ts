@@ -6,6 +6,8 @@ import {
 import { auth } from "./mocks/firebaseClient";
 import { getDoc, updateDoc, documentSnapshot } from "./mocks/firestore";
 import { Career } from "../common/interfaces/Career";
+import { buildFormFields } from "../pages/Match/components/MatchDetailsTab/views/AddDetails/helpers/buildFormFields";
+import { OpponentPlayer } from "../common/interfaces/OpponentPlayer";
 
 describe("ServiceOpponentPlayers - isolamento e persistência de adversários", () => {
   beforeEach(() => {
@@ -194,6 +196,112 @@ describe("ServiceOpponentPlayers - isolamento e persistência de adversários", 
     );
     expect(saved).toEqual([]);
     expect(updateDoc).not.toHaveBeenCalled();
+  });
+
+  it("suporta skipCareerWrite ao salvar em carreira individual evitando write redundante em careerRef", async () => {
+    getDoc.mockResolvedValue(
+      documentSnapshot("career-1", { opponentPlayers: [] }, true),
+    );
+
+    const saved = await ServiceOpponentPlayers.saveOpponentPlayers(
+      "career-1",
+      [{ name: "Craque sem double-write", team: "Rival FC" }],
+      null,
+      { skipCareerWrite: true },
+    );
+
+    expect(saved).toHaveLength(1);
+    expect(saved[0].name).toBe("Craque sem double-write");
+    expect(updateDoc).not.toHaveBeenCalled();
+  });
+
+  describe("filtro contextual de adversários em buildFormFields", () => {
+    const knownOpponents: OpponentPlayer[] = [
+      { id: "op1", name: "Rival Striker", team: "Rival FC", createdAt: 1 },
+      { id: "op2", name: "Rival Winger", team: "Rival FC", createdAt: 2 },
+      { id: "op3", name: "Outro Meia", team: "Outro Clube", createdAt: 3 },
+    ];
+
+    it("campo limpo/vazio: exibe apenas os jogadores do clube adversário da partida", () => {
+      const sections = buildFormFields(
+        false,
+        false,
+        1,
+        1,
+        0,
+        0,
+        ["Gol 1"],
+        {},
+        "Meu Clube",
+        "Rival FC",
+        {},
+        knownOpponents.map((p) => p.name),
+        knownOpponents,
+        "Rival FC",
+      );
+
+      const mvpSection = sections.find((s) => s.title === "Resultado e Tempo de Jogo");
+      const mvpField = mvpSection?.fields.flat().find((f) => f.id === "opponentMvpName");
+
+      expect(mvpField?.options).toEqual(["Rival Striker", "Rival Winger"]);
+      expect(mvpField?.options).not.toContain("Outro Meia");
+    });
+
+    it("campo com digitação: expande as opções para todos os jogadores do histórico geral", () => {
+      const sections = buildFormFields(
+        false,
+        false,
+        1,
+        1,
+        0,
+        0,
+        ["Gol 1"],
+        {},
+        "Meu Clube",
+        "Rival FC",
+        { opponentMvpName: "Outro" },
+        knownOpponents.map((p) => p.name),
+        knownOpponents,
+        "Rival FC",
+      );
+
+      const mvpSection = sections.find((s) => s.title === "Resultado e Tempo de Jogo");
+      const mvpField = mvpSection?.fields.flat().find((f) => f.id === "opponentMvpName");
+
+      expect(mvpField?.options).toEqual([
+        "Rival Striker",
+        "Rival Winger",
+        "Outro Meia",
+      ]);
+    });
+
+    it("fallback: exibe todos os jogadores quando o clube adversário não possui atletas cadastrados", () => {
+      const sections = buildFormFields(
+        false,
+        false,
+        1,
+        1,
+        0,
+        0,
+        ["Gol 1"],
+        {},
+        "Meu Clube",
+        "Clube Inédito",
+        {},
+        knownOpponents.map((p) => p.name),
+        knownOpponents,
+        "Clube Inédito",
+      );
+
+      const mvpSection = sections.find((s) => s.title === "Resultado e Tempo de Jogo");
+      const mvpField = mvpSection?.fields.flat().find((f) => f.id === "opponentMvpName");
+
+      expect(mvpField?.options).toEqual([
+        "Rival Striker",
+        "Rival Winger",
+        "Outro Meia",
+      ]);
+    });
   });
 });
 

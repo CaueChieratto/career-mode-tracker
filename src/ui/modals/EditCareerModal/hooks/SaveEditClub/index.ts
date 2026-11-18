@@ -1,5 +1,6 @@
 import { Career } from "../../../../../common/interfaces/Career";
 import { ServiceCareer } from "../../../../../common/services/ServiceCareer";
+import { ColorsService } from "../../../../../common/services/ColorsService";
 
 export async function SaveEditClub(
   career: Career,
@@ -20,6 +21,14 @@ export async function SaveEditClub(
     managerName,
     createdAt,
   );
+
+  if (career.groupId && managerName && managerName !== career.managerName) {
+    await ServiceCareer.updateCareerGroupManager(career.groupId, managerName);
+  }
+
+  if (primaryColor) {
+    ColorsService.saveColors(career.id, primaryColor);
+  }
 
   const updatedCareer = {
     ...career,

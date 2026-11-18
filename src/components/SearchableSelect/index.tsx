@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { FaChevronDown } from "react-icons/fa";
 import Styles from "./SearchableSelect.module.css";
 
@@ -7,11 +7,20 @@ type SearchableSelectProps = {
   options: readonly string[];
   value: string;
   placeholder?: string;
-  onChange: (event: { target: { name: string; value: string } }) => void;
+  onChange: (event: {
+    target: { name: string; value: string; isExplicitSelection?: boolean };
+  }) => void;
+  onSelectOption?: (option: string, name: string) => void;
   disabled?: boolean;
   className?: string;
   useAlternateStyle?: boolean;
 };
+
+const normalize = (str: string) =>
+  str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 
 const SearchableSelect = ({
   name,
@@ -19,6 +28,7 @@ const SearchableSelect = ({
   value,
   placeholder,
   onChange,
+  onSelectOption,
   className,
   disabled = false,
   useAlternateStyle,
@@ -28,14 +38,21 @@ const SearchableSelect = ({
   const selectRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const filteredOptions = useMemo(() => {
+    const query = normalize(value || "").trim();
+    if (!query) return options;
+    return options.filter((opt) => normalize(opt).includes(query));
+  }, [options, value]);
+
   const handleOptionClick = (optionValue: string) => {
-    onChange({ target: { name, value: optionValue } });
+    onChange({ target: { name, value: optionValue, isExplicitSelection: true } });
+    onSelectOption?.(optionValue, name);
     setIsOpen(false);
     inputRef.current?.blur();
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ target: { name, value: e.target.value } });
+    onChange({ target: { name, value: e.target.value, isExplicitSelection: false } });
     setIsOpen(true);
   };
 
@@ -60,7 +77,7 @@ const SearchableSelect = ({
     if (isOpen) {
       setHighlightedIndex(-1);
     }
-  }, [isOpen, options, value]);
+  }, [isOpen, filteredOptions]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (disabled) return;
@@ -68,8 +85,12 @@ const SearchableSelect = ({
     switch (event.key) {
       case "Enter":
         event.preventDefault();
-        if (isOpen && highlightedIndex >= 0 && options[highlightedIndex]) {
-          handleOptionClick(options[highlightedIndex]);
+        if (
+          isOpen &&
+          highlightedIndex >= 0 &&
+          filteredOptions[highlightedIndex]
+        ) {
+          handleOptionClick(filteredOptions[highlightedIndex]);
         } else {
           setIsOpen(false);
         }
@@ -79,10 +100,13 @@ const SearchableSelect = ({
         event.preventDefault();
         if (!isOpen) {
           setIsOpen(true);
-        } else if (options.length > 0) {
+        } else if (filteredOptions.length > 0) {
           const modifier = event.key === "ArrowDown" ? 1 : -1;
           setHighlightedIndex((prev) => {
-            return (prev + modifier + options.length) % options.length;
+            return (
+              (prev + modifier + filteredOptions.length) %
+              filteredOptions.length
+            );
           });
         }
         break;
@@ -135,23 +159,27 @@ const SearchableSelect = ({
           }}
         />
       </div>
-      {isOpen && options.length > 0 && (
+      {isOpen && (
         <ul className={Styles.options_list}>
-          {options.map((option, index) => (
-            <li
-              key={option}
-              className={`${Styles.option_item} ${
-                value === option ? Styles.selected : ""
-              } ${index === highlightedIndex ? Styles.highlighted : ""}`}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleOptionClick(option);
-              }}
-              onMouseEnter={() => setHighlightedIndex(index)}
-            >
-              {option}
-            </li>
-          ))}
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((option, index) => (
+              <li
+                key={`${option}-${index}`}
+                className={`${Styles.option_item} ${
+                  value === option ? Styles.selected : ""
+                } ${index === highlightedIndex ? Styles.highlighted : ""}`}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleOptionClick(option);
+                }}
+                onMouseEnter={() => setHighlightedIndex(index)}
+              >
+                {option}
+              </li>
+            ))
+          ) : (
+            <li className={Styles.no_options}>Nenhuma opção encontrada</li>
+          )}
         </ul>
       )}
     </div>

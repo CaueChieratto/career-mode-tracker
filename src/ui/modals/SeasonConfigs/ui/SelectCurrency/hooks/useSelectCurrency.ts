@@ -1,6 +1,8 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { Career } from "../../../../../../common/interfaces/Career";
 import { ServiceSeasons } from "../../../../../../common/services/ServiceSeasons";
+import { toast } from "../../../../../../common/services/ToastService";
+import { getCurrencySymbol } from "../../../../../../common/utils/FormatValue";
 
 type UseSelectCurrencyParams = {
   career: Career;
@@ -22,19 +24,20 @@ export const useSelectCurrency = ({
 }: UseSelectCurrencyParams): UseSelectCurrencyReturn => {
   const [isSaving, setIsSaving] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<string>(
-    career.currency || "EUR",
+    getCurrencySymbol(career.currency || "€"),
   );
 
   const handleConfirm = async (): Promise<void> => {
     try {
       setIsSaving(true);
-      await ServiceSeasons.updateCurrency(career.id, selectedCurrency);
-
-      setSelectedCareer({ ...career, currency: selectedCurrency });
+      const symbol = getCurrencySymbol(selectedCurrency);
+      await ServiceSeasons.updateCurrency(career.id, symbol);
+      toast.success("Moeda atualizada com sucesso!");
+      setSelectedCareer({ ...career, currency: symbol });
       onClose();
     } catch (error) {
       console.error("Erro ao salvar moeda:", error);
-      alert("Ocorreu um erro ao salvar a moeda selecionada.");
+      toast.error("Ocorreu um erro ao salvar a moeda selecionada.");
     } finally {
       setIsSaving(false);
     }

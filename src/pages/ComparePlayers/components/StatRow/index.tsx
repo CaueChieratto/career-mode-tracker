@@ -1,5 +1,5 @@
 import Styles from "./StatRow.module.css";
-import { UseRatingColor } from "../../../../common/hooks/Colors/GetOverallColor";
+import { RatingBadge } from "../../../../components/RatingBadge";
 
 interface StatRowProps {
   label: string;
@@ -7,6 +7,19 @@ interface StatRowProps {
   val2: React.ReactNode;
   isRating?: boolean;
 }
+
+const renderRatingOrValue = (value: React.ReactNode, isRating: boolean) => {
+  if (
+    isRating &&
+    value !== "-" &&
+    (typeof value === "number" || typeof value === "string")
+  ) {
+    return (
+      <RatingBadge rating={value} displayValue={value} variant="compact" />
+    );
+  }
+  return value || "-";
+};
 
 export const StatRow = ({
   label,
@@ -16,29 +29,11 @@ export const StatRow = ({
 }: StatRowProps) => (
   <div className={Styles.statRow}>
     <div className={Styles.statValue}>
-      {isRating && val1 !== "-" ? (
-        <span
-          className={Styles.ratingBadge}
-          style={{ backgroundColor: UseRatingColor(Number(val1)) }}
-        >
-          {val1}
-        </span>
-      ) : (
-        val1 || "-"
-      )}
+      {renderRatingOrValue(val1, isRating)}
     </div>
     <div className={Styles.statLabel}>{label}</div>
     <div className={Styles.statValue}>
-      {isRating && val2 !== "-" ? (
-        <span
-          className={Styles.ratingBadge}
-          style={{ backgroundColor: UseRatingColor(Number(val2)) }}
-        >
-          {val2}
-        </span>
-      ) : (
-        val2 || "-"
-      )}
+      {renderRatingOrValue(val2, isRating)}
     </div>
   </div>
 );

@@ -6,6 +6,19 @@ import { Players } from "../../interfaces/playersInfo/players";
 import { LeagueStats } from "../../interfaces/playersStats/leagueStats";
 import { POSITION_DATA } from "../../types/Positions";
 
+const positionRankMap = new Map<string, number>();
+let rankCount = 0;
+POSITION_DATA.forEach((group) => {
+  const order = group.sortOrder || group.positions || [];
+  order.forEach((pos) => {
+    positionRankMap.set(pos, rankCount++);
+  });
+});
+
+export const getPositionRank = (position: string): number => {
+  return positionRankMap.get(position) ?? 999;
+};
+
 export const sortTrophies = (trophies: Career["trophies"]) => {
   return [...trophies].sort((a, b) => {
     const diffSeasons = b.seasons.length - a.seasons.length;

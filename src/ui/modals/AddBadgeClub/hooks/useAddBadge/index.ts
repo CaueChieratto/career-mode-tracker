@@ -1,6 +1,7 @@
 import { useState, ChangeEvent, FormEvent } from "react";
-import { CloudinaryService } from "../../services/CloudinaryService";
+import { CloudinaryService } from "../../../../../common/services/CloudinaryService";
 import { CareerBadgeService } from "../../services/CareerBadgeService";
+import { toast } from "../../../../../common/services/ToastService";
 
 type UseAddBadgeProps = {
   careerId: string;
@@ -51,6 +52,7 @@ export const useAddBadge = ({
         imageUrl,
       });
 
+      toast.success("Escudo atualizado com sucesso!");
       if (onSuccess) onSuccess();
       closeModal();
     } catch (err) {

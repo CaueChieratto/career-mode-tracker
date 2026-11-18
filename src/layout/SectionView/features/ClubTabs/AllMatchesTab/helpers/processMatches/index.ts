@@ -13,6 +13,7 @@ type Params = {
   selectedSeasonId?: string;
   playerId?: string;
   matchingPlayerIds?: Set<string>;
+  forceFinished?: boolean;
 };
 
 const parseDate = (date: string): number => {
@@ -99,6 +100,7 @@ export const processMatches = ({
   selectedSeasonId,
   playerId,
   matchingPlayerIds,
+  forceFinished,
 }: Params): Match[] => {
   const baseMatches = getAllMatches(
     season,
@@ -107,7 +109,7 @@ export const processMatches = ({
     selectedSeasonId,
   );
 
-  const status = isGeralPage ? "FINISHED" : activeTab;
+  const status = isGeralPage || forceFinished ? "FINISHED" : activeTab;
   const isFinished = status === "FINISHED";
 
   const sorted = sortMatches(baseMatches, isFinished);

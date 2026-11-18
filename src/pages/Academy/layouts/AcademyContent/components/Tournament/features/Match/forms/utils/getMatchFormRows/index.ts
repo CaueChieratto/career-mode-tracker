@@ -1,4 +1,4 @@
-import { AcademyMatches } from "../../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import { AcademyMatches } from "../../../../../../../../../../../common/interfaces/AcademyData";
 import { FieldConfig } from "../../../../../../Player/forms/types/FieldConfig";
 import { MatchFormTexts } from "../../types/MatchFormTexts";
 

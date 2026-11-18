@@ -1,6 +1,6 @@
 import { Career } from "../../../../../../../../../../common/interfaces/Career";
-import { AcademyPlayers } from "../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
-import { AcademyTournaments } from "../../../../../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyPlayers } from "../../../../../../../../../../common/interfaces/AcademyData";
+import { AcademyTournaments } from "../../../../../../../../../../common/interfaces/AcademyData";
 
 export const buildPlayerCopyText = (
   player: AcademyPlayers,
@@ -92,5 +92,3 @@ export const buildPlayerCopyText = (
 
   return `${name}, ${position}, ${age}, ${nationality}, ${heightWeight}, ${matches}, ${statsPart}, ${avgRating}, ${titlesPart}.`;
 };
-
-export const formatPlayerText = buildPlayerCopyText;

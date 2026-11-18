@@ -1,14 +1,16 @@
 import { v4 as uuidv4 } from "uuid";
 import { parseFullBrasilDate } from "../../../utils/Date";
 import { Career } from "../../../interfaces/Career";
-import { fetchTeamByClubName } from "../../../services/APICareerService";
 import { ColorsService } from "../../../services/ColorsService";
+import { ServiceClubBadges } from "../../../services/ServiceClubBadges";
 
-type UseCreateCareerProps = {
+export type UseCreateCareerProps = {
   club: string;
   manager: string;
   nation: string;
   createdAt: string;
+  primaryColor: string;
+  secondaryColor: string;
 };
 
 export async function UseCreateCareer({
@@ -16,27 +18,27 @@ export async function UseCreateCareer({
   manager,
   nation,
   createdAt,
+  primaryColor,
+  secondaryColor,
 }: UseCreateCareerProps): Promise<Career> {
-  const team = await fetchTeamByClubName(club);
+  const trimmedClub = club.trim();
+  const teamBadge = await ServiceClubBadges.resolveClubBadge(trimmedClub);
   const createdAtParsed = parseFullBrasilDate(createdAt) ?? new Date();
 
   const newCareer: Career = {
     id: uuidv4(),
-    clubName: team?.strTeam || club,
-    managerName: manager,
+    clubName: trimmedClub,
+    managerName: manager.trim(),
     createdAt: createdAtParsed,
-    teamBadge: team?.strBadge || "",
-    nation: nation,
-    colorsTeams:
-      [team?.strColour1, team?.strColour2].filter(Boolean).length > 0
-        ? [team.strColour1, team.strColour2]
-        : ["#ffffff", "#ffffff"],
+    teamBadge,
+    nation: nation.trim(),
+    colorsTeams: [primaryColor, secondaryColor],
     trophies: [],
     clubData: [],
   };
 
-  if (newCareer.colorsTeams.length > 0 && newCareer.colorsTeams[0]) {
-    ColorsService.saveColors(newCareer.id, newCareer.colorsTeams[0]);
+  if (primaryColor) {
+    ColorsService.saveColors(newCareer.id, primaryColor);
   }
 
   return newCareer;

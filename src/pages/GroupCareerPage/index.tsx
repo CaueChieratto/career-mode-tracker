@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { CareerGroup } from "../../common/interfaces/CareerGroup";
 import Load from "../../components/Load";
@@ -18,13 +18,18 @@ export const GroupCareerPage = () => {
 
   const [save, setSave] = useState<CareerGroup | undefined>(stateSave);
   const [fetching, setFetching] = useState(!stateSave);
+  const [hasOpenScreen, setHasOpenScreen] = useState(false);
+
+  const tabsConfig = useMemo(() => getGroupTabsConfig(), []);
 
   useEffect(() => {
-    if (stateSave || !groupId) return;
+    if (!groupId) return;
 
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        setFetching(true);
+        if (!stateSave) {
+          setFetching(true);
+        }
         ServiceCareerGroup.getById(groupId)
           .then((data) => setSave(data ?? undefined))
           .catch((error) => {
@@ -51,7 +56,8 @@ export const GroupCareerPage = () => {
     );
 
   if (fetching || (save && loading)) return <Load />;
-  if (!save || !groupCareer) return <NotFoundDisplay />;
+  if (!save || !groupCareer || !seasonsByCareer[0]?.season)
+    return <NotFoundDisplay />;
 
   return (
     <GroupCareerContext.Provider
@@ -61,11 +67,13 @@ export const GroupCareerPage = () => {
         notSeason
         title={save.managerName}
         career={groupCareer}
-        season={seasonsByCareer[0]?.season}
-        tabsConfig={getGroupTabsConfig()}
+        season={seasonsByCareer[0].season}
+        tabsConfig={tabsConfig}
+        onScreenChange={setHasOpenScreen}
+        tabStorageKey={`group-tab-${save.id}`}
       />
 
-      <BottomMenu />
+      {!hasOpenScreen && <BottomMenu />}
     </GroupCareerContext.Provider>
   );
 };

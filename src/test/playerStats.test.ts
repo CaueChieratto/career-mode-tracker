@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { savePlayerMatchStats } from '../pages/Match/components/LineupTab/views/AddMatchStatsPlayer/services/savePlayerMatchStats';
 import { buildPlayerStats } from '../pages/Match/components/LineupTab/views/AddMatchStatsPlayer/helpers/buildPlayerStats';
-import { ServiceMatches } from '../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches';
+import { ServiceMatches } from '../common/services/ServiceMatches';
 import { career, deepFreeze, match, player, season, stat } from './factories/domain';
 
-vi.mock('../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches', () => ({ ServiceMatches: { savePlayerStatsToSubcollection: vi.fn() } }));
-beforeEach(() => { vi.mocked(ServiceMatches.savePlayerStatsToSubcollection).mockReset().mockResolvedValue(undefined); });
+vi.mock('../common/services/ServiceMatches', () => ({ ServiceMatches: { savePlayerStatsToSubcollection: vi.fn() } }));
+beforeEach(() => { vi.mocked(ServiceMatches.savePlayerStatsToSubcollection).mockReset().mockImplementation(async (_c, _s, _m, _p, updated) => updated || []); });
 describe('estatísticas individuais e contraparte de substituição', () => {
   it('converte números, filtra minutos e alvos inválidos e preserva cartões', () => {
     const result = buildPlayerStats('p1', { matchGoals: '2', goalMinute_0: '15', goalMinute_1: '', assists: '2', assistToGoal_0: 'p2:30', assistToGoal_1: 'Nenhum gol disponível', yellowCardMinute: '22', substituteIn: 'Bia' }, { yellowCard: true });
@@ -16,12 +16,12 @@ describe('estatísticas individuais e contraparte de substituição', () => {
     const result = await savePlayerMatchStats({ career: career(), season: season(), match: input, player: player(), formValues: { matchGoals: '2', minutesPlayed: '90' }, booleanValues: {} });
     expect(result.updatedPlayerStats).toHaveLength(1);
     expect(result.updatedPlayerStats[0].goals).toBe(2);
-    expect(ServiceMatches.savePlayerStatsToSubcollection).toHaveBeenCalledWith('c1', 's1', 'm1', [expect.objectContaining({ playerId: 'p1', goals: 2 })], [expect.objectContaining({ playerId: 'p1', goals: 2 })]);
+    expect(ServiceMatches.savePlayerStatsToSubcollection).toHaveBeenCalledWith('c1', 's1', 'm1', [expect.objectContaining({ playerId: 'p1', goals: 2 })], [expect.objectContaining({ playerId: 'p1', goals: 2 })], 'p1');
   });
   it('contraparte sem minutos recebe restante e mantém vínculo reverso', async () => {
     const result = await savePlayerMatchStats({ career: career(), season: season({ players: [player(), player({ id: 'p2', name: 'Bia' })] }), match: match(), player: player(), formValues: { minutesPlayed: '60', substituteIn: 'Bia' }, booleanValues: {} });
     expect(result.updatedPlayerStats).toEqual([expect.objectContaining({ playerId: 'p1', minutesPlayed: 60 }), expect.objectContaining({ playerId: 'p2', minutesPlayed: 30, substituteIn: 'Ana' })]);
-    expect(ServiceMatches.savePlayerStatsToSubcollection).toHaveBeenCalledWith('c1', 's1', 'm1', [expect.objectContaining({ playerId: 'p1', minutesPlayed: 60 }), expect.objectContaining({ playerId: 'p2', minutesPlayed: 30, substituteIn: 'Ana' })], [expect.objectContaining({ playerId: 'p1', minutesPlayed: 60 }), expect.objectContaining({ playerId: 'p2', minutesPlayed: 30, substituteIn: 'Ana' })]);
+    expect(ServiceMatches.savePlayerStatsToSubcollection).toHaveBeenCalledWith('c1', 's1', 'm1', [expect.objectContaining({ playerId: 'p1', minutesPlayed: 60 }), expect.objectContaining({ playerId: 'p2', minutesPlayed: 30, substituteIn: 'Ana' })], [expect.objectContaining({ playerId: 'p1', minutesPlayed: 60 }), expect.objectContaining({ playerId: 'p2', minutesPlayed: 30, substituteIn: 'Ana' })], 'p1');
   });
   it('contraparte com minutos informados não é sobrescrita', async () => {
     const counterpart = stat({ playerId: 'p2', minutesPlayed: 20, goals: 1 });

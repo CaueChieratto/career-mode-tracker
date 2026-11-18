@@ -9,8 +9,7 @@ export const getContractInMonths = (savedValue: number): number => {
   return years * 12 + months;
 };
 
-export const formatContractDisplay = (savedValue: number): string => {
-  const totalMonths = getContractInMonths(savedValue);
+export const formatMonthsDuration = (totalMonths: number): string => {
   if (totalMonths <= 0) return "Expirado";
 
   const years = Math.floor(totalMonths / 12);
@@ -26,3 +25,6 @@ export const formatContractDisplay = (savedValue: number): string => {
 
   return `${years}A. ${months}M.`;
 };
+
+export const formatContractDisplay = (savedValue: number): string =>
+  formatMonthsDuration(getContractInMonths(savedValue));

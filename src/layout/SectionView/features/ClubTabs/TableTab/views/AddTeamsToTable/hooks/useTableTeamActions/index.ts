@@ -1,18 +1,23 @@
 import { useState, useCallback } from "react";
-import { ServiceTable } from "../../services/ServiceTable";
+import { ServiceTable } from "../../../../../../../../../common/services/ServiceTable";
 import { useAddTeamsToTableContext } from "../../contexts/context";
 import { v4 as uuidv4 } from "uuid";
 import { resolveTableTeamStatValues } from "../../helpers/tableTeamFormStats";
+import { toast } from "../../../../../../../../../common/services/ToastService";
+import { NavigationSessionStore } from "../../../../../../../../../common/services/NavigationSessionStore";
 
-export function useTableTeamActions() {
+import { TableRowData } from "../../../../../../../../../common/interfaces/Table";
+
+export function useTableTeamActions(resolvedTeamToEdit?: TableRowData) {
   const {
     career,
     season,
     teamId,
-    teamToEdit,
+    teamToEdit: contextTeamToEdit,
     formValues,
     onClose: onSuccess,
   } = useAddTeamsToTableContext();
+  const teamToEdit = contextTeamToEdit ?? resolvedTeamToEdit;
   const careerId = career.id;
   const seasonId = season.id;
 
@@ -23,10 +28,11 @@ export function useTableTeamActions() {
     try {
       setIsSaving(true);
       await ServiceTable.deleteTeamFromTable(careerId, seasonId, teamId);
+      toast.success("Time removido da tabela com sucesso!");
       onSuccess({ type: "DELETE_TABLE_TEAM", teamId });
     } catch (error) {
       console.error("Erro ao deletar time da tabela: ", error);
-      alert("Ocorreu um erro ao deletar os dados. Tente novamente.");
+      toast.error("Ocorreu um erro ao deletar os dados. Tente novamente.");
     } finally {
       setIsSaving(false);
     }
@@ -34,7 +40,7 @@ export function useTableTeamActions() {
 
   const saveTableTeam = useCallback(async () => {
     if (!formValues.teamName) {
-      alert("Por favor, selecione um time.");
+      toast.warning("Por favor, selecione um time.");
       return;
     }
     const searchName = formValues.teamName.trim().toLowerCase();
@@ -42,9 +48,26 @@ export function useTableTeamActions() {
       (t) => t.name.trim().toLowerCase() === searchName,
     );
     const isCareerTeam = career?.clubName.trim().toLowerCase() === searchName;
+    const isEditingCurrentTeam = Boolean(
+      teamId &&
+        teamToEdit?.name &&
+        teamToEdit.name.trim().toLowerCase() === searchName,
+    );
+    const isMatchTeam = Boolean(
+      season.matches?.some(
+        (m) =>
+          m.homeTeam?.trim().toLowerCase() === searchName ||
+          m.awayTeam?.trim().toLowerCase() === searchName,
+      ),
+    );
 
-    if (!existingTeam && !isCareerTeam) {
-      alert("Por favor, selecione um time válido da lista.");
+    if (
+      !existingTeam &&
+      !isCareerTeam &&
+      !isEditingCurrentTeam &&
+      !isMatchTeam
+    ) {
+      toast.warning("Por favor, selecione um time válido da lista.");
       return;
     }
 
@@ -52,9 +75,13 @@ export function useTableTeamActions() {
       setIsSaving(true);
       let teamBadge = "";
       if (existingTeam) {
-        teamBadge = existingTeam.badge || "";
+        teamBadge =
+          existingTeam.badge ||
+          (isEditingCurrentTeam ? teamToEdit?.badge || "" : "");
       } else if (isCareerTeam) {
         teamBadge = career.teamBadge || "";
+      } else if (isEditingCurrentTeam && teamToEdit?.badge) {
+        teamBadge = teamToEdit.badge;
       }
 
       const {
@@ -122,16 +149,11 @@ export function useTableTeamActions() {
         customZone: mapFormToZone(formValues.customZone),
       };
 
-      if (teamId) {
-        await ServiceTable.updateTeamInTable(
-          careerId,
-          seasonId,
-          teamId,
-          tableTeamData,
-        );
-      } else {
-        await ServiceTable.addTeamToTable(careerId, seasonId, tableTeamData);
-      }
+      NavigationSessionStore.saveClickAnchor("table", {
+        scrollY: 0,
+        anchorSelector: `#table-row-${newId}`,
+        updatedAt: Date.now(),
+      });
 
       if (teamId) {
         await ServiceTable.updateTeamInTable(
@@ -140,14 +162,16 @@ export function useTableTeamActions() {
           teamId,
           tableTeamData,
         );
+        toast.success("Dados do time atualizados com sucesso!");
         onSuccess({ type: "UPDATE_TABLE_TEAM", team: tableTeamData });
       } else {
         await ServiceTable.addTeamToTable(careerId, seasonId, tableTeamData);
+        toast.success("Time adicionado à tabela com sucesso!");
         onSuccess({ type: "ADD_TABLE_TEAM", team: tableTeamData });
       }
     } catch (error) {
       console.error("Erro ao salvar time na tabela: ", error);
-      alert("Ocorreu um erro ao salvar os dados. Tente novamente.");
+      toast.error("Ocorreu um erro ao salvar os dados. Tente novamente.");
       setIsSaving(false);
     }
   }, [

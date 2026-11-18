@@ -7,7 +7,7 @@ import { getMatchTabsConfig } from "../../config/matchTabsConfig";
 import type { MatchScreen } from "../../config/screens";
 import { useMatchData } from "../useMatchData";
 import { useMatchTabAction } from "../useMatchTabAction";
-import { useScreenStack } from "../../navigation/useScreenStack";
+import { useScreenStack } from "../../../../common/hooks/useScreenStack";
 
 export const useMatchPageController = () => {
   const data = useMatchData();

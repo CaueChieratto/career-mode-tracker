@@ -56,5 +56,14 @@ POSITION_DATA.forEach((group) => {
   });
 });
 
+export const positionOptionsBySector = {
+  Ataque: ["PE", "PD", "ATA"],
+  Meia: ["VOL", "ME", "MC", "MD", "MEI"],
+  Defesa: ["LE", "ZAG", "LD"],
+  Goleiro: ["GOL"],
+} as const;
+
+export const SECTOR_OPTIONS = ["Ataque", "Meia", "Defesa", "Goleiro"] as const;
+
 export const getGroupForPosition = (position: string) =>
   positionToGroupMap.get(position);

@@ -4,8 +4,8 @@ import { Career } from "../../interfaces/Career";
 import { ClubData } from "../../interfaces/club/clubData";
 import { Players } from "../../interfaces/playersInfo/players";
 import { mergeModernAndLegacy } from "../../helpers/mergeModernAndLegacy";
-import { ServiceMatches } from "../../../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
-import { augmentSeasonWithMatchStats } from "../../../layout/SectionView/helpers/mergeMatchStats";
+import { ServiceMatches } from "../ServiceMatches";
+import { augmentSeasonWithMatchStats } from "../../stats/helpers/mergeMatchStats";
 import { requireAuth } from "./helpers/authHelpers";
 import { parseFirestoreDate } from "./helpers/dateHelpers";
 import { aggregatePlayerStats } from "./helpers/statsHelpers";
@@ -149,7 +149,10 @@ export const PlayersGroupService = {
         season.players.forEach((player) => {
           const uniqueKey = getPlayerIdentityKey(player, careerData.id);
           const history = playerHistoryMap.get(uniqueKey) || [];
-          playerHistoryMap.set(uniqueKey, [...history, player]);
+          playerHistoryMap.set(uniqueKey, [
+            ...history,
+            { ...player, originCareerId: careerData.id },
+          ]);
         });
       }
     }
@@ -160,6 +163,8 @@ export const PlayersGroupService = {
       const latestPlayerState = { ...history[history.length - 1] };
       const maxOverall = Math.max(...history.map((p) => p.overall || 0));
       latestPlayerState.overall = maxOverall;
+      latestPlayerState.originCareerId =
+        history[history.length - 1]?.originCareerId;
 
       finalPlayers.push(latestPlayerState);
     });

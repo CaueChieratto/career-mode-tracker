@@ -1,16 +1,19 @@
 import { useState, useMemo } from "react";
 import { useAcademyContext } from "../../../../../../../../../contexts/AcademyContext/hooks/useAcademyContext";
-import { AcademyMatches } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
-import { PlayerMatchesStats } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
+import { AcademyMatches } from "../../../../../../../../../../../../common/interfaces/AcademyData";
+import { PlayerMatchesStats } from "../../../../../../../../../../../../common/interfaces/AcademyData";
 import { getAvailablePlayers } from "../../helpers/getAvailablePlayers";
 import { buildUpdatedMatch } from "../../helpers/buildUpdatedMatch";
 import { getSuggestedLineup } from "../../helpers/getSuggestedLineup";
+import { evaluateTournamentStatus } from "../../../../../../helpers/evaluateTournamentStatus";
+import { toast } from "../../../../../../../../../../../../common/services/ToastService";
 
 export const useManageMatch = (match: AcademyMatches, onBack: () => void) => {
   const {
     playersAcademy,
     allPlayersAcademy,
     selectedTournament,
+    allTournamentsAcademy,
     onUpdateTournament,
     career,
   } = useAcademyContext();
@@ -35,6 +38,8 @@ export const useManageMatch = (match: AcademyMatches, onBack: () => void) => {
       selectedTournament?.matches || [],
       match,
       allPlayersAcademy,
+      allTournamentsAcademy,
+      selectedTournament?.id,
     );
   });
   const [selectedSearchValue, setSelectedSearchValue] = useState("");
@@ -80,49 +85,8 @@ export const useManageMatch = (match: AcademyMatches, onBack: () => void) => {
       m.id === match.id ? updatedMatch : m,
     );
 
-    let isFinished = false;
-    let isChampion = false;
-    let tournamentResult = "";
-
-    if (updatedMatches.every((m) => m.result !== "FINISHED")) {
-      tournamentResult = "Torneio Marcado";
-    }
-
-    for (const m of updatedMatches) {
-      if (m.result !== "FINISHED") continue;
-
-      const mStatus = m.status?.trim().toLowerCase() || "";
-      const isFinalMatch = mStatus === "final";
-      const isGroupStageMatch = mStatus === "fase de grupos";
-      const uG = Number(m.userGoals) || 0;
-      const oG = Number(m.opponentGoals) || 0;
-
-      let isDefeat = uG < oG;
-      let isVictory = uG > oG;
-
-      if (
-        uG === oG &&
-        m.userPenalties !== undefined &&
-        m.opponentPenalties !== undefined
-      ) {
-        isDefeat = m.userPenalties < m.opponentPenalties;
-        isVictory = m.userPenalties > m.opponentPenalties;
-      }
-
-      if (isDefeat && !isGroupStageMatch) {
-        isFinished = true;
-        isChampion = false;
-        tournamentResult = isFinalMatch ? "Vice-Campeão" : `Eliminado`;
-        break;
-      }
-
-      if (isFinalMatch && isVictory) {
-        isFinished = true;
-        isChampion = true;
-        tournamentResult = "Campeão";
-        break;
-      }
-    }
+    const { isFinished, isChampion, tournamentResult } =
+      evaluateTournamentStatus(updatedMatches);
 
     await onUpdateTournament(
       {
@@ -235,10 +199,11 @@ export const useManageMatch = (match: AcademyMatches, onBack: () => void) => {
         userPenalties,
         opponentPenalties,
       );
+      toast.success("Estatísticas da partida salvas com sucesso!");
       setSelectedPlayerIdForStats(null);
     } catch (error) {
       console.error("Erro ao salvar estatísticas do jogador:", error);
-      alert("Falha ao salvar as estatísticas.");
+      toast.error("Falha ao salvar as estatísticas.");
     } finally {
       setIsSavingStats(false);
     }

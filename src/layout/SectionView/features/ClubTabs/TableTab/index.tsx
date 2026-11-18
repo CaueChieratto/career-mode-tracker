@@ -17,8 +17,9 @@ import { Copy } from "../../../../../common/utils/Copy";
 import { buildTableCopyText } from "./helpers/buildTableCopyText";
 import NoStatsMessage from "../../../../../components/NoStatsMessage";
 import CustomSelect from "../../../../../components/CustomSelect";
-import { leaguesByContinent } from "../../../../../common/utils/league";
+import { getAllLeaguesFlat } from "../../../../../common/utils/league";
 import { SectionScreen } from "../../../config/screens";
+import { useScrollAnchorRestore } from "../../../../../common/hooks/useScrollAnchorRestore";
 
 type TableTabProps = {
   season: ClubData;
@@ -69,6 +70,8 @@ export const TableTab = ({
     isActive,
   );
 
+  useScrollAnchorRestore("table", [tableData]);
+
   const columns = buildTableColumns(activeMode);
 
   const mainLeague = useMemo(() => {
@@ -78,9 +81,7 @@ export const TableTab = ({
     ) {
       return undefined;
     }
-    const allKnownCompetitions = Object.values(leaguesByContinent).flatMap(
-      (continent) => Object.values(continent).flat(),
-    );
+    const allKnownCompetitions = getAllLeaguesFlat();
 
     const trueLeague = selectedSeasonData.leagues.find((seasonComp) => {
       if (seasonComp.league) return true;

@@ -2,32 +2,29 @@ import { useRef } from "react";
 import ModalManager from "../../../../../../../../../common/constants/ModalManager";
 import { useModalManager } from "../../../../../../../../../common/hooks/Modal/UseModalManager";
 import { useSeasonTheme } from "../../../../../../../../../common/hooks/Seasons/UseSeasonTheme";
-import { Career } from "../../../../../../../../../common/interfaces/Career";
-import { ClubData } from "../../../../../../../../../common/interfaces/club/clubData";
 import HeaderSeason from "../../../../../../../../../components/HeaderSeason";
 import Load from "../../../../../../../../../components/Load";
 import { usePlayerActions } from "../../hooks/usePlayerActions";
 import Navbar from "../../../../../../../../../ui/Navbar";
 import Styles from "./AddSquad_PlayerScreen.module.css";
-import AddSquad_Player from "../..";
+import AddSquad_Player_Form from "../../components/AddSquad_Player_Form";
+import { useAddSquadPlayerContext } from "../../contexts/context";
+import { AddSquadPlayerProps } from "../../types";
+import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
 
-type Props = {
-  career: Career;
-  season: ClubData;
-  playerId?: string;
-  onClose: () => void;
-};
+export function AddSquad_PlayerScreen(props?: Partial<AddSquadPlayerProps>) {
+  const context = useAddSquadPlayerContext();
 
-export default function AddSquad_PlayerScreen({
-  career,
-  season,
-  playerId,
-  onClose,
-}: Props) {
+  const career = props?.career ?? context.career;
+  const season = props?.season ?? context.season;
+  const playerId =
+    props?.playerId !== undefined ? props.playerId : context.playerId;
+  const onClose = props?.onClose ?? context.onClose;
+
   const formRef = useRef<HTMLFormElement>(null);
   const modalManager = useModalManager();
   const { clubColor, darkClubColor } = useSeasonTheme();
-  const player = season.players.find((p) => p.id === playerId);
+  const player = season?.players?.find((p: Players) => p.id === playerId);
 
   const {
     isLoading,
@@ -36,10 +33,10 @@ export default function AddSquad_PlayerScreen({
     handleSellPlayer,
     handleReturnLoanPlayer,
   } = usePlayerActions({
-    careerId: career.id,
-    seasonId: season.id,
+    careerId: career?.id,
+    seasonId: season?.id,
     player,
-    currentPlayers: season.players,
+    currentPlayers: season?.players || [],
     onSuccess: onClose,
     career,
     season,
@@ -57,7 +54,7 @@ export default function AddSquad_PlayerScreen({
   return (
     <>
       <HeaderSeason
-        careerId={career.id}
+        careerId={career?.id}
         career={career}
         backSeasons={onClose}
         titleText={player?.name}
@@ -70,7 +67,7 @@ export default function AddSquad_PlayerScreen({
       />
       <div className={Styles.container}>
         <div className={Styles.form_container}>
-          <AddSquad_Player
+          <AddSquad_Player_Form
             ref={formRef}
             player={player}
             career={career}
@@ -95,3 +92,5 @@ export default function AddSquad_PlayerScreen({
     </>
   );
 }
+
+export default AddSquad_PlayerScreen;

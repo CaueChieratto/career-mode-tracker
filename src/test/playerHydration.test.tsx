@@ -9,6 +9,7 @@
  * 2. Todos os dados dependentes (career, season, player, groupCareers, resumo de carreira)
  *    continuam sendo devidamente providos e acessíveis.
  * 3. A desmontagem do hook cancela exatamente o listener registrado.
+ * 4. Quando allCareers já é provido pela tela hospedeira, ServiceCareer.getAll não é chamado (0 chamadas).
  */
 import React from "react";
 import { act, cleanup, renderHook } from "@testing-library/react";
@@ -21,7 +22,7 @@ vi.mock("../common/services/ServiceCareer", () => ({
   ServiceCareer: { getAll: vi.fn() },
 }));
 import { ServiceCareer } from "../common/services/ServiceCareer";
-import { usePlayerPageData } from "../pages/Players/hooks/usePlayerPageData";
+import { usePlayerPageData } from "../layout/SectionView/views/Players/hooks/usePlayerPageData";
 import {
   career as careerFactory,
   player as playerFactory,
@@ -42,6 +43,11 @@ const createWrapper = (route: string) => {
     return (
       <MemoryRouter initialEntries={[route]}>
         <Routes>
+          <Route
+            path="/Career/:careerId/Season/:seasonId"
+            element={<>{children}</>}
+          />
+          <Route path="/Career/:careerId/Geral" element={<>{children}</>} />
           <Route
             path="/Career/:careerId/Season/:seasonId/Player/:playerId"
             element={<>{children}</>}
@@ -70,7 +76,7 @@ afterEach(() => {
 });
 
 describe("[7D] Player Hydration — usePlayerPageData", () => {
-  it("cria exatamente UMA subscrição a ServiceCareer.getAll ao montar a tela de Player", () => {
+  it("cria exatamente UMA subscrição a ServiceCareer.getAll ao montar sem allCareers externo", () => {
     const unsub = vi.fn();
     let snapshotCallback: ((careers: unknown[]) => void) | undefined;
 
@@ -91,9 +97,18 @@ describe("[7D] Player Hydration — usePlayerPageData", () => {
       clubData: [testSeason],
     });
 
-    const { result, unmount } = renderHook(() => usePlayerPageData(), {
-      wrapper: createWrapper("/Career/c1/Season/s1/Player/p1"),
-    });
+    const { result, unmount } = renderHook(
+      () =>
+        usePlayerPageData({
+          playerId: "p1",
+          careerId: "c1",
+          seasonId: "s1",
+          isNotSeason: false,
+        }),
+      {
+        wrapper: createWrapper("/Career/c1/Season/s1"),
+      },
+    );
 
     simulateLoggedIn();
 
@@ -121,15 +136,7 @@ describe("[7D] Player Hydration — usePlayerPageData", () => {
     expect(unsub).toHaveBeenCalledTimes(1);
   });
 
-  it("funciona normalmente na rota Geral (/Career/:careerId/Geral/Player/:playerId)", () => {
-    const unsub = vi.fn();
-    let snapshotCallback: ((careers: unknown[]) => void) | undefined;
-
-    vi.mocked(ServiceCareer.getAll).mockImplementation((cb) => {
-      snapshotCallback = cb as (careers: unknown[]) => void;
-      return unsub;
-    });
-
+  it("não chama ServiceCareer.getAll quando allCareers já é provido pelas props", () => {
     const testPlayer = playerFactory({ id: "p1", name: "Gabriel Gol" });
     const testSeason = seasonFactory({
       id: "s1",
@@ -142,18 +149,53 @@ describe("[7D] Player Hydration — usePlayerPageData", () => {
       clubData: [testSeason],
     });
 
-    const { result } = renderHook(() => usePlayerPageData(), {
-      wrapper: createWrapper("/Career/c1/Geral/Player/p1"),
+    const { result } = renderHook(
+      () =>
+        usePlayerPageData({
+          playerId: "p1",
+          careerId: "c1",
+          seasonId: "s1",
+          isNotSeason: false,
+          allCareers: [testCareer],
+        }),
+      {
+        wrapper: createWrapper("/Career/c1/Season/s1"),
+      },
+    );
+
+    expect(ServiceCareer.getAll).not.toHaveBeenCalled();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.career?.id).toBe("c1");
+    expect(result.current.player?.id).toBe("p1");
+  });
+
+  it("funciona normalmente no modo Geral via props (isNotSeason = true)", () => {
+    const testPlayer = playerFactory({ id: "p1", name: "Gabriel Gol" });
+    const testSeason = seasonFactory({
+      id: "s1",
+      seasonNumber: 1,
+      players: [testPlayer],
+    });
+    const testCareer = careerFactory({
+      id: "c1",
+      clubName: "Flamengo",
+      clubData: [testSeason],
     });
 
-    simulateLoggedIn();
+    const { result } = renderHook(
+      () =>
+        usePlayerPageData({
+          playerId: "p1",
+          careerId: "c1",
+          isNotSeason: true,
+          allCareers: [testCareer],
+        }),
+      {
+        wrapper: createWrapper("/Career/c1/Geral"),
+      },
+    );
 
-    expect(ServiceCareer.getAll).toHaveBeenCalledTimes(1);
-
-    act(() => {
-      snapshotCallback?.([testCareer]);
-    });
-
+    expect(ServiceCareer.getAll).not.toHaveBeenCalled();
     expect(result.current.isNotSeason).toBe(true);
     expect(result.current.career?.id).toBe("c1");
     expect(result.current.player?.id).toBe("p1");

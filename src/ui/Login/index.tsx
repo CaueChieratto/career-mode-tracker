@@ -10,10 +10,12 @@ import { GoLock } from "react-icons/go";
 import { MdOutlineEmail } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import { FirebaseError } from "firebase/app";
+import { toast } from "../../common/services/ToastService";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,24 +50,34 @@ const Login = () => {
           message = "Erro de autenticação. Verifique suas credenciais.";
       }
     }
-    alert(message);
+    toast.error(message);
   };
 
   const handleLogin = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       await AuthService.login(email, password);
+      toast.success("Login realizado com sucesso!");
       linkCareersPage();
     } catch (err) {
       handleAuthError(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleRegister = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
     try {
       await AuthService.register(email, password);
+      toast.success("Conta criada com sucesso!");
       linkCareersPage();
     } catch (err) {
       handleAuthError(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -99,11 +111,11 @@ const Login = () => {
         />
       </Label>
       <ContainerButton className={Styles.containerButtons}>
-        <Button onClick={handleLogin} typeButton="primary">
-          Entrar
+        <Button onClick={handleLogin} typeButton="primary" disabled={isLoading}>
+          {isLoading ? "Entrando..." : "Entrar"}
         </Button>
-        <Button onClick={handleRegister} typeButton="secondary">
-          Criar Conta
+        <Button onClick={handleRegister} typeButton="secondary" disabled={isLoading}>
+          {isLoading ? "Criando..." : "Criar Conta"}
         </Button>
       </ContainerButton>
     </div>

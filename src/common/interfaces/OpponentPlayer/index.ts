@@ -5,5 +5,6 @@ export interface OpponentPlayer {
   careerId?: string;
   groupId?: string | null;
   createdAt?: number;
+  isFormerPlayer?: boolean;
 }
 

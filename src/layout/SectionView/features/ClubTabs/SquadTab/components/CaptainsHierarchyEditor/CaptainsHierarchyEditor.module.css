@@ -1,0 +1,152 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--dark-box, rgba(0, 0, 0, 0.25));
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.limit_badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #b0b0b0;
+}
+
+.warning {
+  font-size: 12px;
+  color: #ff9800;
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 4px 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--dark-item, rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: background 0.2s;
+}
+
+.current_player_item {
+  border-color: var(--club-color, #ffffff);
+  background: color-mix(in srgb, var(--club-color, #ffffff) 15%, transparent);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rank_badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--club-color, #ffffff);
+  color: #000000;
+}
+
+.player_info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.player_name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.player_sub {
+  font-size: 11px;
+  color: #888888;
+}
+
+.current_tag {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--club-color, #ffffff);
+  margin-left: 6px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.arrow_btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.arrow_btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.arrow_btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.replace_btn {
+  background: rgba(255, 152, 0, 0.2);
+  border: 1px solid rgba(255, 152, 0, 0.4);
+  color: #ffb74d;
+  font-size: 11px;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.replace_btn:hover {
+  background: rgba(255, 152, 0, 0.35);
+}
+

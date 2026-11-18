@@ -5,7 +5,7 @@ import type { LeagueStats } from '../../common/interfaces/playersStats/leagueSta
 import type { PlayerMatchStat } from '../../common/interfaces/PlayerMatchStat';
 import type { Match } from '../../common/interfaces/Match';
 import type { SavedLineup } from '../../common/interfaces/Lineup';
-import type { AcademyPlayers } from '../../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers';
+import type { AcademyPlayers } from '../../common/interfaces/AcademyData';
 
 export const leagueStats = (stats: Partial<LeagueStats['stats']> = {}, leagueName = 'Liga'): LeagueStats => ({
   leagueName, leagueImage: 'liga.svg',

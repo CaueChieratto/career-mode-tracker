@@ -4,6 +4,7 @@ import { PlayerDataPayload } from "../../types/PlayerDataPayload";
 import { getFormattedArrivalDate } from "../getFormattedArrivalDate";
 import { FIFA_COUNTRY_CODES } from "../../../../../../../../../common/constants/FIFA_COUNTRY_CODES";
 import { FIFA_NATIONALITIES } from "../../../../../../../../../common/constants/FIFA_NATIONALITIES";
+import { formatDateInput } from "../../../../../../../../../common/utils/Date";
 
 type GetFormRowsParams = {
   texts: PlayerFormTexts;
@@ -18,6 +19,7 @@ type GetFormRowsParams = {
   nationality: string;
   setNationality: (nationality: string) => void;
   editingAttribute?: string;
+  seasonStartYear?: number;
 };
 
 export const getFormRows = ({
@@ -33,6 +35,7 @@ export const getFormRows = ({
   setPosition,
   setNationality,
   editingAttribute,
+  seasonStartYear,
 }: GetFormRowsParams): FieldConfig[][] => {
   const allCountries = Object.keys(FIFA_COUNTRY_CODES);
   const filteredCountries = nationality
@@ -51,10 +54,27 @@ export const getFormRows = ({
     onInput: (e) => (e.currentTarget.value = e.currentTarget.value.slice(0, 2)),
   };
 
+  const birthDateField: FieldConfig = {
+    name: "birthDate",
+    label: texts.birthDateLabel || "Data de Nascimento",
+    placeholder: texts.birthDatePlaceholder || "DD/MM/AAAA",
+    type: "text",
+    maxLength: 10,
+    defaultValue:
+      initialData?.birthDate ||
+      (initialData?.age && seasonStartYear
+        ? `01/01/${seasonStartYear - initialData.age}`
+        : ""),
+    hideOnEvolution: true,
+    onInput: (e) => {
+      e.currentTarget.value = formatDateInput(e.currentTarget.value);
+    },
+  };
+
   const shirtNumberField: FieldConfig = {
     name: "shirtNumber",
-    label: texts.shirtNumberLabel,
-    placeholder: texts.shirtNumberPlaceholder,
+    label: texts.shirtNumberLabel || "Numeração",
+    placeholder: texts.shirtNumberPlaceholder || "Ex: 10",
     type: "number",
     min: 1,
     max: 99,
@@ -209,6 +229,8 @@ export const getFormRows = ({
       weight: weightField,
       sector: sectorField,
       position: positionField,
+      shirtNumber: shirtNumberField,
+      birthDate: birthDateField,
     };
 
     const specificField = attributeMap[editingAttribute];
@@ -221,7 +243,7 @@ export const getFormRows = ({
     return [
       [sectorField, positionField],
       [overallField, potentialField],
-      [ageField, heightField, weightField],
+      [heightField, weightField],
       [evolutionDateField],
     ];
   }
@@ -230,7 +252,7 @@ export const getFormRows = ({
     [nameField, nationalityField],
     [sectorField, positionField],
     [overallField, potentialField],
-    [ageField, heightField, weightField],
-    [shirtNumberField, arrivalDateField],
+    [heightField, weightField, shirtNumberField],
+    [birthDateField, arrivalDateField],
   ];
 };

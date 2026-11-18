@@ -2,7 +2,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import SectionView from "../layout/SectionView";
-import type { TabConfig } from "../layout/SectionView/config/seasonTabsConfig";
+import type { TabConfig } from "../common/config/seasonTabsConfig";
 import { career, season, match as matchFactory } from "./factories/domain";
 import { Match } from "../pages/Match";
 import * as MatchDataHook from "../pages/Match/hooks/useMatchData";
@@ -257,10 +257,10 @@ describe("Stage 7G2 — Lazy Mount of Tabs (SectionView & Match)", () => {
         </ThemeProvider>,
       );
 
-      // Tab 2 (currently active) is mounted
-      expect(screen.getByTestId("tab-2")).toBeTruthy();
-      // Tab 1 ("Elenco" - visited in season-1, but not visited in season-2) was reset and is NOT mounted
-      expect(screen.queryByTestId("tab-1")).toBeNull();
+      // Tab 1 ("Elenco" - active tab for season-2) is mounted
+      expect(screen.getByTestId("tab-1")).toBeTruthy();
+      // Tab 2 ("Geral" - visited in season-1, but not visited in season-2) was reset and is NOT mounted
+      expect(screen.queryByTestId("tab-2")).toBeNull();
     });
   });
 
@@ -366,10 +366,10 @@ describe("Stage 7G2 — Lazy Mount of Tabs (SectionView & Match)", () => {
         </ThemeProvider>,
       );
 
-      // "Formações" (active tab) is mounted for m2
-      expect(screen.getByTestId("lineup-tab")).toBeTruthy();
-      // "Resultado" (visited in m1, but not yet in m2) was reset and is NOT mounted
-      expect(screen.queryByTestId("match-details-tab")).toBeNull();
+      // "Resultado" (active tab for m2) is mounted
+      expect(screen.getByTestId("match-details-tab")).toBeTruthy();
+      // "Formações" (visited in m1, but not yet in m2) was reset and is NOT mounted
+      expect(screen.queryByTestId("lineup-tab")).toBeNull();
     });
   });
 });

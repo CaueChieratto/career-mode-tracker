@@ -1,4 +1,4 @@
-import Styles from "../SeasonsPlayerTab/SeasonsPlayerTab.module.css";
+import Styles from "../PlayerTabs.module.css";
 
 type NoTitleSeasonProps = {
   text: string;

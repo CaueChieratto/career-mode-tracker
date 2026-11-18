@@ -6,15 +6,19 @@ import Load from "../../../../../../../../../components/Load";
 import Navbar from "../../../../../../../../../ui/Navbar";
 import { useTableTeamActions } from "../../hooks/useTableTeamActions";
 import { useTableTeamForm } from "../../hooks/useTableTeamForm";
-import { ServiceTable } from "../../services/ServiceTable";
+import { ServiceTable } from "../../../../../../../../../common/services/ServiceTable";
 import { useAddTeamsToTableContext } from "../../contexts/context";
 import Form from "../../../../../../../../../components/Form";
 import { TableRowData } from "../../../../../../../../../common/interfaces/Table";
 import { getEmptyTableTeamStatFormValues } from "../../helpers/tableTeamFormStats";
+import { useToast } from "../../../../../../../../../common/hooks/UseToast";
 
 export const AddTeamsToTableScreen = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const [addedTeamNames, setAddedTeamNames] = useState<string[]>([]);
+  const [fetchedTeamToEdit, setFetchedTeamToEdit] = useState<
+    TableRowData | undefined
+  >(undefined);
 
   const {
     career,
@@ -30,6 +34,8 @@ export const AddTeamsToTableScreen = () => {
     handleBooleanChange,
   } = useAddTeamsToTableContext();
 
+  const effectiveTeamToEdit = teamToEdit ?? fetchedTeamToEdit;
+
   useEffect(() => {
     const fetchTable = async () => {
       if (career?.id && season?.id) {
@@ -39,17 +45,27 @@ export const AddTeamsToTableScreen = () => {
             season.id,
           );
           setAddedTeamNames(data.map((t) => t.name));
+          if (teamId && !teamToEdit) {
+            const found = data.find((t) => t.id === teamId);
+            if (found) {
+              setFetchedTeamToEdit({
+                ...found,
+                position: 0,
+                zone: "none",
+              });
+            }
+          }
         } catch (error) {
           console.error("Erro ao buscar tabela: ", error);
         }
       }
     };
     fetchTable();
-  }, [career?.id, season?.id]);
+  }, [career?.id, season?.id, teamId, teamToEdit]);
 
   useEffect(() => {
-    if (teamToEdit) {
-      const t = teamToEdit as TableRowData & { customZone?: string };
+    if (effectiveTeamToEdit) {
+      const t = effectiveTeamToEdit as TableRowData & { customZone?: string };
       const mapZoneToForm = (zone?: string) => {
         switch (zone) {
           case "first":
@@ -79,17 +95,23 @@ export const AddTeamsToTableScreen = () => {
         customZone: mapZoneToForm(t.customZone),
       });
     }
-  }, [teamToEdit, setFormValues]);
+  }, [effectiveTeamToEdit, setFormValues]);
 
-  const { formFields } = useTableTeamForm({ addedTeamNames });
-  const { isSaving, saveTableTeam, deleteTableTeam } = useTableTeamActions();
+  const { formFields } = useTableTeamForm({
+    addedTeamNames,
+    resolvedTeamToEdit: fetchedTeamToEdit,
+  });
+  const { isSaving, saveTableTeam, deleteTableTeam } =
+    useTableTeamActions(fetchedTeamToEdit);
+  const { confirm } = useToast();
 
   const actionClick = async (action: string) => {
     if (action === "DELETE_TEAM") {
-      const confirmar = window.confirm(
+      const confirmed = await confirm(
         "Deseja realmente excluir este time da tabela?",
+        { tone: "danger", confirmLabel: "Excluir" },
       );
-      if (confirmar) {
+      if (confirmed) {
         await deleteTableTeam();
       }
     }

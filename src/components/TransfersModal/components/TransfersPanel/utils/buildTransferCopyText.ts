@@ -7,6 +7,11 @@ import {
   checkIsIncomingLoanExit,
   checkIsLoanReturnArrival,
 } from "../../../../../common/services/ServicePlayers/helpers/contractHelpers";
+import {
+  isNextSeasonTiming,
+  isNextWindowTiming,
+  shouldPlayerLeaveOnNextWindow,
+} from "../../../../../common/services/ServicePlayers/helpers/transferTimingHelpers";
 
 const CURRENCY_DICTIONARY: Record<
   string,
@@ -55,15 +60,6 @@ const COUNTRY_NAME_TO_CODE: Record<string, string> = {
   mexico: "MEX",
   "estados unidos": "USA",
   usa: "USA",
-};
-
-export const getCurrencyPluralWord = (currency?: string): string => {
-  if (!currency) return "euros";
-  const normalized = currency.trim();
-  const entry =
-    CURRENCY_DICTIONARY[normalized] ||
-    CURRENCY_DICTIONARY[normalized.toUpperCase()];
-  return entry ? entry.plural : "euros";
 };
 
 export const getCurrencyWords = (
@@ -166,6 +162,129 @@ export interface BuildTransferCopyTextOptions {
   season?: ClubData;
 }
 
+const buildArrivalClausesText = (
+  contract: Contract,
+  currWords: { singular: string; plural: string },
+): string => {
+  const parts: string[] = [];
+  if (contract.installments) {
+    parts.push(
+      `com pagamento de ${contract.installments.percentage}% parcelado em ${contract.installments.totalInstallments}x anuais`,
+    );
+  }
+  if (contract.swapPlayer?.playerName) {
+    parts.push(
+      `envolvendo a cessão de ${contract.swapPlayer.playerName} na negociação`,
+    );
+  }
+  if (contract.transferClauses?.loanBackDuration) {
+    parts.push(
+      `permanecendo emprestado ao ${contract.fromClub || "vendedor"} por ${
+        contract.transferClauses.loanBackDuration
+      } ${
+        contract.transferClauses.loanBackDuration === 1 ? "ano" : "anos"
+      }`,
+    );
+  }
+  if (contract.transferClauses?.buybackValue) {
+    parts.push(
+      `com cláusula de recompra fixada em ${formatWrittenAmount(
+        contract.transferClauses.buybackValue,
+        currWords,
+      )}`,
+    );
+  }
+  if (contract.transferClauses?.sellOnPercentage) {
+    parts.push(
+      `com ${contract.transferClauses.sellOnPercentage}% de taxa de futura venda`,
+    );
+  }
+  if (contract.bonuses && contract.bonuses.length > 0) {
+    parts.push(`além de bônus por metas e objetivos contratuais`);
+  }
+  return parts.length > 0 ? `, ${parts.join(", ")}` : "";
+};
+
+const buildExitClausesText = (
+  contract: Contract,
+  currWords: { singular: string; plural: string },
+  hasDeparted = false,
+): string => {
+  const parts: string[] = [];
+  if (!hasDeparted) {
+    if (isNextWindowTiming(contract.timing)) {
+      parts.push("com saída programada para a próxima janela de transferências");
+    } else if (isNextSeasonTiming(contract.timing)) {
+      parts.push("com saída programada para a próxima temporada");
+    }
+  }
+  if (contract.installments) {
+    parts.push(
+      `com recebimento de ${contract.installments.percentage}% parcelado em ${contract.installments.totalInstallments}x anuais`,
+    );
+  }
+  if (contract.swapPlayer?.playerName) {
+    parts.push(
+      `envolvendo a chegada de ${contract.swapPlayer.playerName} na negociação`,
+    );
+  }
+  if (contract.transferClauses?.loanBackDuration) {
+    parts.push(
+      `permanecendo emprestado ao nosso clube por ${
+        contract.transferClauses.loanBackDuration
+      } ${
+        contract.transferClauses.loanBackDuration === 1 ? "ano" : "anos"
+      }`,
+    );
+  }
+  if (contract.transferClauses?.buybackValue) {
+    parts.push(
+      `com cláusula de recompra fixada em ${formatWrittenAmount(
+        contract.transferClauses.buybackValue,
+        currWords,
+      )}`,
+    );
+  }
+  if (contract.transferClauses?.sellOnPercentage) {
+    parts.push(
+      `com ${contract.transferClauses.sellOnPercentage}% de taxa de futura venda`,
+    );
+  }
+  if (contract.bonuses && contract.bonuses.length > 0) {
+    parts.push(`além de bônus por metas e objetivos contratuais`);
+  }
+  return parts.length > 0 ? `, ${parts.join(", ")}` : "";
+};
+
+const buildLoanClausesText = (
+  contract: Contract,
+  currWords: { singular: string; plural: string },
+): string => {
+  const parts: string[] = [];
+  if (contract.loanTerms?.hasBuyOption && contract.loanTerms.buyOptionFee) {
+    parts.push(
+      `com opção de compra fixada em ${formatWrittenAmount(
+        contract.loanTerms.buyOptionFee,
+        currWords,
+      )}`,
+    );
+  }
+  if (
+    contract.loanTerms?.ourWagePercentage !== undefined &&
+    contract.loanTerms.ourWagePercentage !== 100
+  ) {
+    parts.push(
+      `com divisão salarial de ${contract.loanTerms.ourWagePercentage}% / ${contract.loanTerms.theirWagePercentage}%`,
+    );
+  }
+  if (contract.loanTerms?.sellOnPercentage) {
+    parts.push(
+      `com ${contract.loanTerms.sellOnPercentage}% de repasse em venda futura`,
+    );
+  }
+  return parts.length > 0 ? `, ${parts.join(", ")}` : "";
+};
+
 export const buildTransferCopyText = ({
   player,
   contract,
@@ -186,21 +305,44 @@ export const buildTransferCopyText = ({
   const contractWageSegment = `${contractTimeStr} com um salario semanal de ${salaryStr}`;
 
   if (direction === "arrivals") {
+    const rawBuy =
+      typeof contract.buyValue === "string"
+        ? parseValue(contract.buyValue)
+        : contract.buyValue || 0;
+
     // 1. Promovido da Base
     if (contract.fromClub === "Base") {
       return `${prefix}, ${contractWageSegment}, foi promovido da base.`;
     }
 
     // 2. Empréstimo (Chegada)
-    if (contract.isLoan || player.incomingLoan) {
-      const club = contract.fromClub || "outro clube";
-      if (contract.loanDuration) {
-        const durationText = `${contract.loanDuration} ${
-          contract.loanDuration === 1 ? "ano" : "anos"
+    const isLoanBackArrival = Boolean(
+      contract.leftClub &&
+      !contract.isLoan &&
+      contract.transferClauses?.loanBackDuration,
+    );
+
+    const isExplicitlyNotLoan =
+      Boolean(contract.fromLoanBuyOption) ||
+      contract.isLoan === false ||
+      rawBuy > 0;
+
+    if (contract.isLoan || (player.incomingLoan && !isExplicitlyNotLoan) || isLoanBackArrival) {
+      const club =
+        contract.fromClub || (isLoanBackArrival ? contract.leftClub : "outro clube");
+      const loanClauses = buildLoanClausesText(contract, currWords);
+      const effectiveDuration =
+        contract.loanDuration ||
+        (isLoanBackArrival
+          ? contract.transferClauses?.loanBackDuration
+          : undefined);
+      if (effectiveDuration) {
+        const durationText = `${effectiveDuration} ${
+          effectiveDuration === 1 ? "ano" : "anos"
         } de empréstimo`;
-        return `${prefix}, ${durationText} com um salario semanal de ${salaryStr}, foi contratado por empréstimo do ${club}.`;
+        return `${prefix}, ${durationText} com um salario semanal de ${salaryStr}, foi contratado por empréstimo do ${club}${loanClauses}.`;
       }
-      return `${prefix}, ${contractWageSegment}, foi contratado por empréstimo do ${club}.`;
+      return `${prefix}, ${contractWageSegment}, foi contratado por empréstimo do ${club}${loanClauses}.`;
     }
 
     // 3. Retorno de Empréstimo
@@ -218,25 +360,23 @@ export const buildTransferCopyText = ({
 
     // 4. Passes Livres / Custo Zero
     if (contract.fromClub === "Passes Livres") {
-      return `${prefix}, ${contractWageSegment}, foi contratado a custo zero.`;
+      const arrivalClauses = buildArrivalClausesText(contract, currWords);
+      return `${prefix}, ${contractWageSegment}, foi contratado a custo zero${arrivalClauses}.`;
     }
 
     // 5. Compra definitiva (com valor ou sem valor)
-    const rawBuy =
-      typeof contract.buyValue === "string"
-        ? parseValue(contract.buyValue)
-        : contract.buyValue || 0;
+    const arrivalClauses = buildArrivalClausesText(contract, currWords);
 
     if (rawBuy > 0) {
       const feeFormatted = formatWrittenAmount(rawBuy, currWords);
       return `${prefix}, ${contractWageSegment}, foi contratado do ${
         contract.fromClub || "outro clube"
-      } por ${feeFormatted}.`;
+      } por ${feeFormatted}${arrivalClauses}.`;
     }
 
     return `${prefix}, ${contractWageSegment}, foi contratado do ${
       contract.fromClub || "outro clube"
-    } a custo zero.`;
+    } a custo zero${arrivalClauses}.`;
   }
 
   // EXITS (Saídas)
@@ -264,30 +404,56 @@ export const buildTransferCopyText = ({
   }
 
   // 4. Empréstimo (Saída)
-  if (contract.isLoan || player.loan) {
-    const club = contract.leftClub || "outro clube";
-    if (contract.loanDuration) {
-      return `${prefix}, foi emprestado ao ${club} por ${contract.loanDuration} ${
-        contract.loanDuration === 1 ? "ano" : "anos"
-      }.`;
-    }
-    return `${prefix}, foi emprestado ao ${club}.`;
-  }
-
-  // 5. Venda definitiva (com valor ou sem valor)
   const rawSell =
     typeof contract.sellValue === "string"
       ? parseValue(contract.sellValue)
       : contract.sellValue || 0;
+  const isExplicitlyNotExitLoan =
+    Boolean(contract.fromLoanBuyOption) ||
+    contract.isLoan === false ||
+    rawSell > 0;
+
+  if (contract.isLoan || (player.loan && !isExplicitlyNotExitLoan)) {
+    const club = contract.leftClub || "outro clube";
+    const loanClauses = buildLoanClausesText(contract, currWords);
+    if (contract.loanDuration) {
+      return `${prefix}, foi emprestado ao ${club} por ${contract.loanDuration} ${
+        contract.loanDuration === 1 ? "ano" : "anos"
+      }${loanClauses}.`;
+    }
+    return `${prefix}, foi emprestado ao ${club}${loanClauses}.`;
+  }
+
+  // 5. Venda definitiva (com valor ou sem valor)
+
+  let hasDeparted = false;
+  if (contract.fromScheduledAgreement) {
+    hasDeparted = true;
+  } else if (isNextWindowTiming(contract.timing)) {
+    hasDeparted = shouldPlayerLeaveOnNextWindow(
+      season?.matches || [],
+      contract.dataExit,
+    );
+  } else if (isNextSeasonTiming(contract.timing)) {
+    hasDeparted = Boolean(
+      contract.fromScheduledAgreement ||
+        (season?.seasonNumber &&
+          contract.installments?.firstPaymentSeasonNumber &&
+          season.seasonNumber >= contract.installments.firstPaymentSeasonNumber),
+    );
+  }
+
+  const exitClauses = buildExitClausesText(contract, currWords, hasDeparted);
 
   if (rawSell > 0) {
     const feeFormatted = formatWrittenAmount(rawSell, currWords);
     return `${prefix}, foi vendido ao ${
       contract.leftClub || "outro clube"
-    } por ${feeFormatted}.`;
+    } por ${feeFormatted}${exitClauses}.`;
   }
 
   return `${prefix}, foi transferido ao ${
     contract.leftClub || "outro clube"
-  } a custo zero.`;
+  } a custo zero${exitClauses}.`;
 };
+

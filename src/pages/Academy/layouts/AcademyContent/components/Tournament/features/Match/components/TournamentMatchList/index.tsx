@@ -1,4 +1,4 @@
-import { AcademyMatches } from "../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import { AcademyMatches } from "../../../../../../../../../../common/interfaces/AcademyData";
 import { TournamentMatchCard } from "./components/TournamentMatchCard";
 import Styles from "./TournamentMatchList.module.css";
 

@@ -6,29 +6,74 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-tasks
-coverage
-.test-tools/
 *-debug.log
-coverage-unit/
-coverage-integration/
+
+# Dependencies
+node_modules
+
+# Build outputs & TypeScript incremental cache
 dist
 dist-ssr
-*.local
+functions/lib/
+*.tsbuildinfo
 
-# Editor directories and files
+# Test, coverage & local tooling
+coverage
+coverage-unit/
+coverage-integration/
+.test-tools/
+.vitest/
+playwright-report/
+test-results/
+blob-report/
+
+# Caches & platform CLIs
+.eslintcache
+.vite/
+.firebase/
+.vercel/
+emulator-data/
+firebase-export-*/
+
+# Environment & secrets
+.env
+.env.*
+*.local
+!.env.emulator
+!.env.example
+functions/.env
+functions/.env.*
+functions/.runtimeconfig.json
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+google-services.json
+.secret*
+dummy.json
+dummy.key
+functions/dummy.json
+
+# Legacy local folder
+tasks
+
+# Editor directories, OS & backups
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-dummy.json
-dummy.key
-functions/dummy.json
-*.key
+*.bak
+*.tmp
+*.orig
+*~

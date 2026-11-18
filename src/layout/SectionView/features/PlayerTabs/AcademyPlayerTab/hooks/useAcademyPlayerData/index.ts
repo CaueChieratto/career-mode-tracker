@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Players } from "../../../../../../../common/interfaces/playersInfo/players";
-import { AcademyPlayers } from "../../../../../../../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../../../../../../common/interfaces/AcademyData";
 import { belongsToSeason } from "../../helpers/belongsToSeason";
 
 interface UseAcademyPlayerDataProps {

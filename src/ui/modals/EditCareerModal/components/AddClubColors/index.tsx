@@ -1,27 +1,13 @@
 import { Dispatch, SetStateAction } from "react";
 import Input from "../../../../../components/Input";
+import { getContrastTextColor } from "../../../../../common/hooks/Colors/UseClubColors";
 import Styles from "./AddClubColors.module.css";
 
 type AddClubColorsProps = {
-  edit: boolean;
   primaryColor: string;
   secondaryColor: string;
   setPrimaryColor: Dispatch<SetStateAction<string>>;
   setSecondaryColor: Dispatch<SetStateAction<string>>;
-};
-
-const getContrastColor = (hexcolor: string) => {
-  let hex = hexcolor.replace("#", "");
-  if (hex.length === 3)
-    hex = hex
-      .split("")
-      .map((c) => c + c)
-      .join("");
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? "#000000" : "#FFFFFF";
 };
 
 const AddClubColors = ({
@@ -43,7 +29,7 @@ const AddClubColors = ({
           >
             <span
               className={Styles.hex_value}
-              style={{ color: getContrastColor(primaryColor) }}
+              style={{ color: getContrastTextColor(primaryColor) }}
             >
               {primaryColor.toUpperCase()}
             </span>
@@ -66,7 +52,7 @@ const AddClubColors = ({
           >
             <span
               className={Styles.hex_value}
-              style={{ color: getContrastColor(secondaryColor) }}
+              style={{ color: getContrastTextColor(secondaryColor) }}
             >
               {secondaryColor.toUpperCase()}
             </span>

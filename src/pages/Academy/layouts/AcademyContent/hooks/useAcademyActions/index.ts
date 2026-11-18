@@ -1,7 +1,8 @@
 import { Dispatch, SetStateAction } from "react";
-import { AcademyPlayers } from "../../interfaces/AcademyPlayers/AcademyPlayers";
-import { AcademyTournaments } from "../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyPlayers } from "../../../../../../common/interfaces/AcademyData";
+import { AcademyTournaments } from "../../../../../../common/interfaces/AcademyData";
 import { AcademyService } from "../../services/AcademyService";
+import { toast } from "../../../../../../common/services/ToastService";
 
 type UseAcademyActionsProps = {
   careerId: string;
@@ -66,13 +67,14 @@ export const useAcademyActions = ({
       refetchPlayers(true);
 
       if (!isSilent) {
+        toast.success("Jogador atualizado com sucesso!");
         back();
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } catch (error) {
       refetchPlayers();
       console.error("Erro ao atualizar jogador:", error);
-      alert("Falha ao atualizar o jogador. Tente novamente.");
+      toast.error("Falha ao atualizar o jogador. Tente novamente.");
     }
   };
 
@@ -87,12 +89,13 @@ export const useAcademyActions = ({
         releaseDate,
       );
       refetchPlayers(true);
+      toast.success("Jogador dispensado da base com sucesso!");
       back();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       refetchPlayers();
       console.error("Erro ao dispensar jogador:", error);
-      alert("Falha ao dispensar o jogador. Tente novamente.");
+      toast.error("Falha ao dispensar o jogador. Tente novamente.");
     }
   };
 
@@ -102,12 +105,13 @@ export const useAcademyActions = ({
     try {
       await AcademyService.deletePlayerAcademy(careerId, seasonId, playerId);
       refetchPlayers(true);
+      toast.success("Jogador excluído da base com sucesso!");
       back();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       refetchPlayers();
       console.error("Erro ao deletar jogador:", error);
-      alert("Falha ao deletar o jogador. Tente novamente.");
+      toast.error("Falha ao deletar o jogador. Tente novamente.");
     }
   };
 
@@ -128,12 +132,14 @@ export const useAcademyActions = ({
       if (refetchTournaments) refetchTournaments(true);
 
       if (!isSilent) {
+        toast.success("Torneio da base atualizado!");
         back();
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     } catch (error) {
       if (refetchTournaments) refetchTournaments();
       console.error("Erro ao atualizar torneio:", error);
+      toast.error("Falha ao atualizar o torneio da base.");
     }
   };
 
@@ -148,12 +154,13 @@ export const useAcademyActions = ({
       );
       if (refetchTournaments) refetchTournaments(true);
 
+      toast.success("Torneio excluído com sucesso!");
       back();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       if (refetchTournaments) refetchTournaments();
       console.error("Erro ao deletar torneio:", error);
-      alert("Falha ao deletar o torneio. Tente novamente.");
+      toast.error("Falha ao deletar o torneio. Tente novamente.");
     }
   };
 

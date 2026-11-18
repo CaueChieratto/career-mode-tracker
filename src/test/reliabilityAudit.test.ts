@@ -3,24 +3,28 @@ import {
   isLocalhostEnvironment,
   shouldConnectEmulator,
 } from "../common/services/Firebase/emulatorGuard";
-import { withFirestoreRetry } from "../common/utils/firestoreRetry";
+import {
+  withFirestoreRetry,
+  isQuotaExceededActive,
+  resetQuotaExceeded,
+} from "../common/utils/firestoreRetry";
 import { getAllCareers, clearGettersCache } from "../common/helpers/Getters";
-import { ServiceMatches } from "../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../common/services/ServiceMatches";
 import { ServicePlayers } from "../common/services/ServicePlayers";
-import { ServiceTable } from "../layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable";
+import { ServiceTable } from "../common/services/ServiceTable";
 import { querySnapshot, onSnapshot, getDocs } from "./mocks/firestore";
 import { career, season } from "./factories/domain";
 import type { Career } from "../common/interfaces/Career";
 
 vi.mock(
-  "../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches",
+  "../common/services/ServiceMatches",
   () => ({ ServiceMatches: { getMatchesBySeason: vi.fn() } }),
 );
 vi.mock("../common/services/ServicePlayers", () => ({
   ServicePlayers: { getPlayersBySeason: vi.fn() },
 }));
 vi.mock(
-  "../layout/SectionView/features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable",
+  "../common/services/ServiceTable",
   () => ({ ServiceTable: { getTableBySeason: vi.fn() } }),
 );
 
@@ -73,11 +77,13 @@ describe("Auditoria de Confiabilidade — withFirestoreRetry", () => {
     expect(op).toHaveBeenCalledTimes(1);
   });
 
-  it("retenta e resolve com sucesso em caso de erro 429 transitório", async () => {
-    const error429 = new Error("429 Too Many Requests");
+  it("retenta e resolve com sucesso em caso de erro transitório (unavailable)", async () => {
+    const errorUnavailable = Object.assign(new Error("Unavailable"), {
+      code: "unavailable",
+    });
     const op = vi
       .fn()
-      .mockRejectedValueOnce(error429)
+      .mockRejectedValueOnce(errorUnavailable)
       .mockResolvedValueOnce("recuperado");
 
     const result = await withFirestoreRetry(op, 2, 10);
@@ -85,18 +91,19 @@ describe("Auditoria de Confiabilidade — withFirestoreRetry", () => {
     expect(op).toHaveBeenCalledTimes(2);
   });
 
-  it("retenta e resolve em caso de resource-exhausted (quota/burst)", async () => {
+  it("ativa circuit breaker e aborta sem retentativas redundantes em caso de resource-exhausted (quota/burst)", async () => {
+    resetQuotaExceeded();
     const quotaError = Object.assign(new Error("Quota exceeded"), {
       code: "resource-exhausted",
     });
     const op = vi
       .fn()
-      .mockRejectedValueOnce(quotaError)
-      .mockResolvedValueOnce("ok");
+      .mockRejectedValue(quotaError);
 
-    const result = await withFirestoreRetry(op, 2, 10);
-    expect(result).toBe("ok");
-    expect(op).toHaveBeenCalledTimes(2);
+    await expect(withFirestoreRetry(op, 2, 10)).rejects.toThrow("Quota exceeded");
+    expect(op).toHaveBeenCalledTimes(1);
+    expect(isQuotaExceededActive()).toBe(true);
+    resetQuotaExceeded();
   });
 
   it("rejeita imediatamente em erro não transitório sem retentar", async () => {

@@ -6,19 +6,53 @@ import { TableTeamData } from "../../../../common/interfaces/TableTeamData";
 import type { OptimisticMatchData } from "../../features/ClubTabs/AllMatchesTab/views/AddMatches";
 import { OptimisticTableData } from "../../features/ClubTabs/TableTab/views/AddTeamsToTable";
 
-type OptimisticPlayerData = {
+export type OptimisticAddPlayerData = {
+  type: "ADD_PLAYER";
+  player: Players;
+};
+
+export type OptimisticUpdatePlayerData = {
   type: "UPDATE_PLAYER";
   player: Players;
+};
+
+export type OptimisticDeletePlayerData = {
+  type: "DELETE_PLAYER";
+  playerId: string;
+};
+
+export type OptimisticTransferExitData = {
+  type: "TRANSFER_PLAYER_EXIT";
+  playerId: string;
+  exitData?: Partial<Players>;
+};
+
+export type OptimisticTransferLoanData = {
+  type: "TRANSFER_PLAYER_LOAN";
+  playerId: string;
+  loanData?: Partial<Players>;
+};
+
+export type OptimisticFinancialData = {
+  type: "UPDATE_FINANCIAL_ENTRY";
+  report?: ClubData["financialReport"];
 };
 
 export type OptimisticUpdateData =
   | OptimisticMatchData
   | OptimisticTableData
-  | OptimisticPlayerData;
+  | OptimisticAddPlayerData
+  | OptimisticUpdatePlayerData
+  | OptimisticDeletePlayerData
+  | OptimisticTransferExitData
+  | OptimisticTransferLoanData
+  | OptimisticFinancialData;
+
 interface RefreshedSeasonData {
   matches: ClubData["matches"];
   players: ClubData["players"];
   table?: TableRowData[];
+  financialReport?: ClubData["financialReport"];
 }
 
 type SeasonMatches = NonNullable<ClubData["matches"]>;
@@ -26,12 +60,12 @@ type SeasonTeams = NonNullable<ClubData["teams"]>;
 
 const updatePlayers = (
   players: ClubData["players"],
-  optimisticData: OptimisticPlayerData,
+  optimisticData: OptimisticUpdatePlayerData,
 ): ClubData["players"] => {
-  const exists = players.some((p) => p.id === optimisticData.player.id);
+  const exists = players.some((p) => String(p.id) === String(optimisticData.player.id));
   return exists
     ? players.map((p) =>
-        p.id === optimisticData.player.id ? optimisticData.player : p,
+        String(p.id) === String(optimisticData.player.id) ? optimisticData.player : p,
       )
     : [...players, optimisticData.player];
 };
@@ -137,6 +171,7 @@ export function applyOptimisticUpdate(
 
   return {
     ...career,
+    updatedAt: Math.max(Date.now(), (career.updatedAt || 0) + 1),
     trophies: updatedTrophies,
     clubData: career.clubData.map((season) => {
       if (season.id !== seasonId) {
@@ -159,10 +194,80 @@ export function applyOptimisticUpdate(
         };
       }
 
+      if (optimisticData.type === "ADD_PLAYER") {
+        const currentPlayers = season.players ?? [];
+        const exists = currentPlayers.some(
+          (p) => String(p.id) === String(optimisticData.player.id),
+        );
+        const updatedPlayers = exists
+          ? currentPlayers.map((p) =>
+              String(p.id) === String(optimisticData.player.id)
+                ? optimisticData.player
+                : p,
+            )
+          : [...currentPlayers, optimisticData.player];
+
+        return {
+          ...season,
+          players: updatedPlayers,
+        };
+      }
+
       if (optimisticData.type === "UPDATE_PLAYER") {
         return {
           ...season,
           players: updatePlayers(season.players, optimisticData),
+        };
+      }
+
+      if (optimisticData.type === "DELETE_PLAYER") {
+        const currentPlayers = season.players ?? [];
+        return {
+          ...season,
+          players: currentPlayers.filter(
+            (p) => String(p.id) !== String(optimisticData.playerId),
+          ),
+          captains: season.captains?.filter(
+            (id) => String(id) !== String(optimisticData.playerId),
+          ),
+        };
+      }
+
+      if (optimisticData.type === "TRANSFER_PLAYER_EXIT") {
+        const currentPlayers = season.players ?? [];
+        const updatedPlayers = currentPlayers.map((p) => {
+          if (String(p.id) === String(optimisticData.playerId)) {
+            return { ...p, ...optimisticData.exitData };
+          }
+          return p;
+        });
+
+        return {
+          ...season,
+          players: updatedPlayers,
+        };
+      }
+
+      if (optimisticData.type === "TRANSFER_PLAYER_LOAN") {
+        const currentPlayers = season.players ?? [];
+        const updatedPlayers = currentPlayers.map((p) => {
+          if (String(p.id) === String(optimisticData.playerId)) {
+            return { ...p, ...optimisticData.loanData };
+          }
+          return p;
+        });
+
+        return {
+          ...season,
+          players: updatedPlayers,
+        };
+      }
+
+      if (optimisticData.type === "UPDATE_FINANCIAL_ENTRY") {
+        return {
+          ...season,
+          financialReport:
+            optimisticData.report ?? season.financialReport,
         };
       }
 

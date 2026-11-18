@@ -10,6 +10,7 @@ export interface CareerGroup {
   updatedAt?: number;
   stadiums?: string[];
   opponentPlayers?: OpponentPlayer[];
+  customBonusObjectives?: Record<string, string[]>;
 }
 
 export type BoardItem =

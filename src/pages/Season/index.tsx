@@ -7,23 +7,21 @@ import BottomMenu from "../../ui/BottomMenu";
 import { useModalManager } from "../../common/hooks/Modal/UseModalManager";
 import SectionView from "../../layout/SectionView";
 import { useState } from "react";
-import { Players } from "../../common/interfaces/playersInfo/players";
 import { TransferEvent } from "../../components/TransfersModal/components/TransfersPanel/utils/sortTransfersByValue";
-import EditTransferScreen from "../../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/screens/EditTransferScreen";
 import { SeasonThemeProvider } from "../../contexts/SeasonThemeContext";
+import { ActiveSectionScreen } from "../../layout/SectionView/components/ActiveSectionScreen";
+import { SectionScreen } from "../../layout/SectionView/config/screens";
+import { canEditTransferContract } from "../../common/helpers/transferEditability";
 
 const Season = () => {
   const [hasOpenScreen, setHasOpenScreen] = useState(false);
-  const [editingTransfer, setEditingTransfer] = useState<{
-    player: Players;
-    contract: NonNullable<Players["contract"]>[number];
-    contractIndex: number;
-    direction: "arrivals" | "exit";
-  } | null>(null);
+  const [activeSectionScreen, setActiveSectionScreen] =
+    useState<SectionScreen | null>(null);
 
   const {
     loading,
     career,
+    careers,
     season,
     tabsConfig,
     isModalOpen,
@@ -31,6 +29,7 @@ const Season = () => {
     playersToShow,
     handleOpenTransfers,
     handleCloseModal,
+    proposals,
   } = useSeasonView(false);
 
   const { activeModal } = useModalManager();
@@ -42,54 +41,95 @@ const Season = () => {
     event: TransferEvent,
     direction: "arrivals" | "exit",
   ) => {
-    if (direction === "arrivals" && event.contract.fromClub === "Base") {
+    if (
+      !canEditTransferContract({
+        player: event.player,
+        contract: event.contract,
+        contractIndex: event.contractIndex,
+        direction,
+        career,
+        season,
+      })
+    ) {
       return;
     }
     handleCloseModal();
-    setEditingTransfer({
-      player: event.player,
-      contract: event.contract,
-      contractIndex: event.contractIndex ?? 0,
-      direction,
+    if (direction === "arrivals") {
+      setActiveSectionScreen({
+        key: "addTransferPlayer",
+        editTransfer: {
+          player: event.player,
+          contract: event.contract,
+          contractIndex: event.contractIndex ?? 0,
+        },
+      });
+      return;
+    }
+    setActiveSectionScreen({
+      key: "transferPlayer",
+      playerId: event.player.id,
+      editTransfer: {
+        player: event.player,
+        contract: event.contract,
+        contractIndex: event.contractIndex ?? 0,
+        direction,
+      },
     });
   };
 
-  if (editingTransfer) {
-    return (
-      <SeasonThemeProvider careerId={career.id} career={career}>
-        <EditTransferScreen
-          career={career}
-          season={season}
-          player={editingTransfer.player}
-          contract={editingTransfer.contract}
-          contractIndex={editingTransfer.contractIndex}
-          direction={editingTransfer.direction}
-          onClose={() => setEditingTransfer(null)}
-        />
-      </SeasonThemeProvider>
-    );
-  }
+  const handleOpenScreenFromTransfers = (screen: SectionScreen) => {
+    handleCloseModal();
+    setActiveSectionScreen(screen);
+  };
 
   return (
     <>
-      <SectionView
-        career={career}
-        season={season}
-        tabsConfig={tabsConfig}
-        onOpenTransfers={handleOpenTransfers}
-        onScreenChange={setHasOpenScreen}
-      />
-      <TransfersModal
-        isOpen={isModalOpen}
-        closeModal={handleCloseModal}
-        transferType={transferType}
-        playersToShow={playersToShow}
-        currency={career.currency}
-        career={career}
-        season={season}
-        onTransferClick={handleTransferClick}
-      />
-      {activeModal === ModalType.NONE && !hasOpenScreen && <BottomMenu />}
+      <div
+        style={{
+          display: activeSectionScreen ? "none" : "contents",
+        }}
+      >
+        <SectionView
+          career={career}
+          allCareers={careers}
+          season={season}
+          tabsConfig={tabsConfig}
+          onOpenTransfers={handleOpenTransfers}
+          onScreenChange={setHasOpenScreen}
+        />
+      </div>
+
+      {activeSectionScreen && (
+        <SeasonThemeProvider careerId={career.id} career={career}>
+          <ActiveSectionScreen
+            career={career}
+            allCareers={careers}
+            season={season}
+            screen={activeSectionScreen}
+            onClose={() => setActiveSectionScreen(null)}
+            onOpenScreen={(s) => setActiveSectionScreen(s)}
+            onOpenTransfers={handleOpenTransfers}
+          />
+        </SeasonThemeProvider>
+      )}
+
+      {!hasOpenScreen && !activeSectionScreen && (
+        <TransfersModal
+          isOpen={isModalOpen}
+          closeModal={handleCloseModal}
+          transferType={transferType}
+          playersToShow={playersToShow}
+          currency={career.currency}
+          career={career}
+          season={season}
+          onTransferClick={handleTransferClick}
+          proposals={proposals}
+          onOpenScreen={handleOpenScreenFromTransfers}
+        />
+      )}
+      {activeModal === ModalType.NONE &&
+        !hasOpenScreen &&
+        !activeSectionScreen && <BottomMenu />}
     </>
   );
 };

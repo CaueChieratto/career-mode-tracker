@@ -3,6 +3,7 @@ import { League } from "../../../../../../common/interfaces/League";
 import { Career } from "../../../../../../common/interfaces/Career";
 import { ServiceSeasons } from "../../../../../../common/services/ServiceSeasons";
 import { getAvailableLeagues } from "../helpers/getAvailableLeagues";
+import { toast } from "../../../../../../common/services/ToastService";
 
 type UseSelectLeaguesParams = {
   nation: string;
@@ -85,10 +86,11 @@ export const useSelectLeagues = ({
       );
 
       setSelectedCareer({ ...career, clubData: updatedClubData });
+      toast.success("Ligas da temporada salvas com sucesso!");
       onClose();
     } catch (error) {
       console.error("Erro ao salvar ligas:", error);
-      alert("Ocorreu um erro ao salvar as ligas selecionadas.");
+      toast.error("Ocorreu um erro ao salvar as ligas selecionadas.");
     } finally {
       setIsSaving(false);
     }

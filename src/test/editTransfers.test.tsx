@@ -18,6 +18,19 @@ import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import EditTransferScreen from "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/screens/EditTransferScreen";
 import { Contract } from "../common/interfaces/playersInfo/contract";
 import { formatPlayerName } from "../common/utils/formatPlayerName";
+import { applyEditToCareer } from "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/helpers/transferCareerStateReducers";
+import { ServiceProposals } from "../common/services/ServiceProposals";
+import { TransferProposal } from "../common/interfaces/proposals/transferProposal";
+
+// Mock ServiceProposals
+vi.mock("../common/services/ServiceProposals", () => ({
+  ServiceProposals: {
+    getProposalsBySeason: vi.fn().mockResolvedValue([]),
+    updateProposal: vi.fn().mockResolvedValue(undefined),
+    createProposal: vi.fn().mockResolvedValue({ id: "prop_new" }),
+    getProposalById: vi.fn().mockResolvedValue(null),
+  },
+}));
 
 // Mock Firebase & Auth
 vi.mock("../common/services/Firebase", () => ({
@@ -49,7 +62,7 @@ vi.mock("../common/services/ServicePlayers/helpers/authHelpers", () => ({
 
 const mockAddTeamToSeason = vi.fn().mockResolvedValue(undefined);
 vi.mock(
-  "../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches",
+  "../common/services/ServiceMatches",
   () => ({
     ServiceMatches: {
       addTeamToSeason: (...args: unknown[]) => mockAddTeamToSeason(...args),
@@ -96,17 +109,22 @@ describe("buildEditTransferFormSections", () => {
     const sections = buildEditTransferFormSections("exit", "Emprestar", [
       "Real Madrid",
     ]);
-    expect(sections).toHaveLength(3);
+    expect(sections).toHaveLength(4);
     const detailFieldIds = sections[1].fields.flat().map((f) => f.id);
     expect(detailFieldIds).toContain("toClub");
     expect(detailFieldIds).toContain("loanDuration");
     expect(detailFieldIds).toContain("wagePercentage");
     expect(detailFieldIds).toContain("dateExit");
     expect(detailFieldIds).not.toContain("sellValue");
-    expect(sections[2].title).toBe("Manutenção");
-    expect(sections[2].fields[0][0].id).toBe("revertTransfer");
-    expect(sections[2].fields[0][0].checkbox).toBe(true);
-    expect(sections[2].fields[0][0].action).toBe(
+
+    expect(sections[2].title).toBe("Opção de Compra");
+    const buyOptionFieldIds = sections[2].fields.flat().map((f) => f.id);
+    expect(buyOptionFieldIds).toContain("hasBuyOption");
+
+    expect(sections[3].title).toBe("Manutenção");
+    expect(sections[3].fields[0][0].id).toBe("revertTransfer");
+    expect(sections[3].fields[0][0].checkbox).toBe(true);
+    expect(sections[3].fields[0][0].action).toBe(
       ModalType.REVERT_TRANSFER_CONFIRM,
     );
   });
@@ -121,6 +139,7 @@ describe("buildEditTransferFormSections", () => {
     expect(detailFieldIds).toContain("fromClub");
     expect(detailFieldIds).toContain("buyValue");
     expect(detailFieldIds).toContain("dateArrival");
+    expect(detailFieldIds).toContain("timing");
     expect(detailFieldIds).not.toContain("loanDuration");
     expect(detailFieldIds).not.toContain("wagePercentage");
     expect(sections[2].title).toBe("Manutenção");
@@ -135,17 +154,19 @@ describe("buildEditTransferFormSections", () => {
     const sections = buildEditTransferFormSections("arrivals", "Empréstimo", [
       "Santos",
     ]);
-    expect(sections).toHaveLength(3);
+    expect(sections).toHaveLength(4);
     const detailFieldIds = sections[1].fields.flat().map((f) => f.id);
     expect(detailFieldIds).toContain("fromClub");
     expect(detailFieldIds).toContain("loanDuration");
     expect(detailFieldIds).toContain("wagePercentage");
     expect(detailFieldIds).toContain("dateArrival");
+    expect(detailFieldIds).toContain("timing");
     expect(detailFieldIds).not.toContain("buyValue");
-    expect(sections[2].title).toBe("Manutenção");
-    expect(sections[2].fields[0][0].id).toBe("revertTransfer");
-    expect(sections[2].fields[0][0].checkbox).toBe(true);
-    expect(sections[2].fields[0][0].action).toBe(
+    expect(sections[2].title).toBe("Opção de Compra");
+    expect(sections[3].title).toBe("Manutenção");
+    expect(sections[3].fields[0][0].id).toBe("revertTransfer");
+    expect(sections[3].fields[0][0].checkbox).toBe(true);
+    expect(sections[3].fields[0][0].action).toBe(
       ModalType.REVERT_TRANSFER_CONFIRM,
     );
   });
@@ -668,6 +689,113 @@ describe("PlayersContractService.revertTransferInSeason", () => {
     expect(player.contract![0].fromClub).toBe("Flamengo");
     expect(setDoc).toHaveBeenCalled();
   });
+
+  it("ao reverter transferência, restaura proposta existente para 'em_andamento' preservando termos e limpando finalizedAt", async () => {
+    const existingProposal = {
+      id: "prop_bought_1",
+      careerId: "career-1",
+      seasonId: "season-1",
+      type: "compra",
+      overallStatus: "concluida",
+      finalizedAt: 123456789,
+      playerId: "player-arrival-bought",
+      playerName: "Jogador Comprado",
+      clubNegotiation: {
+        partnerClub: "Santos",
+        transferFee: 20000000,
+        status: "aceita",
+      },
+    };
+
+    vi.mocked(ServiceProposals.getProposalsBySeason).mockResolvedValueOnce([
+      existingProposal as unknown as TransferProposal,
+    ]);
+
+    await PlayersContractService.revertTransferInSeason({
+      careerId: "career-1",
+      seasonId: "season-1",
+      playerId: "player-arrival-bought",
+      contractIndex: 0,
+      direction: "arrivals",
+    });
+
+    expect(ServiceProposals.updateProposal).toHaveBeenCalledWith(
+      "career-1",
+      "season-1",
+      "prop_bought_1",
+      expect.objectContaining({
+        overallStatus: "em_andamento",
+        finalizedAt: undefined,
+        clubNegotiation: expect.objectContaining({
+          status: "em_negociacao",
+          partnerClub: "Santos",
+          transferFee: 20000000,
+        }),
+      }),
+    );
+  });
+
+  it("ao reverter chegada de compra com atleta trocado, restaura o atleta trocado no elenco e limpa status de venda", async () => {
+    const swappedPlayer: Players = {
+      id: "player-swapped",
+      name: "Jogador Trocado",
+      sell: true,
+      loan: false,
+      buy: false,
+      incomingLoan: false,
+      contract: [
+        {
+          fromClub: "FC Barcelona",
+          leftClub: "Santos",
+          sellValue: 0,
+          swapPlayer: {
+            playerName: "Jogador Trocado",
+            playerValue: 5000000,
+          },
+        },
+      ],
+    } as Players;
+
+    const boughtWithSwap: Players = {
+      id: "player-bought-swap",
+      name: "Jogador Trocado Comprado",
+      sell: false,
+      loan: false,
+      buy: true,
+      incomingLoan: false,
+      contract: [
+        {
+          fromClub: "Santos",
+          buyValue: 15000000,
+          dataArrival: new Date("2024-07-01"),
+          swapPlayer: {
+            playerId: "player-swapped",
+            playerName: "Jogador Trocado",
+            playerValue: 5000000,
+          },
+        },
+      ],
+    } as Players;
+
+    mockCareer.clubData[0].players.push(swappedPlayer, boughtWithSwap);
+
+    await PlayersContractService.revertTransferInSeason({
+      careerId: "career-1",
+      seasonId: "season-1",
+      playerId: "player-bought-swap",
+      contractIndex: 0,
+      direction: "arrivals",
+    });
+
+    const restored = mockCareer.clubData[0].players.find(
+      (p) => p.id === "player-swapped",
+    );
+    expect(restored?.sell).toBe(false);
+    expect(restored?.contract).toHaveLength(0);
+    expect(
+      mockCareer.clubData[0].players.find((p) => p.id === "player-bought-swap"),
+    ).toBeUndefined();
+  });
 });
 
 describe("TransfersPanel click handling", () => {
@@ -880,7 +1008,8 @@ describe("EditTransferScreen UI para reversão de transferência", () => {
     expect(screen.getByText("Reverter essa transferência?")).toBeDefined();
 
     // Deve renderizar um botão "Sim" (FormSegmentedControl), e NÃO um input de texto
-    const simButton = screen.getByRole("button", { name: "Sim" });
+    const simButtons = screen.getAllByRole("button", { name: "Sim" });
+    const simButton = simButtons[simButtons.length - 1];
     expect(simButton).toBeDefined();
 
     // Ao clicar em "Sim", abre o modal de confirmação com o título "Reverter Transferência?"
@@ -1002,7 +1131,7 @@ describe("TransfersPanel botão de copiar (FaRegCopy)", () => {
 describe("applyRevertToCareer (atualização síncrona sem necessidade de F5)", () => {
   it("reverte saída em memória instantaneamente atualizando sell e loan para false", async () => {
     const { applyRevertToCareer } = await import(
-      "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/hooks/useEditTransferForm"
+      "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/helpers/transferCareerStateReducers"
     );
 
     const initialCareer: Career = {
@@ -1040,8 +1169,8 @@ describe("applyRevertToCareer (atualização síncrona sem necessidade de F5)", 
       "exit",
     );
 
-    const revertedPlayer = updatedCareer.clubData[0].players.find(
-      (p) => p.id === "p1",
+    const revertedPlayer = (updatedCareer.clubData[0].players as Players[]).find(
+      (p: Players) => p.id === "p1",
     )!;
     expect(revertedPlayer.sell).toBe(false);
     expect(revertedPlayer.loan).toBe(false);
@@ -1052,7 +1181,7 @@ describe("applyRevertToCareer (atualização síncrona sem necessidade de F5)", 
 
   it("reverte chegada de único contrato em memória removendo o jogador sem necessidade de F5", async () => {
     const { applyRevertToCareer } = await import(
-      "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/hooks/useEditTransferForm"
+      "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/helpers/transferCareerStateReducers"
     );
 
     const initialCareer: Career = {
@@ -1092,7 +1221,7 @@ describe("applyRevertToCareer (atualização síncrona sem necessidade de F5)", 
 
   it("reverte saída de fim de empréstimo recebido restaurando incomingLoan: true e mantendo isLoan: true", async () => {
     const { applyRevertToCareer } = await import(
-      "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/hooks/useEditTransferForm"
+      "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/helpers/transferCareerStateReducers"
     );
 
     const initialCareer: Career = {
@@ -1135,8 +1264,8 @@ describe("applyRevertToCareer (atualização síncrona sem necessidade de F5)", 
       "exit",
     );
 
-    const revertedPlayer = updatedCareer.clubData[0].players.find(
-      (p) => p.id === "p-loan-return-exit",
+    const revertedPlayer = (updatedCareer.clubData[0].players as Players[]).find(
+      (p: Players) => p.id === "p-loan-return-exit",
     )!;
     expect(revertedPlayer.sell).toBe(false);
     expect(revertedPlayer.loan).toBe(false);
@@ -1788,5 +1917,543 @@ describe("Impedir edição de transferências na tela Geral", () => {
     );
   });
 });
+
+describe("Persistência e Edição do Step 2 de Contratos em Transferências", () => {
+  let careerForStep2: Career;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    careerForStep2 = {
+      id: "career-step2",
+      createdAt: new Date("2024-01-01"),
+      nation: "ENG",
+      currency: "€",
+      clubData: [
+        {
+          id: "season-1",
+          seasonNumber: 1,
+          teams: [{ name: "Arsenal", showMatch: false }],
+          players: [
+            {
+              id: "player-compra",
+              name: "Mikel Merino",
+              sell: false,
+              loan: false,
+              buy: true,
+              incomingLoan: false,
+              salary: 80000,
+              contractTime: 3,
+              contractUntil: "30/06/2027",
+              contract: [
+                {
+                  fromClub: "Real Sociedad",
+                  buyValue: 32000000,
+                  dataArrival: new Date("2024-07-15"),
+                  isLoan: false,
+                  salary: 80000,
+                  contractTime: 3,
+                  contractUntil: "30/06/2027",
+                  signingBonus: "2M",
+                  contractDetails: {
+                    weeklyWage: 80000,
+                    durationYears: 3,
+                    squadRole: "Importante",
+                    signingBonus: 2000000,
+                  },
+                },
+              ],
+            } as unknown as Players,
+            {
+              id: "player-emprestimo",
+              name: "Raheem Sterling",
+              sell: false,
+              loan: false,
+              buy: false,
+              incomingLoan: true,
+              salary: 100000,
+              contractTime: 1,
+              contract: [
+                {
+                  fromClub: "Chelsea",
+                  buyValue: 0,
+                  dataArrival: new Date("2024-08-30"),
+                  isLoan: true,
+                  loanDuration: 1,
+                  wagePercentage: 50,
+                  salary: 100000,
+                  fullSalary: 200000,
+                  loanTerms: {
+                    buyOptionFee: 20000000,
+                  },
+                },
+              ],
+            } as unknown as Players,
+          ],
+        } as unknown as ClubData,
+      ],
+    } as unknown as Career;
+
+    mockCareer = careerForStep2;
+  });
+
+  it("PlayersContractService.editTransferInSeason persiste campos do Step 2 para Compra", async () => {
+    await PlayersContractService.editTransferInSeason({
+      careerId: "career-step2",
+      seasonId: "season-1",
+      playerId: "player-compra",
+      contractIndex: 0,
+      direction: "arrivals",
+      transferType: "Compra",
+      clubName: "Real Sociedad",
+      transferValue: "35M",
+      date: "20/07",
+      salary: 130000,
+      contractUntil: "30/06/2029",
+      contractTime: 5,
+      signingBonus: "4M",
+      agentFee: "1.5M",
+    });
+
+    const player = mockCareer.clubData[0].players[0];
+    const contract = player.contract![0];
+
+    expect(contract.salary).toBe(130000);
+    expect(contract.contractUntil).toBe("30/06/2029");
+    expect(contract.contractTime).toBe(5);
+    expect(contract.signingBonus).toBe("4M");
+    expect(contract.contractDetails?.weeklyWage).toBe(130000);
+    expect(contract.contractDetails?.durationYears).toBe(5);
+    expect(contract.contractDetails?.signingBonus).toBe(4000000);
+    expect(contract.contractDetails?.agentFee).toBe(1500000);
+
+    expect(player.salary).toBe(130000);
+    expect(player.contractUntil).toBe("30/06/2029");
+    expect(player.contractTime).toBe(5);
+  });
+
+  it("PlayersContractService.editTransferInSeason persiste campos do Step 2 para Empréstimo", async () => {
+    await PlayersContractService.editTransferInSeason({
+      careerId: "career-step2",
+      seasonId: "season-1",
+      playerId: "player-emprestimo",
+      contractIndex: 0,
+      direction: "arrivals",
+      transferType: "Empréstimo",
+      clubName: "Chelsea",
+      transferValue: "0",
+      date: "31/08",
+      salary: 300000,
+      wagePercentage: "60",
+      loanDuration: "2",
+      buyOption: "25M",
+    });
+
+    const player = mockCareer.clubData[0].players[1];
+    const contract = player.contract![0];
+
+    expect(contract.fullSalary).toBe(300000);
+    expect(contract.salary).toBe(180000); // 60% de 300000
+    expect(contract.wagePercentage).toBe(60);
+    expect(contract.loanDuration).toBe(2);
+    expect(contract.buyOptionValue).toBe(25000000);
+    expect(contract.loanTerms?.buyOptionFee).toBe(25000000);
+  });
+
+  it("applyEditToCareer atualiza estado otimista em memória com Step 2 para Compra e Empréstimo", () => {
+    const updatedCompra = applyEditToCareer(
+      careerForStep2,
+      "season-1",
+      "player-compra",
+      0,
+      "arrivals",
+      {
+        transferType: "Compra",
+        transferValue: 35000000,
+        clubName: "Real Sociedad",
+        date: new Date("2024-07-20"),
+        salary: 140000,
+        contractUntil: "30/06/2029",
+        contractTime: 5,
+        signingBonus: "3M",
+        agentFee: "1M",
+      },
+    );
+
+    const playerCompra = updatedCompra.clubData[0].players[0];
+    expect(playerCompra.salary).toBe(140000);
+    expect(playerCompra.contractUntil).toBe("30/06/2029");
+    expect(playerCompra.contractTime).toBe(5);
+    expect(playerCompra.contract![0].contractDetails?.signingBonus).toBe(3000000);
+    expect(playerCompra.contract![0].contractDetails?.agentFee).toBe(1000000);
+
+    const updatedEmprestimo = applyEditToCareer(
+      careerForStep2,
+      "season-1",
+      "player-emprestimo",
+      0,
+      "arrivals",
+      {
+        transferType: "Empréstimo",
+        transferValue: 0,
+        clubName: "Chelsea",
+        date: new Date("2024-08-31"),
+        salary: 200000,
+        wagePercentage: 40,
+        loanDuration: 2,
+        buyOption: "18M",
+      },
+    );
+
+    const playerLoan = updatedEmprestimo.clubData[0].players[1];
+    expect(playerLoan.contract![0].fullSalary).toBe(200000);
+    expect(playerLoan.contract![0].salary).toBe(80000); // 40% de 200k
+    expect(playerLoan.contract![0].buyOptionValue).toBe(18000000);
+    expect(playerLoan.contract![0].loanTerms?.buyOptionFee).toBe(18000000);
+  });
+
+  it("EditTransferScreen avança para Step 2 e chama ServicePlayers.editTransferInSeason com dados de contrato", async () => {
+    cleanup();
+    const editSpy = vi
+      .spyOn(ServicePlayers, "editTransferInSeason")
+      .mockResolvedValue(undefined);
+
+    const playerToEdit = careerForStep2.clubData[0].players[0];
+    const onCloseMock = vi.fn();
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <EditTransferScreen
+              career={careerForStep2}
+              season={careerForStep2.clubData[0]}
+              player={playerToEdit}
+              contract={playerToEdit.contract![0]}
+              contractIndex={0}
+              direction="arrivals"
+              onClose={onCloseMock}
+            />
+          ),
+        },
+      ],
+      { initialEntries: ["/"] },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    // Na Step 1, clica em "Próximo"
+    const nextBtn = screen.getByText("Próximo");
+    fireEvent.click(nextBtn);
+
+    // Na Step 2, campos de contrato devem estar visíveis
+    expect(screen.getByText("Informações do Contrato")).toBeDefined();
+    const salaryInput = screen.getByPlaceholderText("Ex: 500k, 1.2M");
+    const contractUntilInput = screen.getByPlaceholderText("Ex: 30/06/2030");
+
+    fireEvent.change(salaryInput, { target: { value: "150k" } });
+    fireEvent.change(contractUntilInput, { target: { value: "30/06/2029" } });
+
+    // Salva as alterações
+    const saveBtn = screen.getByText("Salvar Alterações");
+    fireEvent.click(saveBtn);
+
+    expect(editSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        careerId: "career-step2",
+        seasonId: "season-1",
+        playerId: "player-compra",
+        direction: "arrivals",
+        transferType: "Compra",
+        salary: "150k",
+        contractUntil: "30/06/2029",
+      }),
+    );
+  });
+
+  it("preserva o valor de compra ao trocar para Empréstimo e voltar para Compra", () => {
+    cleanup();
+    const playerToEdit = careerForStep2.clubData[0].players[0];
+    const onCloseMock = vi.fn();
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <EditTransferScreen
+              career={careerForStep2}
+              season={careerForStep2.clubData[0]}
+              player={playerToEdit}
+              contract={playerToEdit.contract![0]}
+              contractIndex={0}
+              direction="arrivals"
+              onClose={onCloseMock}
+            />
+          ),
+        },
+      ],
+      { initialEntries: ["/"] },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    // Verifica valor da compra inicial
+    const buyValueInput = screen.getByPlaceholderText("Ex: 100M, 1.5B, 500k") as HTMLInputElement;
+    expect(buyValueInput.value).toBe("32m");
+
+    // Altera o valor da compra para 45M
+    fireEvent.change(buyValueInput, { target: { value: "45M" } });
+    expect(buyValueInput.value).toBe("45M");
+
+    // Alterna para Empréstimo
+    const emprestimoButton = screen.getByRole("button", { name: "Empréstimo" });
+    fireEvent.click(emprestimoButton);
+
+    // Campos de empréstimo devem estar visíveis
+    expect(screen.getByPlaceholderText("Ex: 0.6, 1, 1.6, 2")).toBeDefined();
+
+    // Alterna de volta para Compra
+    const compraButton = screen.getByRole("button", { name: "Compra" });
+    fireEvent.click(compraButton);
+
+    // O valor de 45M NÃO deve ter sido apagado
+    const buyValueReopened = screen.getByPlaceholderText("Ex: 100M, 1.5B, 500k") as HTMLInputElement;
+    expect(buyValueReopened.value).toBe("45M");
+  });
+
+  it("persiste timing em chegadas através do ServicePlayers e applyEditToCareer", async () => {
+    await PlayersContractService.editTransferInSeason({
+      careerId: "career-step2",
+      seasonId: "season-1",
+      playerId: "player-compra",
+      contractIndex: 0,
+      direction: "arrivals",
+      transferType: "Compra",
+      clubName: "Real Sociedad",
+      transferValue: "32M",
+      date: "15/07",
+      timing: "Próxima Janela",
+    });
+
+    const player = mockCareer.clubData[0].players[0];
+    expect(player.contract![0].timing).toBe("Próxima Janela");
+
+    const updated = applyEditToCareer(
+      careerForStep2,
+      "season-1",
+      "player-compra",
+      0,
+      "arrivals",
+      {
+        transferType: "Compra",
+        transferValue: 32000000,
+        clubName: "Real Sociedad",
+        date: new Date("2024-07-15"),
+        timing: "Próxima Temporada",
+      },
+    );
+
+    expect(updated.clubData[0].players[0].contract![0].timing).toBe("Próxima Temporada");
+  });
+
+  it("inicializa o campo timing em chegadas de acordo com o contrato e nunca vazio", () => {
+    cleanup();
+    const playerWithTiming = {
+      ...careerForStep2.clubData[0].players[0],
+      contract: [
+        {
+          ...careerForStep2.clubData[0].players[0].contract![0],
+          timing: "Próxima Janela" as const,
+        },
+      ],
+    };
+    const onCloseMock = vi.fn();
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <EditTransferScreen
+              career={careerForStep2}
+              season={careerForStep2.clubData[0]}
+              player={playerWithTiming}
+              contract={playerWithTiming.contract[0]}
+              contractIndex={0}
+              direction="arrivals"
+              onClose={onCloseMock}
+            />
+          ),
+        },
+      ],
+      { initialEntries: ["/"] },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    // Timing deve vir preenchido com 'Próxima Janela'
+    expect(screen.getByText(/Pr[oó]xima Janela/i)).toBeDefined();
+  });
+
+  it("carrega a taxa de transferência inicial em saídas limpa de símbolos de moeda (ex: '50m')", () => {
+    cleanup();
+    const barcaCareer: Career = {
+      id: "career-barca-edit",
+      clubName: "FC Barcelona",
+      managerName: "Hansi Flick",
+      createdAt: new Date("2024-07-01"),
+      teamBadge: "",
+      nation: "ESP",
+      currency: "EUR",
+      colorsTeams: ["#004d98", "#a50044"],
+      trophies: [],
+      clubData: [],
+    };
+
+    const pedri: Players = {
+      id: "pedri-exit",
+      name: "Pedri",
+      overall: 88,
+      sector: "Meio-Campo",
+      position: "MC",
+      age: 22,
+      salary: 150000,
+      nation: "ESP",
+      shirtNumber: "8",
+      playerValue: 100000000,
+      buy: false,
+      captain: false,
+      sell: true,
+      contractTime: 0,
+      ballonDor: 0,
+      statsLeagues: [],
+      contract: [
+        {
+          buyValue: 0,
+          sellValue: 50000000,
+          fromClub: "FC Barcelona",
+          leftClub: "Paris Saint-Germain",
+          dataArrival: new Date("2024-07-01"),
+          dataExit: new Date("2024-08-01"),
+          isLoan: false,
+        },
+      ],
+    };
+
+    const barcaSeason: ClubData = {
+      id: "season-barca-1",
+      seasonNumber: 1,
+      teams: [],
+      players: [pedri],
+      matches: [],
+    };
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <EditTransferScreen
+              career={barcaCareer}
+              season={barcaSeason}
+              player={pedri}
+              contract={pedri.contract![0]}
+              contractIndex={0}
+              direction="exit"
+              onClose={vi.fn()}
+            />
+          ),
+        },
+      ],
+      { initialEntries: ["/"] },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    const sellValueInput = screen.getByPlaceholderText("Ex: 150k, 50M") as HTMLInputElement;
+    expect(sellValueInput.value).toBe("50m");
+  });
+
+  it("carrega a taxa de transferência inicial em compras limpa de símbolos de moeda (ex: '32m')", () => {
+    cleanup();
+    const barcaCareer: Career = {
+      id: "career-barca-buy",
+      clubName: "FC Barcelona",
+      managerName: "Hansi Flick",
+      createdAt: new Date("2024-07-01"),
+      teamBadge: "",
+      nation: "ESP",
+      currency: "EUR",
+      colorsTeams: ["#004d98", "#a50044"],
+      trophies: [],
+      clubData: [],
+    };
+
+    const gavi: Players = {
+      id: "gavi-buy",
+      name: "Gavi",
+      overall: 86,
+      sector: "Meio-Campo",
+      position: "MC",
+      age: 20,
+      salary: 120000,
+      nation: "ESP",
+      shirtNumber: "6",
+      playerValue: 90000000,
+      buy: true,
+      captain: false,
+      sell: false,
+      contractTime: 4,
+      ballonDor: 0,
+      statsLeagues: [],
+      contract: [
+        {
+          buyValue: 32000000,
+          sellValue: 0,
+          fromClub: "Real Betis",
+          leftClub: "",
+          dataArrival: new Date("2024-07-01"),
+          dataExit: null,
+          isLoan: false,
+        },
+      ],
+    };
+
+    const barcaSeason: ClubData = {
+      id: "season-barca-1",
+      seasonNumber: 1,
+      teams: [],
+      players: [gavi],
+      matches: [],
+    };
+
+    const router = createMemoryRouter(
+      [
+        {
+          path: "/",
+          element: (
+            <EditTransferScreen
+              career={barcaCareer}
+              season={barcaSeason}
+              player={gavi}
+              contract={gavi.contract![0]}
+              contractIndex={0}
+              direction="arrivals"
+              onClose={vi.fn()}
+            />
+          ),
+        },
+      ],
+      { initialEntries: ["/"] },
+    );
+
+    render(<RouterProvider router={router} />);
+
+    const buyValueInput = screen.getByPlaceholderText("Ex: 100M, 1.5B, 500k") as HTMLInputElement;
+    expect(buyValueInput.value).toBe("32m");
+  });
+});
+
 
 

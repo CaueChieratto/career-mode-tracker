@@ -5,7 +5,7 @@ import Styles from "./MatchDetails.module.css";
 import { LineupList } from "./ui/LineupList";
 import { ScoreBoard } from "./ui/ScoreBoard";
 import { TournamentResult } from "./ui/TournamentResult";
-import { AcademyPlayers } from "../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../../../../../../../../../common/interfaces/AcademyData";
 
 type MatchDetailsProps = {
   allCareers: Career[];

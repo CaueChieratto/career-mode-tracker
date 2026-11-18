@@ -18,7 +18,7 @@ import { getCareerById } from "../common/helpers/Getters";
 import { auth } from "./mocks/firebaseClient";
 import { getDoc } from "./mocks/firestore";
 import { career, season, player, leagueStats } from "./factories/domain";
-import { getAggregatedPlayersForCareer } from "../layout/SectionView/helpers/mergeMatchStats";
+import { getAggregatedPlayersForCareer } from "../common/stats/helpers/mergeMatchStats";
 import { aggregatePlayerStats } from "../common/services/ServicePlayers/helpers/statsHelpers";
 import type { Career } from "../common/interfaces/Career";
 import type { Players } from "../common/interfaces/playersInfo/players";

@@ -4,11 +4,13 @@ import { PlayerFormTexts } from "../../types/PlayerFormTexts";
 import { usePositionSelection } from "../usePositionSelection";
 import { getFormRows } from "../../utils/getFormRows";
 import { getFormattedArrivalDate } from "../../utils/getFormattedArrivalDate";
-import { AcademyPlayersHistory } from "../../../../../interfaces/AcademyPlayers/AcademyPlayersHistory";
+import { AcademyPlayersHistory } from "../../../../../../../../../common/interfaces/AcademyData";
 import { useAsyncForm } from "../../../../../hooks/useAsyncForm";
 import { useAcademyContext } from "../../../../../../contexts/AcademyContext/hooks/useAcademyContext";
 import { isEuropeanSeason } from "../../../../../utils/isEuropeanSeason";
 import { getSeasonMonthWeight } from "../../../components/PlayerDevelopment/utils/getSeasonMonthWeight";
+import { calculatePlayerAge } from "../../../../../../../../../common/utils/calculatePlayerAge";
+import { toast, markErrorAsNotified } from "../../../../../../../../../common/services/ToastService";
 
 type UsePlayerFormProps = {
   texts: PlayerFormTexts;
@@ -27,7 +29,7 @@ export const usePlayerForm = ({
   isEvolution,
   editingAttribute,
 }: UsePlayerFormProps) => {
-  const { career } = useAcademyContext();
+  const { career, seasonNumber } = useAcademyContext();
 
   const [nationality, setNationality] = useState<string>(
     initialData?.nationality || "",
@@ -53,7 +55,36 @@ export const usePlayerForm = ({
     if (formData.has("name")) playerData.name = formData.get("name") as string;
     if (formData.has("nationality"))
       playerData.nationality = formData.get("nationality") as string;
-    if (formData.has("age")) playerData.age = Number(formData.get("age"));
+
+    const birthDateRaw = formData.get("birthDate") as string | null;
+    const birthDate = birthDateRaw ? birthDateRaw.trim() : "";
+    if (birthDate) {
+      playerData.birthDate = birthDate;
+    } else if (initialData?.birthDate) {
+      playerData.birthDate = initialData.birthDate;
+    }
+
+    const currentSeason = career?.clubData?.find(
+      (s) => s.seasonNumber === seasonNumber,
+    );
+
+    const calculatedAge = calculatePlayerAge(
+      playerData.birthDate,
+      career?.createdAt,
+      seasonNumber || 1,
+      career?.nation,
+      currentSeason?.matches,
+    );
+
+    if (calculatedAge > 0) {
+      playerData.age = calculatedAge;
+    } else if (formData.has("age")) {
+      playerData.age = Number(formData.get("age"));
+    } else if (initialData?.age) {
+      playerData.age = initialData.age;
+    } else {
+      playerData.age = 0;
+    }
 
     const shirtValue = formData.get("shirtNumber");
     if (shirtValue && shirtValue.toString().trim() !== "") {
@@ -108,10 +139,10 @@ export const usePlayerForm = ({
           evWeight < arrWeight ||
           (evWeight === arrWeight && evDay < arrDay)
         ) {
-          alert(
+          toast.warning(
             `A data da evolução não pode ser anterior à data de chegada (${arrDateStr}).`,
           );
-          throw new Error("Invalid evolution date");
+          throw markErrorAsNotified(new Error("Invalid evolution date"));
         }
       }
     }
@@ -123,6 +154,11 @@ export const usePlayerForm = ({
     handleCustomSubmit,
     parsePlayerData,
   );
+
+  const baseYear = career?.createdAt
+    ? new Date(career.createdAt).getFullYear()
+    : new Date().getFullYear();
+  const seasonStartYear = baseYear + (Math.max(1, seasonNumber || 1) - 1);
 
   const formRows = getFormRows({
     texts,
@@ -137,6 +173,7 @@ export const usePlayerForm = ({
     nationality,
     setNationality,
     editingAttribute,
+    seasonStartYear,
   });
 
   return { isLoading, sector, position, submit, formRows };

@@ -9,7 +9,7 @@ import { PlayerMatchStat } from "../../../../../../../../../../common/interfaces
 import { NumberStats } from "../../../../../../../../ui/NumberStats";
 import { OwnGoal } from "../../../../../../../../../../ui/IconsSVG/OwnGoal";
 import { OverflowText } from "../../../../../../../../../../components/OverflowText";
-import { PlayerCircle } from "./PlayerCircle";
+import { PlayerCircle } from "../../../../../../../../../../components/PlayerCircle";
 import { formatPlayerName } from "../../../../../../../../../../common/utils/formatPlayerName";
 
 type PlayerDetailsProps = {

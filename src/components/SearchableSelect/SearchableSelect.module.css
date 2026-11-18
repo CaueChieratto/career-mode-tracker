@@ -87,3 +87,10 @@
 .chevron.open {
   transform: rotate(180deg);
 }
+
+.no_options {
+  padding: 12px 14px;
+  color: #888;
+  font-style: italic;
+  cursor: default;
+}

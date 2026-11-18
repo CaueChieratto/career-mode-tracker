@@ -2,22 +2,24 @@ import { createPortal } from "react-dom";
 import Card from "../../../../../../../../../ui/Card";
 import Styles from "./PlayerStats.module.css";
 import StatisticsTable_Title from "../../../../../../../../../components/Statistics/StatisticsTable_Title";
-import { useMemo, useRef, useState, useContext } from "react";
+import { useMemo, useState, useContext } from "react";
 import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { usePlayerSeasonStats } from "../../../../../../../../../common/hooks/Players/UsePlayerSeasonStats";
+import { ServicePlayers } from "../../../../../../../../../common/services/ServicePlayers";
 import { Career } from "../../../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../../../common/interfaces/club/clubData";
 import { sortLeaguesByLevel } from "../../../../../../../../../common/utils/Sorts";
 import CalculatedStatistics from "../../../../../../../../../components/Statistics/CalculatedStatistics";
 import Load from "../../../../../../../../../components/Load";
-import { toRawPlayer } from "../../../../../../../helpers/mergeMatchStats";
+import { toRawPlayer } from "../../../../../../../../../common/stats/helpers/mergeMatchStats";
 import { GroupCareerContext } from "../../../../../../../../../pages/GroupCareerPage/contexts/GroupCareerContext";
 import {
   isSamePlayerId,
   getPlayerIdentityKey,
 } from "../../../../../../../../../common/utils/playerIdentity";
 import { formatPlayerName } from "../../../../../../../../../common/utils/formatPlayerName";
+import { SectionScreen } from "../../../../../../../config/screens";
+import { toast } from "../../../../../../../../../common/services/ToastService";
 
 type PlayerStatsProps = {
   player: Players;
@@ -26,6 +28,7 @@ type PlayerStatsProps = {
   isGeralPage: boolean;
   onEditPlayerStats: (playerId: string) => void;
   onUpdatePlayer?: (player: Players) => void;
+  onOpenScreen?: (screen: SectionScreen) => void;
 };
 
 const PlayerStats = ({
@@ -35,6 +38,7 @@ const PlayerStats = ({
   isGeralPage,
   onEditPlayerStats,
   onUpdatePlayer,
+  onOpenScreen,
 }: PlayerStatsProps) => {
   const [expand, setExpand] = useState(false);
   const isGoalkeeper = player.position === "GOL";
@@ -42,21 +46,34 @@ const PlayerStats = ({
   const location = useLocation();
   const { careerId } = useParams<{ careerId: string; groupId: string }>();
   const groupContext = useContext(GroupCareerContext);
-  const leagueFormRef = useRef(null);
+  const [isDeletingLeague, setIsDeletingLeague] = useState(false);
 
-  const { handleDeleteLeague, isDeletingLeague } = usePlayerSeasonStats({
-    career,
-    season,
-    player,
-    leagueFormRef,
-  });
+  const handleDeleteLeague = async (leagueName: string): Promise<boolean> => {
+    if (!player) return false;
+    setIsDeletingLeague(true);
+    try {
+      await ServicePlayers.deleteLeagueStatsFromPlayer(
+        career.id,
+        season.id,
+        player.id,
+        leagueName,
+      );
+      return true;
+    } catch (error) {
+      console.error("Erro ao deletar a liga:", error);
+      toast.error("Não foi possível remover a liga.");
+      return false;
+    } finally {
+      setIsDeletingLeague(false);
+    }
+  };
 
   const handleDeleteLeagueAndSync = async (leagueName: string) => {
     const targetLeague = ((player as unknown as { aggregatedLeagues?: Array<{ leagueName: string; source: string }> }).aggregatedLeagues || []).find(
       (l) => l.leagueName === leagueName,
     );
     if (targetLeague?.source === "matches") {
-      alert(
+      toast.info(
         `As estatísticas da competição "${leagueName}" são calculadas automaticamente a partir de partidas finalizadas e não podem ser excluídas por aqui. Para alterá-las ou removê-las, acesse a aba Partidas.`,
       );
       return;
@@ -69,6 +86,7 @@ const PlayerStats = ({
         ...toRawPlayer(player),
         statsLeagues: manualBase.filter((l) => l.leagueName !== leagueName),
       });
+      toast.success("Estatísticas da competição removidas com sucesso!");
     }
   };
 
@@ -108,6 +126,18 @@ const PlayerStats = ({
           }
         }
 
+        if (onOpenScreen && targetCareerId) {
+          onOpenScreen({
+            key: "player",
+            playerId: targetPlayerId,
+            careerId: targetCareerId,
+            isNotSeason: true,
+            isFromGroup: Boolean(resolvedGroupId),
+            groupId: resolvedGroupId || undefined,
+          });
+          return;
+        }
+
         if (resolvedGroupId) {
           navigate(
             `/Career/${targetCareerId}/Geral/Player/${targetPlayerId}?fromGroup=true&groupId=${resolvedGroupId}`,
@@ -115,6 +145,18 @@ const PlayerStats = ({
           return;
         }
       }
+
+      if (onOpenScreen && targetCareerId) {
+        onOpenScreen({
+          key: "player",
+          playerId: targetPlayerId,
+          careerId: targetCareerId,
+          isNotSeason: true,
+          isFromGroup: false,
+        });
+        return;
+      }
+
       navigate(`/Career/${targetCareerId}/Geral/Player/${targetPlayerId}`);
       return;
     }
@@ -124,7 +166,10 @@ const PlayerStats = ({
 
   return (
     <>
-      <Card className={Styles.card}>
+      <Card
+        id={player.id ? `player-stat-${player.id}` : undefined}
+        className={Styles.card}
+      >
         <section
           className={isGeralPage ? Styles.section_geral : Styles.section}
           onClick={navigatePlayer}
@@ -146,7 +191,6 @@ const PlayerStats = ({
           onClick={() => setExpand(!expand)}
         >
           <StatisticsTable_Title
-            setExpand={setExpand}
             expand={expand}
             type="expand"
           />

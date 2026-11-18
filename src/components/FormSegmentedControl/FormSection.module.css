@@ -22,3 +22,18 @@
   color: white;
   font-weight: bold;
 }
+
+.segmented_control.vertical {
+  flex-direction: column;
+  width: 50%;
+  margin: 0 auto;
+}
+
+.segmented_control.vertical button {
+  width: 100%;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.segmented_control.vertical button:last-child {
+  border-bottom: none;
+}

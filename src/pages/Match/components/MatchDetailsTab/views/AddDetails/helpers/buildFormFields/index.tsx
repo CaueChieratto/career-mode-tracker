@@ -4,6 +4,7 @@ import { TbTargetArrow } from "react-icons/tb";
 import { Field } from "../../../../../../../../components/FormSection";
 import { RefereeCard } from "../../../../../../../../ui/IconsSVG/RefereeCard";
 import { chunkArray } from "../chunkArray";
+import { OpponentPlayer } from "../../../../../../../../common/interfaces/OpponentPlayer";
 
 export const buildFormFields = (
   hasExtraTime: boolean,
@@ -18,12 +19,34 @@ export const buildFormFields = (
   awayTeam: string = "Visitante",
   formValues: Record<string, string> = {},
   opponentPlayerOptions: string[] = [],
+  opponentPlayers?: OpponentPlayer[],
+  opponentTeam?: string,
 ): { title: string; fields: Field[][] }[] => {
   const getFilteredOpponentOptions = (currentValue?: string): string[] => {
-    const search = (currentValue ?? "").trim().toLowerCase();
+    const search = (currentValue ?? "").trim();
+    if (opponentPlayers && opponentTeam) {
+      if (!search) {
+        const teamPlayers = opponentPlayers
+          .filter(
+            (p) =>
+              (p.team &&
+                p.team.trim().toLowerCase() ===
+                  opponentTeam.trim().toLowerCase()) ||
+              p.isFormerPlayer,
+          )
+          .map((p) => p.name);
+
+        if (teamPlayers.length > 0) {
+          return teamPlayers;
+        }
+        return opponentPlayers.map((p) => p.name);
+      }
+      return opponentPlayers.map((p) => p.name);
+    }
+
     if (!search) return opponentPlayerOptions;
     return opponentPlayerOptions.filter((opt) =>
-      opt.toLowerCase().includes(search),
+      opt.toLowerCase().includes(search.toLowerCase()),
     );
   };
 

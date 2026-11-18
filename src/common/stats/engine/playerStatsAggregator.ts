@@ -5,11 +5,11 @@ import { LeagueStats } from "../../interfaces/playersStats/leagueStats";
 import { Match } from "../../interfaces/Match";
 import { AugmentedCareer } from "../../interfaces/ComparePlayers";
 import { formatDisplayValue } from "../../utils/FormatValue";
-import { calculateTotalStats } from "../../../layout/SectionView/features/ClubTabs/StatsTab_Club/components/PlayerStatsList/utils/calculateTotalStats";
+import { calculateTotalStats } from "../helpers/calculateTotalStats";
 import {
   augmentSeasonWithMatchStats,
   areLeagueStatsIdentical,
-} from "../../../layout/SectionView/helpers/mergeMatchStats";
+} from "../helpers/mergeMatchStats";
 import {
   getPlayerIdentityKey,
   matchPlayerStatToPlayer,
@@ -423,11 +423,14 @@ export const aggregateSinglePlayerStats = (
     player,
     age: `${player.age} anos`,
     position: player.position,
-    marketValue: formatDisplayValue(
-      player.playerValue,
-      augmentedCareer.currency,
-    ),
-    salary: formatDisplayValue(player.salary, augmentedCareer.currency),
+    marketValue:
+      player.playerValue !== undefined
+        ? formatDisplayValue(player.playerValue, augmentedCareer.currency)
+        : "-",
+    salary:
+      player.salary !== undefined
+        ? formatDisplayValue(player.salary, augmentedCareer.currency)
+        : "-",
     seasonsAtClub: compareMode === "total" ? seasonsAtClub : undefined,
 
     games: coreStats.games,

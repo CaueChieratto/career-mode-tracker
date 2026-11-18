@@ -1,5 +1,5 @@
 import { Players } from "../../../../common/interfaces/playersInfo/players";
-import { getAggregatedPlayersForCareer } from "../../../../layout/SectionView/helpers/mergeMatchStats";
+import { getAggregatedPlayersForCareer } from "../../../../common/stats/helpers/mergeMatchStats";
 import { AugmentedCareer } from "../../../../common/interfaces/ComparePlayers";
 import { Match } from "../../../../common/interfaces/Match";
 

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useContext } from "react";
+import { useMemo, useState, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import { Career } from "../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../common/interfaces/club/clubData";
@@ -38,18 +38,13 @@ export const BestPlayersTab = ({ season, career }: BestPlayersTabProps) => {
     });
   }, [statsData]);
 
-  const [selectedStat, setSelectedStat] = useState<string>("");
+  const [rawSelectedStat, setRawSelectedStat] = useState<string>("");
 
-  useEffect(() => {
-    if (visibleCards.length > 0) {
-      const exists = visibleCards.some((c) => c.title === selectedStat);
-      if (!exists) {
-        setSelectedStat(visibleCards[0].title);
-      }
-    } else {
-      setSelectedStat("");
-    }
-  }, [visibleCards, selectedStat]);
+  const selectedStat = useMemo(() => {
+    if (visibleCards.length === 0) return "";
+    const exists = visibleCards.some((c) => c.title === rawSelectedStat);
+    return exists ? rawSelectedStat : visibleCards[0].title;
+  }, [visibleCards, rawSelectedStat]);
 
   const hasAnyMatches = isGeralPage
     ? statsData.length > 0
@@ -73,7 +68,7 @@ export const BestPlayersTab = ({ season, career }: BestPlayersTabProps) => {
   }
 
   const handleSelectChange = (title: string) => {
-    setSelectedStat(title);
+    setRawSelectedStat(title);
     const card = visibleCards.find((c) => c.title === title);
     if (card) {
       const element = document.getElementById(card.id);

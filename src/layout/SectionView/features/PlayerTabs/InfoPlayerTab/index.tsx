@@ -6,32 +6,46 @@ import TransactionInfoSection from "./components/TransactionInfoSection";
 import { usePlayerInfo } from "./hooks/usePlayerInfo";
 import { Career } from "../../../../../common/interfaces/Career";
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
+import { ClubData } from "../../../../../common/interfaces/club/clubData";
+import { usePlayerGroupStatsContext } from "../../../../../contexts/PlayerGroupStatsContext";
 import React, { useMemo } from "react";
 import { useLocation, useParams } from "react-router-dom";
 
 type InfoPlayerTabProps = {
   player?: Players;
   career: Career;
+  season?: ClubData;
+  notSeason?: boolean;
 };
 
 const InfoPlayerTab: React.FC<InfoPlayerTabProps> = ({
   player: propPlayer,
   career,
+  season: propSeason,
+  notSeason: propNotSeason,
 }) => {
   const location = useLocation();
-  const { seasonId } = useParams<{ seasonId: string }>();
-  const isNotSeason = location.pathname.includes("/Geral") || !seasonId;
+  const groupStatsCtx = usePlayerGroupStatsContext();
+  const { seasonId: paramSeasonId } = useParams<{ seasonId?: string }>();
+  const effectiveSeasonId = propSeason?.id ?? paramSeasonId;
+  const isNotSeason =
+    groupStatsCtx?.isGeralPage ??
+    propNotSeason ??
+    (location.pathname.includes("/Geral") || !effectiveSeasonId);
 
   const player = useMemo(() => {
-    if (isNotSeason || !seasonId || !career || !propPlayer) return propPlayer;
-    const season = career.clubData.find((s) => s.id === seasonId);
+    if (isNotSeason || !effectiveSeasonId || !career || !propPlayer)
+      return propPlayer;
+    const season = career.clubData.find((s) => s.id === effectiveSeasonId);
     if (!season) return propPlayer;
     return season.players.find((p) => p.id === propPlayer.id) || propPlayer;
-  }, [propPlayer, career, seasonId, isNotSeason]);
+  }, [propPlayer, career, effectiveSeasonId, isNotSeason]);
 
   const { transactions, getPlayerAgeForTransaction } = usePlayerInfo(
     player,
     career,
+    effectiveSeasonId,
+    isNotSeason,
   );
   const currency = career.currency;
 

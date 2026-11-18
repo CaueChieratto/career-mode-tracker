@@ -6,6 +6,7 @@ type FormSegmentedControlProps = {
   clubColor: string;
   options?: readonly string[];
   value?: boolean | string;
+  orientation?: "horizontal" | "vertical";
   onChange?: (value: boolean) => void;
   onOptionChange?: (value: string) => void;
   action?: () => void;
@@ -16,6 +17,7 @@ const FormSegmentedControl = ({
   value,
   clubColor,
   options,
+  orientation,
   onChange,
   onOptionChange,
   action,
@@ -39,8 +41,12 @@ const FormSegmentedControl = ({
     const currentValue =
       typeof value === "string" ? value : (options[0] ?? "");
 
+    const containerClass = `${Styles.segmented_control} ${
+      orientation === "vertical" ? Styles.vertical : ""
+    }`.trim();
+
     return (
-      <div className={Styles.segmented_control}>
+      <div className={containerClass}>
         <input type="hidden" name={name} value={currentValue} />
         {options.map((option) => {
           const isActive = currentValue === option;
@@ -61,9 +67,12 @@ const FormSegmentedControl = ({
   }
 
   const isChecked = typeof value === "boolean" ? value : value === "true";
+  const containerClass = `${Styles.segmented_control} ${
+    orientation === "vertical" ? Styles.vertical : ""
+  }`.trim();
 
   return (
-    <div className={Styles.segmented_control}>
+    <div className={containerClass}>
       <input type="hidden" name={name} value={String(isChecked)} />
       <Button
         type="button"

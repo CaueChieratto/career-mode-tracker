@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useForm } from "../../../../../../../common/hooks/UseForm";
-import { ServiceMatches } from "../../../../../../../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../../../../../../common/services/ServiceMatches";
 import { AddStatsMatchFormFields } from "../constants/FormFields";
 import { buildInitialStats } from "../helpers/buildInitialStats";
 import { buildMatchUpdate } from "../helpers/buildMatchUpdate";
@@ -8,6 +8,7 @@ import { Field } from "../../../../../../../components/FormSection";
 import { Match } from "../../../../../../../common/interfaces/Match";
 import { ClubData } from "../../../../../../../common/interfaces/club/clubData";
 import { Career } from "../../../../../../../common/interfaces/Career";
+import { toast } from "../../../../../../../common/services/ToastService";
 
 type UseAddStatsMatchProps = {
   career: Career;
@@ -78,6 +79,7 @@ export const useAddStatsMatch = ({
         matchToSave,
       );
 
+      toast.success("Estatísticas da partida salvas com sucesso!");
       onSaved?.(matchToSave);
       onClose();
     } finally {

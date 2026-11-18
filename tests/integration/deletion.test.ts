@@ -3,7 +3,7 @@ import { boundary } from "./firestoreBoundary";
 import { expect, it, vi } from "vitest";
 import { deleteCareerFromFirestore } from "../../src/common/helpers/Deleters";
 import { ServiceSeasons } from "../../src/common/services/ServiceSeasons";
-import { ServiceMatches } from "../../src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../src/common/services/ServiceMatches";
 import {
   academyPlayer,
   career,

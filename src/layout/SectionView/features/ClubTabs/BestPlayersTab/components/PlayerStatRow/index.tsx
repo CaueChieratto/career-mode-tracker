@@ -1,6 +1,6 @@
-import { UseRatingColor } from "../../../../../../../common/hooks/Colors/GetOverallColor";
 import { Players } from "../../../../../../../common/interfaces/playersInfo/players";
 import { PlayerInfo } from "../../../../../../../components/PlayerInfo";
+import { RatingBadge } from "../../../../../../../components/RatingBadge";
 import Styles from "./PlayerStatRow.module.css";
 
 type PlayerStatRowProps = {
@@ -16,9 +16,6 @@ export const PlayerStatRow = ({
   description,
   isRating,
 }: PlayerStatRowProps) => {
-  const formattedValue =
-    isRating && Number(value) % 1 === 0 ? Number(value).toString() : value;
-
   const renderValue = () => {
     if (typeof value === "number") {
       return <span className={Styles.stat_number}>{value}</span>;
@@ -50,12 +47,7 @@ export const PlayerStatRow = ({
 
       <footer className={Styles.stat_block}>
         {isRating ? (
-          <div
-            className={Styles.ratingBadge}
-            style={{ backgroundColor: UseRatingColor(+value) }}
-          >
-            {formattedValue}
-          </div>
+          <RatingBadge rating={value} />
         ) : (
           <div className={Styles.stat_content}>
             <h3 className={Styles.data_title_stat}>{renderValue()}</h3>

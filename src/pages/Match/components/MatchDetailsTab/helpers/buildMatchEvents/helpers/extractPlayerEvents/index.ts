@@ -2,6 +2,7 @@ import { ClubData } from "../../../../../../../../common/interfaces/club/clubDat
 import { Match } from "../../../../../../../../common/interfaces/Match";
 import { GoalListItem, MatchEvent } from "../../../../types";
 import { getEventDetails, parseGoals } from "../timeUtils";
+import { resolvePlayerChainSubstitution } from "../../../../../../helpers/substitutionChain";
 
 export const extractPlayerEvents = (match: Match, season: ClubData) => {
   const events: MatchEvent[] = [];
@@ -170,77 +171,13 @@ export const extractPlayerEvents = (match: Match, season: ClubData) => {
     const isStarter = starterIds.includes(player.id);
 
     if (!isStarter && stat.minutesPlayed && stat.minutesPlayed > 0) {
-      let subMinute = stat.minutesPlayed;
-      let subOutName = stat.substituteIn;
-      let isValidSub = false;
-
-      for (const sId of starterIds) {
-        const ordered = [sId];
-        let curr = sId;
-
-        while (true) {
-          let next: string | null = null;
-          const currStat = match.playerStats?.find((s) => s.playerId === curr);
-
-          if (currStat?.substituteIn && currStat.substituteIn !== "Nenhum") {
-            const p = season.players.find(
-              (p) => p.name === currStat.substituteIn,
-            );
-            if (p && !ordered.includes(p.id)) next = p.id;
-          }
-
-          if (!next) {
-            const currPlayer = season.players.find((p) => p.id === curr);
-            if (currPlayer) {
-              const pointedBy = match.playerStats?.find(
-                (s) =>
-                  s.substituteIn === currPlayer.name &&
-                  !ordered.includes(s.playerId),
-              );
-              if (pointedBy) next = pointedBy.playerId;
-            }
-          }
-
-          if (next) {
-            ordered.push(next);
-            curr = next;
-          } else {
-            break;
-          }
-        }
-
-        const playerIndex = ordered.indexOf(player.id);
-        if (playerIndex > 0) {
-          subMinute = 0;
-          for (let k = 0; k < playerIndex; k++) {
-            const prevStat = match.playerStats?.find(
-              (s) => s.playerId === ordered[k],
-            );
-            subMinute += prevStat?.minutesPlayed || 0;
-          }
-          const prevPlayer = season.players.find(
-            (p) => p.id === ordered[playerIndex - 1],
-          );
-          if (prevPlayer) {
-            subOutName = prevPlayer.name;
-          }
-          isValidSub = true;
-          break;
-        }
-      }
-
-      if (!isValidSub && stat.substituteIn && stat.substituteIn !== "Nenhum") {
-        isValidSub = true;
-        const outPlayer = season.players.find(
-          (p) => p.name === stat.substituteIn,
-        );
-        if (outPlayer) {
-          const outStats = match.playerStats?.find(
-            (s) => s.playerId === outPlayer.id,
-          );
-          subMinute = outStats?.minutesPlayed || 0;
-        }
-      }
+      const { subMinute, subOutName, isValidSub } =
+        resolvePlayerChainSubstitution({
+          playerId: player.id,
+          starterIds,
+          playerStats: match.playerStats || [],
+          allPlayers: season.players,
+        });
 
       if (isValidSub) {
         let clockSubMinute = subMinute;

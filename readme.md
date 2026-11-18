@@ -147,6 +147,16 @@ npm ci
 
 O primeiro comando baixa o projeto. O segundo abre sua pasta no terminal. O terceiro instala as dependências nas versões registradas no arquivo `package-lock.json`.
 
+Para compilar as Cloud Functions ou executar os testes de integração com emuladores locais em um clone novo, instale também as dependências isoladas de `tests/emulator-tools` e `functions` (usando os respectivos `package-lock.json`) e prepare o emulador:
+
+```bash
+npm ci --prefix tests/emulator-tools
+npm ci --prefix functions
+npm run test:emulators:prepare
+```
+
+A compilação de `functions/lib/` (ignorada pelo Git) é executada automaticamente por `npm run test:integration` após a instalação das dependências acima, ou manualmente via `npm --prefix functions run build`.
+
 ### Configurar as conexões
 
 Crie um arquivo chamado **`.env.local`** na pasta principal do projeto. Ele reúne as configurações usadas para conectar o aplicativo aos serviços externos.

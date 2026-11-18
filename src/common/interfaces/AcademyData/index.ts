@@ -3,3 +3,6 @@ export interface AcademyData {
   tournament: string;
   nickname: string;
 }
+
+export * from "./AcademyPlayers";
+export * from "./AcademyTournaments";

@@ -9,8 +9,8 @@ import {
 } from "@testing-library/react";
 import { PlayerWorkspace } from "../pages/Academy/layouts/AcademyContent/components/Player/views/PlayerWorkspace";
 import { useAcademyContext } from "../pages/Academy/layouts/contexts/AcademyContext/hooks/useAcademyContext";
-import { AcademyPlayers } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
-import { AcademyTournaments } from "../pages/Academy/layouts/AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyPlayers } from "../common/interfaces/AcademyData";
+import { AcademyTournaments } from "../common/interfaces/AcademyData";
 import { Career } from "../common/interfaces/Career";
 
 afterEach(cleanup);

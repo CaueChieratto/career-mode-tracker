@@ -2,26 +2,31 @@ import { useEffect, useMemo, useState } from "react";
 import { Career } from "../../../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../../../common/interfaces/club/clubData";
 import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
-import { ServicePlayers } from "../../../../../../../../../common/services/ServicePlayers";
 import {
   brasilDatePlaceholderShort,
+  formatDateInput,
   formatDateInputShort,
-  parseBrasilDate,
 } from "../../../../../../../../../common/utils/Date";
 import {
   formatDisplayValue,
+  formatTransferValue,
   parseValue,
 } from "../../../../../../../../../common/utils/FormatValue";
-import { ServiceMatches } from "../../../../../AllMatchesTab/views/AddMatches/services/ServiceMatches";
-import { getSeasonDateRange } from "../../../../../../../../../common/utils/GetSeasonDateRange";
-import { notifyCareersUpdated } from "../../../../../../../../../common/hooks/Career/UseCareer";
-import { updateCachedCareer } from "../../../../../../../../../common/helpers/Getters";
-
+import { calculateContractYears } from "../../../../../../../../../common/utils/calculateContractYears";
 import {
   checkIsSpecialTransfer,
   checkIsIncomingLoanExit,
 } from "../../constants/buildEditTransferFormSections";
-import { Contract } from "../../../../../../../../../common/interfaces/playersInfo/contract";
+import {
+  isNextSeasonTiming,
+  isNextWindowTiming,
+} from "../../../../../../../../../common/services/ServicePlayers/helpers/transferTimingHelpers";
+import { BooleanValues } from "../../types";
+import { toast } from "../../../../../../../../../common/services/ToastService";
+import { mergeFormValues } from "../../../../../../../../../common/hooks/UseForm";
+import { useGlobalTeamsOptions } from "../../../shared/useGlobalTeamsOptions";
+import { useTransferBonusesDraft } from "../useTransferBonusesDraft";
+import { useEditTransferActions } from "../useEditTransferActions";
 
 export type UseEditTransferFormProps = {
   career: Career;
@@ -33,265 +38,10 @@ export type UseEditTransferFormProps = {
   onClose: () => void;
 };
 
-export const applyRevertToCareer = (
-  career: Career,
-  seasonId: string,
-  playerId: string,
-  contractIndex: number,
-  direction: "arrivals" | "exit",
-): Career => {
-  const newClubData = (career.clubData || []).map((s) => {
-    if (s.id !== seasonId) return s;
-
-    let newPlayers = [...(s.players || [])];
-    const targetPlayer = newPlayers.find((p) => p.id === playerId);
-    if (!targetPlayer) return s;
-
-    const contracts = targetPlayer.contract ? [...targetPlayer.contract] : [];
-    let idx = contractIndex;
-    if (idx < 0 || idx >= contracts.length) {
-      idx = contracts.findIndex((c) =>
-        direction === "exit"
-          ? Boolean(c.dataExit || c.leftClub)
-          : Boolean(c.dataArrival || c.fromClub),
-      );
-      if (idx < 0) idx = Math.max(0, contracts.length - 1);
-    }
-
-    if (direction === "exit") {
-      const currentContract = contracts[idx];
-      const finalContracts = [...contracts];
-      const isIncomingReturn = checkIsIncomingLoanExit(
-        targetPlayer,
-        currentContract,
-        "exit",
-      );
-
-      if (isIncomingReturn) {
-        finalContracts[idx] = {
-          ...currentContract,
-          leftClub: "",
-          dataExit: null,
-          sellValue: 0,
-          isLoan: true,
-        };
-
-        const updatedPlayer: Players = {
-          ...targetPlayer,
-          sell: false,
-          loan: false,
-          incomingLoan: true,
-          contract: finalContracts,
-        };
-
-        newPlayers = newPlayers.map((p) =>
-          p.id === playerId ? updatedPlayer : p,
-        );
-      } else {
-        if (currentContract?.dataArrival || currentContract?.fromClub) {
-          finalContracts[idx] = {
-            ...currentContract,
-            leftClub: "",
-            dataExit: null,
-            sellValue: 0,
-            isLoan: false,
-            loanDuration: undefined,
-            wagePercentage: undefined,
-            buyOptionValue: undefined,
-          };
-        } else {
-          if (contracts.length > 1) {
-            finalContracts.splice(idx, 1);
-          } else if (currentContract) {
-            finalContracts[idx] = {
-              ...currentContract,
-              leftClub: "",
-              dataExit: null,
-              sellValue: 0,
-              isLoan: false,
-              loanDuration: undefined,
-              wagePercentage: undefined,
-              buyOptionValue: undefined,
-            };
-          }
-        }
-
-        const updatedPlayer: Players = {
-          ...targetPlayer,
-          sell: false,
-          loan: false,
-          contract: finalContracts,
-        };
-
-        newPlayers = newPlayers.map((p) =>
-          p.id === playerId ? updatedPlayer : p,
-        );
-      }
-    } else {
-      // Arrivals
-      if (contracts.length <= 1) {
-        if (contracts[0]?.fromClub === "Fim de Empréstimo") {
-          const updatedPlayer: Players = {
-            ...targetPlayer,
-            loan: true,
-            sell: false,
-            buy: false,
-            contract: [
-              {
-                ...contracts[0],
-                fromClub: "",
-                dataArrival: null,
-              },
-            ],
-          };
-          newPlayers = newPlayers.map((p) =>
-            p.id === playerId ? updatedPlayer : p,
-          );
-        } else {
-          newPlayers = newPlayers.filter((p) => p.id !== playerId);
-        }
-      } else {
-        const finalContracts = [...contracts];
-        finalContracts.splice(idx, 1);
-        const prev = finalContracts[finalContracts.length - 1];
-        const isPrevLoanExit = Boolean(prev?.isLoan && prev?.leftClub);
-
-        const updatedPlayer: Players = {
-          ...targetPlayer,
-          contract: finalContracts,
-          ...(isPrevLoanExit
-            ? { loan: true, sell: false, buy: false, incomingLoan: false }
-            : {}),
-        };
-
-        newPlayers = newPlayers.map((p) =>
-          p.id === playerId ? updatedPlayer : p,
-        );
-      }
-    }
-
-    return {
-      ...s,
-      players: newPlayers,
-    };
-  });
-
-  return {
-    ...career,
-    updatedAt: Date.now(),
-    clubData: newClubData,
-  };
-};
-
-export const applyEditToCareer = (
-  career: Career,
-  seasonId: string,
-  playerId: string,
-  contractIndex: number,
-  direction: "arrivals" | "exit",
-  updatedFields: {
-    clubName: string;
-    transferValue: number;
-    transferType: string;
-    date: Date;
-    loanDuration?: number;
-    wagePercentage?: number;
-  },
-): Career => {
-  const newClubData = (career.clubData || []).map((s) => {
-    if (s.id !== seasonId) return s;
-
-    let newPlayers = [...(s.players || [])];
-    const targetPlayer = newPlayers.find((p) => p.id === playerId);
-    if (!targetPlayer) return s;
-
-    const contracts = targetPlayer.contract ? [...targetPlayer.contract] : [];
-    let idx = contractIndex;
-    if (idx < 0 || idx >= contracts.length) {
-      idx = contracts.findIndex((c) =>
-        direction === "exit"
-          ? Boolean(c.dataExit || c.leftClub)
-          : Boolean(c.dataArrival || c.fromClub),
-      );
-      if (idx < 0) idx = Math.max(0, contracts.length - 1);
-    }
-
-    const currentContract = { ...(contracts[idx] || {}) };
-    const finalPlayer: Players = { ...targetPlayer };
-
-    if (direction === "exit") {
-      currentContract.dataExit = updatedFields.date;
-      if (updatedFields.clubName)
-        currentContract.leftClub = updatedFields.clubName;
-
-      const isIncomingReturn =
-        checkIsIncomingLoanExit(
-          targetPlayer,
-          currentContract as Contract,
-          "exit",
-        ) || updatedFields.transferType === "Fim de Empréstimo";
-
-      if (isIncomingReturn) {
-        currentContract.sellValue = 0;
-        currentContract.isLoan = true;
-        delete currentContract.loanDuration;
-        delete currentContract.wagePercentage;
-        delete currentContract.buyOptionValue;
-        finalPlayer.sell = true;
-        finalPlayer.loan = false;
-        finalPlayer.incomingLoan = false;
-      } else if (updatedFields.transferType === "Venda") {
-        currentContract.sellValue = updatedFields.transferValue;
-        currentContract.isLoan = false;
-        delete currentContract.loanDuration;
-        delete currentContract.wagePercentage;
-        finalPlayer.sell = true;
-        finalPlayer.loan = false;
-      } else if (updatedFields.transferType === "Emprestar") {
-        currentContract.sellValue = 0;
-        currentContract.isLoan = true;
-        currentContract.loanDuration = updatedFields.loanDuration || 0;
-        currentContract.wagePercentage = updatedFields.wagePercentage || 0;
-        finalPlayer.sell = false;
-        finalPlayer.loan = true;
-      }
-    } else {
-      currentContract.dataArrival = updatedFields.date;
-      if (updatedFields.clubName)
-        currentContract.fromClub = updatedFields.clubName;
-      if (updatedFields.transferType === "Compra") {
-        currentContract.buyValue = updatedFields.transferValue;
-        currentContract.isLoan = false;
-        delete currentContract.loanDuration;
-        delete currentContract.wagePercentage;
-        finalPlayer.buy = true;
-        finalPlayer.incomingLoan = false;
-      } else if (updatedFields.transferType === "Empréstimo") {
-        currentContract.buyValue = 0;
-        currentContract.isLoan = true;
-        currentContract.loanDuration = updatedFields.loanDuration || 0;
-        currentContract.wagePercentage = updatedFields.wagePercentage ?? 100;
-        finalPlayer.buy = false;
-        finalPlayer.incomingLoan = true;
-      }
-    }
-
-    contracts[idx] = currentContract as Contract;
-    finalPlayer.contract = contracts;
-
-    newPlayers = newPlayers.map((p) => (p.id === playerId ? finalPlayer : p));
-
-    return {
-      ...s,
-      players: newPlayers,
-    };
-  });
-
-  return {
-    ...career,
-    updatedAt: Date.now(),
-    clubData: newClubData,
-  };
+const resolveTimingOption = (timing?: string, isArrival?: boolean): string => {
+  if (isNextSeasonTiming(timing)) return "Próxima Temporada";
+  if (isNextWindowTiming(timing)) return "Próxima Janela";
+  return isArrival ? "Imediata" : "Imediato";
 };
 
 export const useEditTransferForm = ({
@@ -303,55 +53,184 @@ export const useEditTransferForm = ({
   direction,
   onClose,
 }: UseEditTransferFormProps) => {
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [globalTeams, setGlobalTeams] = useState<string[]>(() => {
-    if (!career?.clubData) return [];
-    const teams = new Set<string>();
-    career.clubData.forEach((s) => {
-      s.teams?.forEach((t) => {
-        if (t.name) teams.add(t.name);
-      });
-    });
-    return Array.from(teams).sort();
+
+  const [booleanValues, setBooleanValues] = useState<BooleanValues>(() => {
+    return {
+      isRetirement:
+        contract.leftClub === "Aposentou" ||
+        contract.leftClub === "Aposentadoria",
+      isEndContract: contract.leftClub === "Fim de Contrato",
+      isReturnLoan: false,
+      hasInstallments: Boolean(contract.installments),
+      hasPlayerSwap: Boolean(
+        contract.swapPlayer &&
+        (contract.swapPlayer.playerName || contract.swapPlayer.playerId),
+      ),
+      hasBonus: Boolean(contract.bonuses && contract.bonuses.length > 0),
+      hasOtherClauses: Boolean(
+        contract.transferClauses &&
+        (contract.transferClauses.loanBackDuration ||
+          contract.transferClauses.buybackValue ||
+          contract.transferClauses.firstRefusal ||
+          contract.transferClauses.sellOnPercentage),
+      ),
+      firstRefusal: Boolean(contract.transferClauses?.firstRefusal),
+      hasBuyOption: Boolean(
+        contract.loanTerms?.hasBuyOption !== false &&
+          (contract.loanTerms?.hasBuyOption ||
+            (contract.buyOptionValue && Number(contract.buyOptionValue) > 0) ||
+            (contract.loanTerms?.buyOptionFee &&
+              Number(contract.loanTerms.buyOptionFee) > 0) ||
+            (contract.isLoan &&
+              (Number(contract.sellValue || 0) > 0 ||
+                parseValue(String(contract.buyValue || "0")) > 0))),
+      ),
+    };
   });
 
-  useEffect(() => {
-    const fetchAllUserTeams = async () => {
-      try {
-        const allTeams = await ServiceMatches.getAllTeamsAcrossUserCareers();
-        if (allTeams.length > 0) {
-          setGlobalTeams(allTeams);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar times globais: ", error);
-      }
-    };
-    fetchAllUserTeams();
-  }, []);
+  const [customBonusOptions] = useState<Record<string, string[]>>(
+    () => career?.customBonusObjectives || {},
+  );
 
   const initialValues = useMemo<Record<string, string>>(() => {
     const isArrival = direction === "arrivals";
+    const isLoanArrival = Boolean(contract.isLoan);
+    const initialSalary =
+      isArrival && isLoanArrival
+        ? contract.fullSalary !== undefined
+          ? contract.wagePercentage &&
+            contract.wagePercentage < 100 &&
+            contract.salary !== undefined &&
+            Number(contract.fullSalary) === Number(contract.salary)
+            ? formatTransferValue(
+                Math.round(
+                  Number(contract.salary) / (contract.wagePercentage / 100),
+                ),
+              ).toLowerCase()
+            : formatTransferValue(Number(contract.fullSalary)).toLowerCase()
+          : contract.wagePercentage && contract.salary
+            ? formatTransferValue(
+                Math.round(
+                  Number(contract.salary) / (contract.wagePercentage / 100),
+                ),
+              ).toLowerCase()
+            : player.salary !== undefined
+              ? formatTransferValue(Number(player.salary)).toLowerCase()
+              : ""
+        : contract.salary !== undefined
+          ? formatTransferValue(Number(contract.salary)).toLowerCase()
+          : player.salary !== undefined
+            ? formatTransferValue(Number(player.salary)).toLowerCase()
+            : "";
+    const initialContractTime = contract.contractTime
+      ? String(contract.contractTime)
+      : player.contractTime
+        ? String(player.contractTime)
+        : "1";
+    const initialContractUntil =
+      contract.contractUntil || player.contractUntil || "";
+    const initialSigningBonus = contract.signingBonus
+      ? String(contract.signingBonus)
+      : contract.contractDetails?.signingBonus
+        ? formatTransferValue(
+            contract.contractDetails.signingBonus,
+          ).toLowerCase()
+        : "";
+    const initialAgentFee = contract.contractDetails?.agentFee
+      ? formatTransferValue(contract.contractDetails.agentFee).toLowerCase()
+      : "";
 
     if (isArrival) {
-      const isLoanArrival = Boolean(contract.isLoan || player.incomingLoan);
+      const extra = contract as unknown as Record<string, unknown>;
+      const instAny = contract.installments as unknown as { totalValue?: number } | undefined;
+      const rawArrivalFee =
+        (typeof contract.buyValue === "number" && contract.buyValue > 0) ||
+        (typeof contract.buyValue === "string" &&
+          parseValue(contract.buyValue) > 0)
+          ? contract.buyValue
+          : instAny?.totalValue ||
+            (contract.installments
+              ? contract.installments.annualInstallmentValue * contract.installments.totalInstallments + (contract.installments.upfrontValue || 0)
+              : undefined) ||
+            (extra.transferFee ??
+              extra.value ??
+              (isLoanArrival
+                ? contract.buyOptionValue || contract.loanTerms?.buyOptionFee
+                : undefined));
+      const numericArrivalFee =
+        typeof rawArrivalFee === "number"
+          ? rawArrivalFee
+          : parseValue(String(rawArrivalFee || "0"));
+      const arrivalFeeStr =
+        numericArrivalFee > 0
+          ? formatTransferValue(numericArrivalFee).toLowerCase()
+          : "";
+
+      const exercisedDerivedContract = player.contract?.find(
+        (c) =>
+          !c.isLoan &&
+          Boolean(
+            c.fromLoanBuyOption ||
+              c.buyOptionFinalized ||
+              c.sourceLoanContractIndex !== undefined,
+          ),
+      );
+
+      const buyOptVal =
+        contract.buyOptionValue ||
+        contract.loanTerms?.buyOptionFee ||
+        exercisedDerivedContract?.buyValue ||
+        (isLoanArrival
+          ? contract.buyValue || extra.transferFee || extra.value
+          : undefined);
+      const numericBuyOpt =
+        typeof buyOptVal === "number"
+          ? buyOptVal
+          : parseValue(String(buyOptVal || "0"));
+      const initialBuyOption =
+        numericBuyOpt > 0
+          ? formatTransferValue(numericBuyOpt).toLowerCase()
+          : arrivalFeeStr;
+      const sellOnPct =
+        contract.loanTerms?.sellOnPercentage ??
+        exercisedDerivedContract?.transferClauses?.sellOnPercentage;
+
       const res: Record<string, string> = {
         transferType: isLoanArrival ? "Empréstimo" : "Compra",
         fromClub: contract.fromClub || "",
-        buyValue:
-          contract.buyValue !== undefined &&
-          contract.buyValue !== null &&
-          !isLoanArrival
-            ? formatDisplayValue(contract.buyValue as number, career.currency)
-            : "",
+        timing: resolveTimingOption(contract.timing, true),
+        buyValue: isLoanArrival ? (initialBuyOption || arrivalFeeStr) : arrivalFeeStr,
+        transferFee: arrivalFeeStr || initialBuyOption,
         loanDuration: contract.loanDuration
           ? String(contract.loanDuration)
-          : "",
-        wagePercentage: contract.wagePercentage
+          : contract.loanTerms?.durationYears
+            ? String(contract.loanTerms.durationYears)
+            : isLoanArrival
+              ? "1"
+              : "",
+        wagePercentage: contract.wagePercentage !== undefined && contract.wagePercentage !== null && String(contract.wagePercentage) !== ""
           ? String(contract.wagePercentage)
-          : "",
+          : contract.loanTerms?.ourWagePercentage !== undefined && contract.loanTerms.ourWagePercentage !== null
+            ? String(contract.loanTerms.ourWagePercentage)
+            : isLoanArrival
+              ? "100"
+              : "",
+        buyOption: initialBuyOption || arrivalFeeStr,
+        buyOptionValue: initialBuyOption || arrivalFeeStr,
+        sellOnPercentage:
+          sellOnPct !== undefined && sellOnPct !== null
+            ? String(sellOnPct)
+            : "",
         dateArrival: contract.dataArrival
           ? brasilDatePlaceholderShort(new Date(contract.dataArrival))
           : "",
+        salary: initialSalary,
+        contractTime: initialContractTime,
+        contractUntil: initialContractUntil,
+        signingBonus: initialSigningBonus,
+        agentFee: initialAgentFee,
       };
       return res;
     } else {
@@ -369,28 +248,134 @@ export const useEditTransferForm = ({
           dateExit: contract.dataExit
             ? brasilDatePlaceholderShort(new Date(contract.dataExit))
             : "",
+          salary: initialSalary,
+          contractTime: initialContractTime,
+          contractUntil: initialContractUntil,
+          signingBonus: initialSigningBonus,
+          agentFee: initialAgentFee,
         };
       }
 
-      const isLoanExit = Boolean(contract.isLoan || player.loan);
+      const isLoanExit = Boolean(contract.isLoan);
+      const extra = contract as unknown as Record<string, unknown>;
+      const instAny = contract.installments as unknown as { totalValue?: number } | undefined;
+      const rawExitFee =
+        (typeof contract.sellValue === "number" && contract.sellValue > 0) ||
+        (typeof contract.sellValue === "string" &&
+          parseValue(contract.sellValue) > 0)
+          ? contract.sellValue
+          : instAny?.totalValue ||
+            (contract.installments
+              ? contract.installments.annualInstallmentValue * contract.installments.totalInstallments + (contract.installments.upfrontValue || 0)
+              : undefined) ||
+            (extra.transferFee ??
+              extra.value ??
+              (isLoanExit
+                ? contract.buyOptionValue || contract.loanTerms?.buyOptionFee
+                : undefined));
+      const numericExitFee =
+        typeof rawExitFee === "number"
+          ? rawExitFee
+          : parseValue(String(rawExitFee || "0"));
+      const exitFeeStr =
+        numericExitFee > 0
+          ? formatTransferValue(numericExitFee).toLowerCase()
+          : "";
+
+      const exercisedDerivedContract = player.contract?.find(
+        (c) =>
+          !c.isLoan &&
+          Boolean(
+            c.fromLoanBuyOption ||
+              c.buyOptionFinalized ||
+              c.sourceLoanContractIndex !== undefined,
+          ),
+      );
+
+      const buyOptVal =
+        contract.loanTerms?.buyOptionFee ||
+        contract.buyOptionValue ||
+        exercisedDerivedContract?.sellValue ||
+        (isLoanExit
+          ? contract.sellValue || extra.transferFee || extra.value
+          : undefined);
+      const numericBuyOpt =
+        typeof buyOptVal === "number"
+          ? buyOptVal
+          : parseValue(String(buyOptVal || "0"));
+      const initialBuyOption =
+        numericBuyOpt > 0
+          ? formatTransferValue(numericBuyOpt).toLowerCase()
+          : exitFeeStr;
+      const sellOnPct =
+        contract.loanTerms?.sellOnPercentage ??
+        exercisedDerivedContract?.transferClauses?.sellOnPercentage;
+
       const res: Record<string, string> = {
         transferType: isLoanExit ? "Emprestar" : "Venda",
+        timing: resolveTimingOption(contract.timing, false),
         toClub: contract.leftClub || "",
-        sellValue:
-          contract.sellValue !== undefined &&
-          contract.sellValue !== null &&
-          !isLoanExit
-            ? formatDisplayValue(contract.sellValue as number, career.currency)
-            : "",
+        sellValue: isLoanExit ? (initialBuyOption || exitFeeStr) : exitFeeStr,
+        transferFee: exitFeeStr || initialBuyOption,
         loanDuration: contract.loanDuration
           ? String(contract.loanDuration)
-          : "",
-        wagePercentage: contract.wagePercentage
+          : contract.loanTerms?.durationYears
+            ? String(contract.loanTerms.durationYears)
+            : isLoanExit
+              ? "1"
+              : "",
+        wagePercentage: contract.wagePercentage !== undefined && contract.wagePercentage !== null && String(contract.wagePercentage) !== ""
           ? String(contract.wagePercentage)
-          : "",
+          : contract.loanTerms?.theirWagePercentage !== undefined && contract.loanTerms.theirWagePercentage !== null
+            ? String(contract.loanTerms.theirWagePercentage)
+            : isLoanExit
+              ? "0"
+              : "",
+        buyOption: initialBuyOption || exitFeeStr,
+        buyOptionValue: initialBuyOption || exitFeeStr,
+        sellOnPercentage:
+          sellOnPct !== undefined && sellOnPct !== null
+            ? String(sellOnPct)
+            : "",
         dateExit: contract.dataExit
           ? brasilDatePlaceholderShort(new Date(contract.dataExit))
           : "",
+        installmentsPercentage: contract.installments?.percentage
+          ? `${contract.installments.percentage}%`
+          : "20%",
+        installmentsYears: contract.installments?.totalInstallments
+          ? `${contract.installments.totalInstallments} temporadas`
+          : "2 temporadas",
+        swapPlayerName: contract.swapPlayer?.playerName || "",
+        swapPlayerValue: (() => {
+          if (!contract.swapPlayer?.playerValue) return "";
+          const numeric =
+            typeof contract.swapPlayer.playerValue === "number"
+              ? contract.swapPlayer.playerValue
+              : parseValue(String(contract.swapPlayer.playerValue || "0"));
+          return numeric > 0 ? formatTransferValue(numeric).toLowerCase() : "";
+        })(),
+        swapPlayerSector: contract.swapPlayer?.sector || "",
+        swapPlayerPosition: contract.swapPlayer?.position || "",
+        sellOnPercentageClause: contract.transferClauses?.sellOnPercentage
+          ? `${contract.transferClauses.sellOnPercentage}%`
+          : "",
+        buybackValue: contract.transferClauses?.buybackValue
+          ? formatDisplayValue(
+              contract.transferClauses.buybackValue,
+              career.currency,
+            )
+          : "",
+        loanBackDuration: contract.transferClauses?.loanBackDuration
+          ? `${contract.transferClauses.loanBackDuration} temporada${
+              contract.transferClauses.loanBackDuration > 1 ? "s" : ""
+            }`
+          : "",
+        salary: initialSalary,
+        contractTime: initialContractTime,
+        contractUntil: initialContractUntil,
+        signingBonus: initialSigningBonus,
+        agentFee: initialAgentFee,
       };
       return res;
     }
@@ -399,365 +384,196 @@ export const useEditTransferForm = ({
   const [formValues, setFormValues] =
     useState<Record<string, string>>(initialValues);
 
-  const handleInputChange = (
+  useEffect(() => {
+    setFormValues(initialValues);
+  }, [initialValues]);
+
+  const {
+    bonuses,
+    editingBonusIndex,
+    setBonuses,
+    handleAddOrEditBonus,
+    handleEditBonus,
+    handleDeleteBonus,
+  } = useTransferBonusesDraft({
+    formValues,
+    setFormValues,
+    initialBonuses: contract.bonuses ? [...contract.bonuses] : [],
+    getDirection: () => "receivable",
+    getPartnerClub: () => formValues.toClub || "",
+    requireValueSuffix: false,
+    validateSingleObjective: false,
+    hasPerformanceCountInput: true,
+    getNextCategoryAfterSave: () => "",
+  });
+
+  const handleCustomInputChange = (
     e:
       | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
       | { target: { name: string; value: string } },
+    field?: { id: string },
   ) => {
-    const { name } = e.target;
-    let { value } = e.target;
-    if (name === "dateExit" || name === "dateArrival") {
+    const fieldId = field?.id || e.target.name;
+    let value = e.target.value;
+
+    if (fieldId === "dateArrival" || fieldId === "dateExit") {
       value = formatDateInputShort(value);
     }
-    setFormValues((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    if (fieldId === "sellOnPercentage") {
+      value = value.replace("%", "").trim();
+    }
+
+    if (fieldId === "contractUntil") {
+      value = formatDateInput(value);
+      if (value.length === 10) {
+        const years = calculateContractYears(
+          value,
+          career.createdAt,
+          season.seasonNumber,
+          career.nation,
+        );
+        if (years >= 1 && years <= 7) {
+          setFormValues((prev) => ({ ...prev, contractTime: String(years) }));
+        }
+      }
+    }
+
+    setFormValues((prev) => {
+      const next = { ...prev, [fieldId]: value };
+
+      if (fieldId === "transferType") {
+        const isSpecial = checkIsSpecialTransfer(contract, direction);
+        if (!isSpecial) {
+          if (direction === "exit") {
+            if (value === "Venda") {
+              setBooleanValues((b) => ({ ...b, hasBuyOption: false }));
+            } else if (value === "Emprestar") {
+              if (!next.timing) next.timing = "Imediata";
+              if (!next.installmentsPercentage)
+                next.installmentsPercentage = "20%";
+              if (!next.installmentsYears)
+                next.installmentsYears = "2 temporadas";
+              setBooleanValues((b) => ({
+                ...b,
+                hasInstallments: false,
+                hasPlayerSwap: false,
+                hasBonus: false,
+                hasOtherClauses: false,
+                firstRefusal: false,
+              }));
+              setBonuses([]);
+            }
+          }
+        }
+      }
+
+      if (fieldId === "bonusCategory") {
+        next.bonusObjective = "";
+        next.bonusCount = "";
+      }
+
+      return next;
+    });
+  };
+
+  const handleBooleanChangeWrapper = (id: string, value: boolean) => {
+    setBooleanValues((prev) => {
+      const next = { ...prev, [id]: value };
+
+      if (id === "isRetirement" && value) {
+        next.isEndContract = false;
+        next.hasInstallments = false;
+        next.hasPlayerSwap = false;
+        next.hasBonus = false;
+        next.hasOtherClauses = false;
+        setBonuses([]);
+      } else if (id === "isEndContract" && value) {
+        next.isRetirement = false;
+        next.hasInstallments = false;
+        next.hasPlayerSwap = false;
+        next.hasBonus = false;
+        next.hasOtherClauses = false;
+        setBonuses([]);
+      }
+
+      if (id === "hasBonus" && !value) {
+        setBonuses([]);
+      }
+
+      return next;
+    });
   };
 
   const currentClubName =
     direction === "arrivals" ? formValues.fromClub : formValues.toClub;
 
-  const filteredTeamOptions = useMemo(() => {
-    const searchValue = (currentClubName || "")
-      .toLowerCase()
-      .replace(/\s/g, "");
-    if (searchValue) {
-      return globalTeams.filter((teamName) =>
-        teamName.toLowerCase().replace(/\s/g, "").includes(searchValue),
-      );
+  const { filteredTeamOptions } = useGlobalTeamsOptions({
+    career,
+    season,
+    searchQuery: currentClubName || "",
+  });
+
+  const mergedFormValues = useMemo(
+    () =>
+      mergeFormValues(
+        formValues,
+        booleanValues as unknown as Record<string, boolean>,
+      ),
+    [formValues, booleanValues],
+  );
+
+  const handleProceedToStep2 = () => {
+    const club =
+      direction === "arrivals" ? formValues.fromClub : formValues.toClub;
+    if (!club || !club.trim()) {
+      toast.warning("Por favor, informe o clube.");
+      return false;
     }
-    return globalTeams;
-  }, [globalTeams, currentClubName]);
-
-  const handleSave = async () => {
-    const isArrival = direction === "arrivals";
-    const isSpecial = checkIsSpecialTransfer(contract, direction);
-    const date = isArrival ? formValues.dateArrival : formValues.dateExit;
-
-    if (!date || date.length < 5) {
-      alert("Por favor, preencha a data corretamente (DD/MM).");
-      return;
-    }
-
-    const { startDate, endDate } = getSeasonDateRange(
-      season.seasonNumber,
-      career.createdAt,
-      career.nation,
-    );
-    const [, month] = date.split("/").map(Number);
-    const m = (month || 1) - 1;
-    const year =
-      m < startDate.getMonth()
-        ? endDate.getFullYear()
-        : startDate.getFullYear();
-    const parsedDate = parseBrasilDate(date, year) || new Date();
-
-    const isIncomingLoanReturnExit = checkIsIncomingLoanExit(
-      player,
-      contract,
-      direction,
-    );
-
-    if (isIncomingLoanReturnExit) {
-      const clubName =
-        formValues.toClub || contract.leftClub || contract.fromClub;
-
-      if (!clubName || !clubName.trim()) {
-        alert("Por favor, informe o clube.");
-        return;
-      }
-
-      setIsLoading(true);
-      try {
-        await ServicePlayers.editTransferInSeason({
-          careerId: career.id,
-          seasonId: season.id,
-          playerId: player.id,
-          contractIndex,
-          direction,
-          transferType: "Fim de Empréstimo",
-          clubName: clubName.trim(),
-          transferValue: "0",
-          date,
-        });
-
-        const updatedCareer = applyEditToCareer(
-          career,
-          season.id,
-          player.id,
-          contractIndex,
-          direction,
-          {
-            clubName: clubName.trim(),
-            transferValue: 0,
-            transferType: "Fim de Empréstimo",
-            date: parsedDate,
-          },
-        );
-
-        const updatedSeason = updatedCareer.clubData.find(
-          (s) => s.id === season.id,
-        );
-        if (updatedSeason) {
-          season.players = updatedSeason.players;
-        }
-        career.clubData = updatedCareer.clubData;
-        career.updatedAt = updatedCareer.updatedAt;
-
-        const updatedPlayer = updatedSeason?.players.find(
-          (p) => p.id === player.id,
-        );
-        if (updatedPlayer) {
-          Object.assign(player, updatedPlayer);
-        }
-
-        updateCachedCareer(updatedCareer);
-        notifyCareersUpdated((prev) =>
-          prev.map((c) => (c.id === career.id ? updatedCareer : c)),
-        );
-
-        onClose();
-      } catch (error: unknown) {
-        alert(
-          error instanceof Error
-            ? error.message
-            : "Erro ao salvar a transferência.",
-        );
-      } finally {
-        setIsLoading(false);
-      }
-      return;
-    }
-
-    if (isSpecial) {
-      setIsLoading(true);
-      try {
-        await ServicePlayers.editTransferInSeason({
-          careerId: career.id,
-          seasonId: season.id,
-          playerId: player.id,
-          contractIndex,
-          direction,
-          transferType: formValues.transferType,
-          clubName: isArrival ? contract.fromClub : contract.leftClub,
-          transferValue: "0",
-          date,
-        });
-
-        const updatedCareer = applyEditToCareer(
-          career,
-          season.id,
-          player.id,
-          contractIndex,
-          direction,
-          {
-            clubName: (isArrival ? contract.fromClub : contract.leftClub) || "",
-            transferValue: 0,
-            transferType: formValues.transferType,
-            date: parsedDate,
-          },
-        );
-
-        const updatedSeason = updatedCareer.clubData.find(
-          (s) => s.id === season.id,
-        );
-        if (updatedSeason) {
-          season.players = updatedSeason.players;
-        }
-        career.clubData = updatedCareer.clubData;
-        career.updatedAt = updatedCareer.updatedAt;
-
-        const updatedPlayer = updatedSeason?.players.find(
-          (p) => p.id === player.id,
-        );
-        if (updatedPlayer) {
-          Object.assign(player, updatedPlayer);
-        }
-
-        updateCachedCareer(updatedCareer);
-        notifyCareersUpdated((prev) =>
-          prev.map((c) => (c.id === career.id ? updatedCareer : c)),
-        );
-
-        onClose();
-      } catch (error: unknown) {
-        alert(
-          error instanceof Error
-            ? error.message
-            : "Erro ao salvar a transferência.",
-        );
-      } finally {
-        setIsLoading(false);
-      }
-      return;
-    }
-
-    const transferType = formValues.transferType;
-    const isLoan =
-      transferType === "Emprestar" || transferType === "Empréstimo";
-
-    const clubName = isArrival ? formValues.fromClub : formValues.toClub;
-    const rawTransferValue = isArrival
-      ? formValues.buyValue
-      : formValues.sellValue;
-    const transferValue =
-      rawTransferValue !== undefined &&
-      rawTransferValue !== null &&
-      rawTransferValue.trim() !== ""
-        ? rawTransferValue.trim()
-        : "0";
-
-    if (!clubName || !clubName.trim()) {
-      alert("Por favor, informe o clube.");
-      return;
-    }
-
-    if (isLoan) {
-      if (!formValues.loanDuration || Number(formValues.loanDuration) <= 0) {
-        alert("Por favor, informe a duração do empréstimo.");
-        return;
-      }
-      const wage = Number(formValues.wagePercentage);
-      if (
-        formValues.wagePercentage === undefined ||
-        formValues.wagePercentage === "" ||
-        isNaN(wage) ||
-        wage < 0 ||
-        wage > 100
-      ) {
-        alert("Por favor, informe a porcentagem de salário paga (0 a 100).");
-        return;
-      }
-    }
-
-    setIsLoading(true);
-    try {
-      await ServicePlayers.editTransferInSeason({
-        careerId: career.id,
-        seasonId: season.id,
-        playerId: player.id,
-        contractIndex,
-        direction,
-        transferType,
-        clubName: clubName.trim(),
-        transferValue: transferValue || "0",
-        date,
-        loanDuration: formValues.loanDuration,
-        wagePercentage: formValues.wagePercentage,
-      });
-
-      const updatedCareer = applyEditToCareer(
-        career,
-        season.id,
-        player.id,
-        contractIndex,
-        direction,
-        {
-          clubName: clubName.trim(),
-          transferValue: parseValue(transferValue || "0"),
-          transferType,
-          date: parsedDate,
-          loanDuration: formValues.loanDuration
-            ? Number(formValues.loanDuration)
-            : undefined,
-          wagePercentage: formValues.wagePercentage
-            ? Number(formValues.wagePercentage)
-            : undefined,
-        },
-      );
-
-      const updatedSeason = updatedCareer.clubData.find(
-        (s) => s.id === season.id,
-      );
-      if (updatedSeason) {
-        season.players = updatedSeason.players;
-      }
-      career.clubData = updatedCareer.clubData;
-      career.updatedAt = updatedCareer.updatedAt;
-
-      const updatedPlayer = updatedSeason?.players.find(
-        (p) => p.id === player.id,
-      );
-      if (updatedPlayer) {
-        Object.assign(player, updatedPlayer);
-      }
-
-      updateCachedCareer(updatedCareer);
-      notifyCareersUpdated((prev) =>
-        prev.map((c) => (c.id === career.id ? updatedCareer : c)),
-      );
-
-      onClose();
-    } catch (error: unknown) {
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Erro ao salvar a transferência.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
+    setCurrentStep(2);
+    return true;
   };
 
-  const handleRevertTransfer = async () => {
-    setIsLoading(true);
-    try {
-      await ServicePlayers.revertTransferInSeason({
-        careerId: career.id,
-        seasonId: season.id,
-        playerId: player.id,
-        contractIndex,
-        direction,
-      });
-
-      const updatedCareer = applyRevertToCareer(
-        career,
-        season.id,
-        player.id,
-        contractIndex,
-        direction,
-      );
-
-      const updatedSeason = updatedCareer.clubData.find(
-        (s) => s.id === season.id,
-      );
-      if (updatedSeason) {
-        season.players = updatedSeason.players;
-      }
-      career.clubData = updatedCareer.clubData;
-      career.updatedAt = updatedCareer.updatedAt;
-
-      const updatedPlayer = updatedSeason?.players.find(
-        (p) => p.id === player.id,
-      );
-      if (updatedPlayer) {
-        Object.assign(player, updatedPlayer);
-      }
-
-      updateCachedCareer(updatedCareer);
-      notifyCareersUpdated((prev) =>
-        prev.map((c) => (c.id === career.id ? updatedCareer : c)),
-      );
-
-      onClose();
-    } catch (error: unknown) {
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Erro ao reverter a transferência.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
+  const handleReturnToStep1 = () => {
+    setCurrentStep(1);
   };
+
+  const { handleSave, handleRevertTransfer } = useEditTransferActions({
+    career,
+    season,
+    player,
+    contract,
+    contractIndex,
+    direction,
+    onClose,
+    formValues,
+    booleanValues,
+    bonuses,
+    setIsLoading,
+  });
 
   return {
+    currentStep,
+    setCurrentStep,
+    handleProceedToStep2,
+    handleReturnToStep1,
     isLoading,
     formValues,
+    booleanValues,
+    mergedFormValues,
+    bonuses,
+    editingBonusIndex,
+    customBonusOptions,
     filteredTeamOptions,
-    handleInputChange,
+    handleInputChange: handleCustomInputChange,
+    handleCustomInputChange,
+    handleBooleanChangeWrapper,
+    handleAddOrEditBonus,
+    handleEditBonus,
+    handleDeleteBonus,
     handleSave,
     handleRevertTransfer,
   };
 };
+
+export default useEditTransferForm;

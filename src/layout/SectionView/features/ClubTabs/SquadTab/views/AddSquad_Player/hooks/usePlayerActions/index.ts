@@ -3,17 +3,21 @@ import { Players } from "../../../../../../../../../common/interfaces/playersInf
 import { useAddSquadPlayer } from "../../../../../../../../../common/hooks/Players/UseAddSquadPlayer";
 import { Career } from "../../../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../../../common/interfaces/club/clubData";
-import { Teams } from "../../../../../../../../../common/interfaces/Teams";
 import { useEditSquadPlayer } from "../../../TransferPlayer/hooks/useEditSquadPlayer";
-import { ServiceMatches } from "../../../../../AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceSeasons } from "../../../../../../../../../common/services/ServiceSeasons";
+import { ensureTeamSavedInSeason } from "../../../shared/useGlobalTeamsOptions";
 import { mapFormDataToPlayerData } from "../../../../../../../../../common/helpers/Mappers";
+import { toast } from "../../../../../../../../../common/services/ToastService";
+import { NavigationSessionStore } from "../../../../../../../../../common/services/NavigationSessionStore";
+import { OptimisticUpdateData } from "../../../../../../../helpers/updateSectionCareer";
+import { getSortedCaptains } from "../../../../../GeneralTab/components/CaptainsHierarchyCard/helpers/getSortedCaptains";
 
 type usePlayerActionsProps = {
   careerId: string;
   seasonId: string;
   player?: Players;
   currentPlayers?: Players[];
-  onSuccess: () => void;
+  onSuccess: (optimisticData?: OptimisticUpdateData) => void;
   career: Career;
   season: ClubData;
 };
@@ -50,14 +54,28 @@ export const usePlayerActions = ({
     });
 
   const handleAddOrEditPlayer = async (formData: FormData) => {
-    setIsLoading(true);
+    let newPlayerData;
     try {
-      const newPlayerData = mapFormDataToPlayerData(
+      newPlayerData = mapFormDataToPlayerData(
         formData,
         career,
         season,
         player,
       );
+    } catch (validationError: unknown) {
+      toast.warning(
+        validationError instanceof Error
+          ? validationError.message
+          : "Preencha todos os campos obrigatórios.",
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      let createdPlayer: Players | undefined;
+      let updatedPlayer: Players | undefined;
+
       if (player) {
         newPlayerData.loan = player.loan ?? false;
         newPlayerData.sell = player.sell ?? false;
@@ -72,48 +90,128 @@ export const usePlayerActions = ({
           delete player.playedWithUs;
         }
 
+        const optionalKeys = [
+          "playerValue",
+          "salary",
+          "contractTime",
+          "contractUntil",
+        ] as const;
+        for (const key of optionalKeys) {
+          if (formData.has(key) && !(key in newPlayerData)) {
+            delete player[key];
+          }
+        }
+
         Object.assign(player, newPlayerData);
+        updatedPlayer = { ...player, ...newPlayerData };
       } else {
         const globalId = (formData.get("globalId") as string) || null;
         const candidateId = globalId || Math.random().toString();
-        season.players = [
-          ...season.players,
-          {
-            id: candidateId,
-            ...newPlayerData,
-            ...(globalId
-              ? { playedWithUs: newPlayerData.playedWithUs || globalId }
-              : {}),
-          } as Players,
-        ];
+        createdPlayer = {
+          id: candidateId,
+          ...newPlayerData,
+          ...(globalId
+            ? { playedWithUs: newPlayerData.playedWithUs || globalId }
+            : {}),
+        } as Players;
       }
 
       const fromClubName = (formData.get("fromClub") as string)?.trim();
 
       if (!player && fromClubName) {
-        const teamAlreadyExists = season.teams?.some(
-          (t) => t.name.toLowerCase() === fromClubName.toLowerCase(),
-        );
+        await ensureTeamSavedInSeason(careerId, seasonId, season, fromClubName);
+      }
 
-        if (!teamAlreadyExists) {
-          const newTeam: Teams = {
-            name: fromClubName,
-            showMatch: false,
-          };
-
-          await ServiceMatches.addTeamToSeason(careerId, seasonId, newTeam);
+      let savedPlayer: Players | undefined;
+      if (player) {
+        await editPlayer(formData);
+        savedPlayer = updatedPlayer || player;
+      } else {
+        savedPlayer = await addPlayer(formData);
+        if (savedPlayer) {
+          createdPlayer = savedPlayer;
         }
       }
 
-      if (player) {
-        await editPlayer(formData);
-      } else {
-        await addPlayer(formData);
+      const isCaptain = formData.get("isCaptain") === "true";
+      const actualPlayerId =
+        player?.id || savedPlayer?.id || createdPlayer?.id;
+
+      if (isCaptain && actualPlayerId) {
+        try {
+          const currentSorted = getSortedCaptains(season);
+          const otherCaptainIds = currentSorted
+            .filter((c) => c.id !== actualPlayerId && !c.sell)
+            .map((c) => c.id);
+
+          let updatedCaptains: string[];
+          const alreadyInCaptains = season.captains?.includes(actualPlayerId);
+
+          if (alreadyInCaptains && season.captains) {
+            updatedCaptains = season.captains.filter(
+              (id) => id === actualPlayerId || otherCaptainIds.includes(id),
+            );
+          } else {
+            updatedCaptains = [...otherCaptainIds, actualPlayerId].slice(0, 5);
+          }
+
+          await ServiceSeasons.updateSeasonCaptains(
+            careerId,
+            seasonId,
+            updatedCaptains,
+          );
+        } catch (e) {
+          console.error("Erro ao sincronizar ordem dos capitães:", e);
+        }
+      } else if (
+        !isCaptain &&
+        (player?.captain || season.captains?.includes(actualPlayerId || ""))
+      ) {
+        const idToRemove = actualPlayerId || player?.id;
+        if (idToRemove && season.captains && season.captains.includes(idToRemove)) {
+          const remaining = season.captains.filter((id) => id !== idToRemove);
+          await ServiceSeasons.updateSeasonCaptains(
+            careerId,
+            seasonId,
+            remaining,
+          );
+        }
       }
 
-      onSuccess();
+      toast.success(
+        player
+          ? "Jogador atualizado com sucesso!"
+          : "Jogador adicionado com sucesso!",
+      );
+
+      const targetPlayerId = player?.id || createdPlayer?.id;
+      const targetPlayerName = player?.name || (newPlayerData?.name as string);
+      if (targetPlayerId || targetPlayerName) {
+        const selector = targetPlayerId
+          ? `#player-row-${targetPlayerId}, [data-player-id="${targetPlayerId}"]`
+          : `[data-player-name="${targetPlayerName}"]`;
+        NavigationSessionStore.saveClickAnchor("squad", {
+          scrollY: 0,
+          anchorSelector: selector,
+          updatedAt: Date.now(),
+        });
+      }
+
+      if (player && updatedPlayer) {
+        onSuccess({
+          type: "UPDATE_PLAYER",
+          player: updatedPlayer,
+        });
+      } else if (createdPlayer) {
+        onSuccess({
+          type: "ADD_PLAYER",
+          player: createdPlayer,
+        });
+      } else {
+        onSuccess();
+      }
     } catch (error: unknown) {
-      alert(
+      toast.error(
         error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
       );
     } finally {
@@ -124,13 +222,20 @@ export const usePlayerActions = ({
   const handleDeletePlayer = async () => {
     setIsLoading(true);
     try {
-      if (player) {
-        season.players = season.players.filter((p) => p.id !== player.id);
-      }
+      const deletedPlayerId = player?.id;
       await deletePlayer();
-      onSuccess();
+      toast.success("Jogador excluído do elenco com sucesso!");
+      if (deletedPlayerId) {
+        onSuccess({
+          type: "DELETE_PLAYER",
+          playerId: deletedPlayerId,
+        });
+      } else {
+        onSuccess();
+      }
     } catch (error) {
       console.error("Falha ao deletar o jogador:", error);
+      toast.error("Erro ao excluir jogador do elenco. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -158,6 +263,7 @@ export const usePlayerActions = ({
       }
     } catch (error) {
       console.error("Falha ao registrar saída do jogador:", error);
+      toast.error("Falha ao registrar saída do jogador. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -168,14 +274,19 @@ export const usePlayerActions = ({
     try {
       await returnLoanPlayer(returnDate);
       if (player) {
-        Object.assign(
-          player,
-          player.incomingLoan
+        const updated = {
+          ...player,
+          ...(player.incomingLoan
             ? { sell: true, incomingLoan: false }
-            : { loan: false },
-        );
+            : { loan: false }),
+        };
+        onSuccess({
+          type: "UPDATE_PLAYER",
+          player: updated,
+        });
+      } else {
+        onSuccess();
       }
-      onSuccess();
     } catch (error) {
       console.error("Falha ao retornar o jogador:", error);
     } finally {

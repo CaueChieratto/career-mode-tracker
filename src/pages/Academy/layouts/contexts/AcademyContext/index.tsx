@@ -1,8 +1,11 @@
 import { createContext } from "react";
 import { Career } from "../../../../../common/interfaces/Career";
-import { DashboardCardConfig } from "../../AcademyContent/config";
-import { AcademyPlayers } from "../../AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
-import { AcademyTournaments } from "../../AcademyContent/interfaces/AcademyTournaments/AcademyTournaments";
+import type { DashboardCardConfig } from "../../AcademyContent/config/types";
+import {
+  AcademyPlayers,
+  AcademyTournaments,
+} from "../../../../../common/interfaces/AcademyData";
+
 
 export type EditingEvolutionEvent = {
   historyId: string;

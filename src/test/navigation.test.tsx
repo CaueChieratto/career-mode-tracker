@@ -8,7 +8,7 @@ import {
 } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { getCareerCardButtons } from "../pages/CareersPage/constants/CareerCardButtons";
-import { useSeasons } from "../pages/AddSeasons/hooks/useSeasons";
+import { useSeasons } from "../pages/CareersPage/views/AddSeasons/hooks/useSeasons";
 import { career, season } from "./factories/domain";
 import { SeasonConfigs } from "../ui/modals/SeasonConfigs";
 import { CareerPageContext } from "../pages/CareersPage/contexts/CareerPageContext";
@@ -77,9 +77,10 @@ describe("Stage 7C — Contrato de Navegação SPA", () => {
   });
 
   describe("CareersPage → Career", () => {
-    it("utiliza navigate com URL correta, repassa state e reseta scroll sem full reload", () => {
+    it("utiliza callback onOpenAddSeasons, repassa a carreira e reseta scroll sem full reload nem navigate de rota", () => {
       const mockCareer = career({ id: "career-123" });
-      const buttons = getCareerCardButtons(navigateMock);
+      const onOpenAddSeasonsMock = vi.fn();
+      const buttons = getCareerCardButtons(onOpenAddSeasonsMock);
       const enterButton = buttons.find((b) => b.text === "Entrar");
 
       expect(enterButton).toBeDefined();
@@ -87,16 +88,16 @@ describe("Stage 7C — Contrato de Navegação SPA", () => {
 
       enterButton!.onClick!(mockCareer);
 
-      expect(navigateMock).toHaveBeenCalledTimes(1);
-      expect(navigateMock).toHaveBeenCalledWith("/Career/career-123", {
-        state: { career: mockCareer },
-      });
+      expect(onOpenAddSeasonsMock).toHaveBeenCalledTimes(1);
+      expect(onOpenAddSeasonsMock).toHaveBeenCalledWith(mockCareer);
+      expect(navigateMock).not.toHaveBeenCalled();
       expect(scrollToSpy).toHaveBeenCalledWith(0, 0);
     });
 
-    it("clique no botão Entrar do CareerCard via context dispara navigate SPA com career state", () => {
+    it("clique no botão Entrar do CareerCard via context dispara callback de estado e reseta scroll", () => {
       const mockCareer = career({ id: "c1", clubName: "Meu Clube" });
-      const buttons = getCareerCardButtons(navigateMock);
+      const onOpenAddSeasonsMock = vi.fn();
+      const buttons = getCareerCardButtons(onOpenAddSeasonsMock);
       const onOpenModalMock = vi.fn();
       const setSelectedCareerMock = vi.fn();
 
@@ -117,10 +118,9 @@ describe("Stage 7C — Contrato de Navegação SPA", () => {
       const enterButton = screen.getByRole("button", { name: "Entrar" });
       fireEvent.click(enterButton);
 
-      expect(navigateMock).toHaveBeenCalledTimes(1);
-      expect(navigateMock).toHaveBeenCalledWith("/Career/c1", {
-        state: { career: mockCareer },
-      });
+      expect(onOpenAddSeasonsMock).toHaveBeenCalledTimes(1);
+      expect(onOpenAddSeasonsMock).toHaveBeenCalledWith(mockCareer);
+      expect(navigateMock).not.toHaveBeenCalled();
       expect(scrollToSpy).toHaveBeenCalledWith(0, 0);
     });
   });

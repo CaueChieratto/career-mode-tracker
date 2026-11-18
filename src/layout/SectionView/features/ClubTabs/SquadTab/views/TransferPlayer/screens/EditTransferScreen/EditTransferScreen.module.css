@@ -1,9 +1,12 @@
 .container {
-  padding: 32px 16px 100px 16px;
+  padding: 32px 16px 240px 16px;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  gap: 40px;
+  gap: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .form {
@@ -11,4 +14,20 @@
   flex-direction: column;
   gap: 20px;
   width: 100%;
+}
+
+.noticeContainer {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.noticeText {
+  font-size: 0.85rem;
+  color: #93c5fd;
+  margin: 0;
+  line-height: 1.4;
+  text-align: center;
 }

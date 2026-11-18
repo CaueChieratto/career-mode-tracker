@@ -1,2 +1,0 @@
-export { formatPlayerName } from "../formatPlayerName";
-

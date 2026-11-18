@@ -1,5 +1,5 @@
 import { useAcademyContext } from "../../../../../../../../../contexts/AcademyContext/hooks/useAcademyContext";
-import { AcademyMatches } from "../../../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import { AcademyMatches } from "../../../../../../../../../../../../common/interfaces/AcademyData";
 import { getOpponentBadge } from "../../helpers/getOpponentBadge";
 import { TournamentMatchActions } from "../TournamentMatchActions";
 import { TournamentMatchBody } from "../TournamentMatchBody";

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { FaCalendarAlt, FaTrophy, FaList, FaUsers } from "react-icons/fa";
 import { FocusedCard } from "../../../Cards/FocusedCard";
-import { AcademyTournaments } from "../../../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyTournaments } from "../../../../../../../../common/interfaces/AcademyData";
 import { EntityWorkspace } from "../../../EntityWorkspace";
 import { tournamentActions } from "./constants/tournamentActions";
 import { TournamentEditor } from "../../components/TournamentEditor";
-import { AcademyMatches } from "../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import { AcademyMatches } from "../../../../../../../../common/interfaces/AcademyData";
 import { ManageMatchView } from "../../features/Match/components/ManageMatchView";
 import { TournamentMatchList } from "../../features/Match/components/TournamentMatchList";
 import { CreateAcademyMatchForm } from "../../features/Match/containers/CreateAcademyMatchForm";

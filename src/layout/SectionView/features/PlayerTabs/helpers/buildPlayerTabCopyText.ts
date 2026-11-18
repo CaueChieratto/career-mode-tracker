@@ -1,6 +1,6 @@
 import { Players } from "../../../../../common/interfaces/playersInfo/players";
 import { Trophy } from "../../../../../common/interfaces/club/trophy";
-import { calculateTotalStats } from "../../ClubTabs/StatsTab_Club/components/PlayerStatsList/utils/calculateTotalStats";
+import { calculateTotalStats } from "../../../../../common/stats/helpers/calculateTotalStats";
 import { Stats } from "../../../../../common/interfaces/playersStats/stats";
 
 export const buildPlayerTabCopyText = (

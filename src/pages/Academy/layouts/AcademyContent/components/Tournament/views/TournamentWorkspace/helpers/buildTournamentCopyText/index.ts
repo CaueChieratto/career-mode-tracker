@@ -1,7 +1,7 @@
 import { Career } from "../../../../../../../../../../common/interfaces/Career";
-import { AcademyPlayers } from "../../../../../../interfaces/AcademyPlayers/AcademyPlayers";
-import { PlayerMatchesStats } from "../../../../../../interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
-import { AcademyTournaments } from "../../../../../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyPlayers } from "../../../../../../../../../../common/interfaces/AcademyData";
+import { PlayerMatchesStats } from "../../../../../../../../../../common/interfaces/AcademyData";
+import { AcademyTournaments } from "../../../../../../../../../../common/interfaces/AcademyData";
 
 export const formatTournamentHeaderName = (name: string): string => {
   if (!name) return "";

@@ -13,11 +13,13 @@ import { Players } from "../../../../../../../../common/interfaces/playersInfo/p
 import { NumberStats } from "../../../../../../ui/NumberStats";
 import { OwnGoal } from "../../../../../../../../ui/IconsSVG/OwnGoal";
 import { formatPlayerName } from "../../../../../../../../common/utils/formatPlayerName";
+import { useLineupTabContext } from "../../../../contexts/context";
+import { resolvePlayerChainSubstitution } from "../../../../../../helpers/substitutionChain";
 
 type PlayerRowProps = {
   slot: BenchSlot;
-  onRemove: (slotId: string) => void;
-  onPlayerClick: (playerId: string) => void;
+  onRemove?: (slotId: string) => void;
+  onPlayerClick?: (playerId: string) => void;
   onOpenModal?: (playerId: string) => void;
   stats?: PlayerMatchStat;
   isMVP?: boolean;
@@ -30,18 +32,26 @@ type PlayerRowProps = {
 
 export const PlayerRow = ({
   slot,
-  onRemove,
-  onPlayerClick,
-  onOpenModal,
+  onRemove: propOnRemove,
+  onPlayerClick: propOnPlayerClick,
+  onOpenModal: propOnOpenModal,
   isMVP,
   stats,
-  allPlayers,
-  allStats,
-  isFromGeral,
+  allPlayers: propAllPlayers,
+  allStats: propAllStats,
+  isFromGeral: propIsFromGeral,
   chainSubMinute,
   chainSubOutName,
 }: PlayerRowProps) => {
+  const ctx = useLineupTabContext();
   if (!slot.player) return null;
+
+  const onRemove = propOnRemove ?? ctx.removePlayer;
+  const onPlayerClick = propOnPlayerClick ?? ctx.onPlayerClick;
+  const onOpenModal = propOnOpenModal ?? ctx.onOpenModal;
+  const allPlayers = propAllPlayers ?? ctx.allPlayers;
+  const allStats = propAllStats ?? ctx.allStats;
+  const isFromGeral = propIsFromGeral ?? ctx.isFromGeral;
 
   const ratingValue = stats?.rating || 0;
   const backgroundColor = UseMatchRatingColor(ratingValue);
@@ -63,13 +73,17 @@ export const PlayerRow = ({
       subMinute = chainSubMinute;
       subOutName = chainSubOutName;
     } else {
-      const outPlayer = allPlayers.find((p) => p.name === stats.substituteIn);
-      if (outPlayer) {
-        const outPlayerStats = allStats.find(
-          (s) => s.playerId === outPlayer.id,
-        );
-        subMinute = outPlayerStats?.minutesPlayed || 0;
-      }
+      const chain = resolvePlayerChainSubstitution({
+        playerId: slot.player.id,
+        starterIds: [],
+        playerStats: allStats,
+        allPlayers,
+      });
+      subMinute =
+        chain.subMinute !== Infinity
+          ? chain.subMinute
+          : stats.minutesPlayed || 0;
+      subOutName = chain.subOutName || stats.substituteIn;
     }
   }
 

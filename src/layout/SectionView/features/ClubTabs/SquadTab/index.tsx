@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { SquadElements } from "./elements/SquadElements";
 import { ClubData } from "../../../../../common/interfaces/club/clubData";
 import Card from "../../../../../ui/Card";
@@ -16,6 +16,9 @@ import { ColorsService } from "../../../../../common/services/ColorsService";
 import { Copy } from "../../../../../common/utils/Copy";
 import { useLocation } from "react-router-dom";
 import { SectionScreen } from "../../../config/screens";
+import { AddPlayerChoiceModal } from "./elements/SquadElements/Section/ui/AddPlayerChoiceModal";
+import { getLatestFinishedMatch } from "./elements/SquadElements/Section/components/FooterSection_Player/utils/getLatestFinishedMatch";
+import { useScrollAnchorRestore } from "../../../../../common/hooks/useScrollAnchorRestore";
 
 type SquadTabProps = {
   season: ClubData;
@@ -32,19 +35,49 @@ const SquadTab = ({ season, career, onOpenScreen }: SquadTabProps) => {
   const { sortOption, isAsc, handleSortChange } =
     useSquadSort(storageKeySuffix);
 
-  const { clubColor } = useClubColors(
+  useScrollAnchorRestore("squad", [season.players]);
+
+  const { clubColor, darkClubColor } = useClubColors(
     ColorsService.getColorSaved(career.id) || "#ffffff",
   );
+
+  const [isChoiceModalOpen, setIsChoiceModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpen = () => {
+      setIsChoiceModalOpen(true);
+    };
+    window.addEventListener("open-add-player-choice-modal", handleOpen);
+    return () => {
+      window.removeEventListener("open-add-player-choice-modal", handleOpen);
+    };
+  }, []);
+
+  const handleSelectElenco = () => {
+    setIsChoiceModalOpen(false);
+    onOpenScreen?.({ key: "addSquadPlayer" });
+  };
+
+  const handleSelectTransferencia = () => {
+    setIsChoiceModalOpen(false);
+    onOpenScreen?.({ key: "addTransferPlayer" });
+  };
 
   const isGrouped =
     sortOption === "Ordenar por padrão" || sortOption.includes("(Agrupado)");
   const criteria = sortOption.split(" (")[0];
 
   const { groupedData, flatData } = useMemo(() => {
-    return buildSquadData(season.players, criteria, isAsc);
-  }, [season.players, criteria, isAsc]);
+    return buildSquadData(season.players, criteria, isAsc, season.matches);
+  }, [season.players, criteria, isAsc, season.matches]);
 
   const currency = career.currency || "€";
+
+  const latestFinishedMatchDate = useMemo(() => {
+    if (!season.matches || !season.matches.length) return null;
+    const latest = getLatestFinishedMatch(season.matches);
+    return latest?.date || null;
+  }, [season.matches]);
 
   const copySquad = async () => {
     if (!flatData.length) return;
@@ -79,11 +112,14 @@ const SquadTab = ({ season, career, onOpenScreen }: SquadTabProps) => {
               />
               {players.map((player, y) => (
                 <SquadElements.Section
-                  {...player}
-                  matches={season.matches || []}
                   key={`${player.id}-${y}`}
+                  player={player}
+                  latestFinishedMatchDate={latestFinishedMatchDate}
                   currency={currency}
                   careerNation={career.nation}
+                  careerCreatedAt={career.createdAt}
+                  seasonNumber={season.seasonNumber}
+                  matches={season.matches}
                   academyNickname={player.academyNickname || academyNickname}
                   onOpenScreen={onOpenScreen}
                 />
@@ -96,16 +132,29 @@ const SquadTab = ({ season, career, onOpenScreen }: SquadTabProps) => {
           <SquadElements.Header name={sortOption} color={clubColor} />
           {flatData.map((player, x) => (
             <SquadElements.Section
-              {...player}
-              matches={season.matches || []}
               key={`${player.id}-${x}`}
+              player={player}
+              latestFinishedMatchDate={latestFinishedMatchDate}
               currency={currency}
               careerNation={career.nation}
+              careerCreatedAt={career.createdAt}
+              seasonNumber={season.seasonNumber}
+              matches={season.matches}
               academyNickname={academyNickname}
               onOpenScreen={onOpenScreen}
             />
           ))}
         </Card>
+      )}
+
+      {isChoiceModalOpen && (
+        <AddPlayerChoiceModal
+          onClose={() => setIsChoiceModalOpen(false)}
+          onSelectElenco={handleSelectElenco}
+          onSelectTransferencia={handleSelectTransferencia}
+          clubColor={clubColor}
+          darkClubColor={darkClubColor}
+        />
       )}
     </ContainerClubContent>
   );

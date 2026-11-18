@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { ServiceMatches } from "../../src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../src/common/services/ServiceMatches";
 import { buildMatchPayload } from "../../src/pages/Match/components/MatchDetailsTab/views/AddDetails/hooks/helpers/buildMatchPayload";
-import { normalizeOpponentEvents } from "../../src/pages/Match/helpers/opponentCards";
+import { normalizeOpponentEvents } from "../../src/common/services/ServiceOpponentPlayers/helpers/opponentCards";
 import { career, match, season } from "../../src/test/factories/domain";
 import type { Match } from "../../src/common/interfaces/Match";
 import type { TableTeamData } from "../../src/common/interfaces/TableTeamData";

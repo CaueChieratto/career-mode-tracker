@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { ServiceLineup } from "../../../../services/ServiceLineup";
 import { SavedLineup } from "../../../../../../common/interfaces/Lineup";
 import { PlayerMatchStat } from "../../../../../../common/interfaces/PlayerMatchStat";
+import { toast } from "../../../../../../common/services/ToastService";
 
 type UseSaveLineupParams = {
   careerId?: string;
@@ -19,11 +20,11 @@ export const useSaveLineup = ({
       savedLineup: SavedLineup,
       playerStats: PlayerMatchStat[],
       removedPlayerIds: string[],
-    ) => {
-      if (!careerId || !seasonId) return false;
+    ): Promise<PlayerMatchStat[] | null> => {
+      if (!careerId || !seasonId) return null;
 
       try {
-        await ServiceLineup.saveLineupToMatch(
+        const persistedStats = await ServiceLineup.saveLineupToMatch(
           careerId,
           seasonId,
           matchId,
@@ -31,11 +32,11 @@ export const useSaveLineup = ({
           playerStats,
           removedPlayerIds,
         );
-        return true;
+        return persistedStats || playerStats;
       } catch (error) {
         console.error("Erro: ", error);
-        alert("Erro ao salvar a formação. Tente novamente.");
-        return false;
+        toast.error("Erro ao salvar a formação. Tente novamente.");
+        return null;
       }
     },
     [careerId, seasonId, matchId],

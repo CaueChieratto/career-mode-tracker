@@ -2,7 +2,7 @@ import { useState } from "react";
 import { MatchFormTexts } from "../../types/MatchFormTexts";
 import { getMatchFormRows } from "../../utils/getMatchFormRows";
 import { useAsyncForm } from "../../../../../../../hooks/useAsyncForm";
-import { AcademyMatches } from "../../../../../../../interfaces/AcademyTournaments/AcademyMatches/AcademyMatches";
+import { AcademyMatches } from "../../../../../../../../../../../common/interfaces/AcademyData";
 import { MatchDataPayload } from "../../types/MatchDataPayload";
 
 type UseMatchFormProps = {

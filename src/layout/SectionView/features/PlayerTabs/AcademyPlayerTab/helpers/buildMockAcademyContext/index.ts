@@ -1,6 +1,6 @@
 import { Career } from "../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../common/interfaces/club/clubData";
-import { AcademyPlayers } from "../../../../../../../pages/Academy/layouts/AcademyContent/interfaces/AcademyPlayers/AcademyPlayers";
+import { AcademyPlayers } from "../../../../../../../common/interfaces/AcademyData";
 import { AcademyContextData } from "../../../../../../../pages/Academy/layouts/contexts/AcademyContext";
 
 interface BuildMockAcademyContextParams {

@@ -1,4 +1,4 @@
-import Styles from "../SeasonsPlayerTab/SeasonsPlayerTab.module.css";
+import Styles from "../PlayerTabs.module.css";
 import { FcCalculator } from "react-icons/fc";
 import { useState } from "react";
 import TrophyList from "../SeasonsPlayerTab/components/TrophyList";

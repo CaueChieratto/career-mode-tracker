@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Career } from "../../../../../../common/interfaces/Career";
-import { augmentCareerWithMatchStats } from "../../../../../../layout/SectionView/helpers/mergeMatchStats";
+import { augmentCareerWithMatchStats } from "../../../../../../common/stats/helpers/mergeMatchStats";
+import { getPlayerIdentityKey } from "../../../../../../common/utils/playerIdentity";
 
 interface PlayerStatSummary {
   name: string;
@@ -53,8 +54,9 @@ export const useStatsSummary = (career: Career): StatsSummary => {
 
     (augmentedCareer.clubData || []).forEach((season) => {
       (season.players || []).forEach((player) => {
-        if (!playerStats[player.id]) {
-          playerStats[player.id] = {
+        const playerKey = getPlayerIdentityKey(player, augmentedCareer.id);
+        if (!playerStats[playerKey]) {
+          playerStats[playerKey] = {
             name: player.name,
             games: 0,
             goals: 0,
@@ -68,10 +70,10 @@ export const useStatsSummary = (career: Career): StatsSummary => {
           const assists = league.stats.assists || 0;
           const games = league.stats.games || 0;
 
-          playerStats[player.id].games += games;
-          playerStats[player.id].goals += goals;
-          playerStats[player.id].assists += assists;
-          playerStats[player.id].goalContributions += goals + assists;
+          playerStats[playerKey].games += games;
+          playerStats[playerKey].goals += goals;
+          playerStats[playerKey].assists += assists;
+          playerStats[playerKey].goalContributions += goals + assists;
         });
 
         (player.contract || []).forEach((contract) => {

@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Career } from "../../../../common/interfaces/Career";
 import { ServicePlayers } from "../../../../common/services/ServicePlayers";
-import { ServiceMatches } from "../../features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceFinance } from "../../../../common/services/ServiceFinance";
+import { ServiceMatches } from "../../../../common/services/ServiceMatches";
 import {
   applyOptimisticUpdate,
   OptimisticUpdateData,
   replaceSeasonData,
 } from "../../helpers/updateSectionCareer";
-import { ServiceTable } from "../../features/ClubTabs/TableTab/views/AddTeamsToTable/services/ServiceTable";
+import { ServiceTable } from "../../../../common/services/ServiceTable";
 import { TableRowData } from "../../../../common/interfaces/Table";
 
 interface UseSectionCareerResult {
@@ -31,8 +32,15 @@ export function useSectionCareer(
         return career;
       }
 
+      const incomingTime = Number(career.updatedAt || 0);
+      const localTime = Number(previousCareer.updatedAt || 0);
+      const isIncomingNewer = incomingTime >= localTime;
+
       return {
         ...career,
+        trophies: isIncomingNewer
+          ? (career.trophies ?? previousCareer.trophies)
+          : (previousCareer.trophies ?? career.trophies),
         clubData: career.clubData.map((incomingSeason) => {
           const localSeason = previousCareer.clubData.find(
             (season) => season.id === incomingSeason.id,
@@ -42,12 +50,41 @@ export function useSectionCareer(
             return incomingSeason;
           }
 
+          const resolveSubcollection = <T>(
+            incoming: T[] | undefined,
+            local: T[] | undefined,
+          ): T[] | undefined => {
+            if (isIncomingNewer) {
+              if (Array.isArray(incoming) && incoming.length > 0) {
+                return incoming;
+              }
+              return local ?? incoming;
+            }
+            return local ?? incoming;
+          };
+
           return {
             ...incomingSeason,
-            table: localSeason.table ?? incomingSeason.table,
-            matches: localSeason.matches ?? incomingSeason.matches,
-            players: localSeason.players ?? incomingSeason.players,
-            teams: localSeason.teams ?? incomingSeason.teams,
+            table: (resolveSubcollection(
+              incomingSeason.table,
+              localSeason.table,
+            ) as unknown as typeof incomingSeason.table) ?? incomingSeason.table,
+            matches:
+              resolveSubcollection(
+                incomingSeason.matches,
+                localSeason.matches,
+              ) ?? incomingSeason.matches,
+            players:
+              resolveSubcollection(
+                incomingSeason.players,
+                localSeason.players,
+              ) ?? incomingSeason.players,
+            teams: isIncomingNewer
+              ? (incomingSeason.teams ?? localSeason.teams)
+              : (localSeason.teams ?? incomingSeason.teams),
+            financialReport: isIncomingNewer
+              ? (incomingSeason.financialReport ?? localSeason.financialReport)
+              : (localSeason.financialReport ?? incomingSeason.financialReport),
           };
         }),
       };
@@ -57,17 +94,39 @@ export function useSectionCareer(
   const refreshSeason = useCallback(
     async (targetSeasonId = defaultSeasonId) => {
       try {
+        const targetSeason = career.clubData?.find((s) => s.id === targetSeasonId);
         const [matches, players, tableData] = await Promise.all([
           ServiceMatches.getMatchesBySeason(career.id, targetSeasonId),
           ServicePlayers.getPlayersBySeason(career.id, targetSeasonId),
           ServiceTable.getTableBySeason(career.id, targetSeasonId),
         ]);
 
+        const seasonForFinance = targetSeason
+          ? {
+              ...targetSeason,
+              players: players ?? targetSeason.players,
+              matches: matches ?? targetSeason.matches,
+            }
+          : undefined;
+
+        const financialReport = await ServiceFinance.getReportBySeason(
+          career.id,
+          targetSeasonId,
+          targetSeason?.seasonNumber,
+          seasonForFinance,
+          career,
+        );
+
         setLocalCareer((currentCareer) =>
           replaceSeasonData(
             currentCareer,
             targetSeasonId,
-            { matches, players, table: tableData as unknown as TableRowData[] },
+            {
+              matches,
+              players,
+              table: tableData as unknown as TableRowData[],
+              financialReport,
+            },
             Date.now(),
           ),
         );
@@ -75,7 +134,7 @@ export function useSectionCareer(
         console.error("Erro: ", erro);
       }
     },
-    [career.id, defaultSeasonId],
+    [career, defaultSeasonId],
   );
 
   const updateMatchesOptimistically = useCallback(

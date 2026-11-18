@@ -5,17 +5,22 @@ import Button from "../../../components/Button";
 import ContainerButton from "../../../components/ContainerButton";
 import Styles from "./DeleteConfirmModal.module.css";
 import Load from "../../../components/Load";
+import { toast } from "../../../common/services/ToastService";
 
 type DeleteConfirmModalProps = {
   closeModal: () => void;
   onConfirm?: () => void | Promise<void>;
   selectedCareer?: Career;
+  successMessage?: string;
+  errorMessage?: string;
 };
 
 const DeleteConfirmModal = ({
   closeModal,
   selectedCareer,
   onConfirm,
+  successMessage,
+  errorMessage,
 }: DeleteConfirmModalProps) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,14 +29,25 @@ const DeleteConfirmModal = ({
     try {
       if (selectedCareer) {
         await ServiceCareer.deleteCareer(selectedCareer.id);
+        toast.success(successMessage || "Carreira excluída com sucesso!");
       } else if (onConfirm) {
         await onConfirm();
+        if (successMessage) {
+          toast.success(successMessage);
+        }
       }
+      closeModal();
     } catch (error) {
       console.error("Erro na operação de exclusão:", error);
+      if (errorMessage) {
+        toast.error(errorMessage);
+      } else if (selectedCareer) {
+        toast.error("Erro ao excluir carreira. Tente novamente.");
+      } else {
+        toast.error("Erro na operação de exclusão. Tente novamente.");
+      }
     } finally {
       setIsLoading(false);
-      closeModal();
     }
   };
 

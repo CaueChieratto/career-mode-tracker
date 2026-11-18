@@ -11,10 +11,10 @@ import { Career } from "../common/interfaces/Career";
 import { ClubData } from "../common/interfaces/club/clubData";
 import { Match } from "../common/interfaces/Match";
 import { career, season } from "../test/factories/domain";
-import { ServiceMatches } from "../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../common/services/ServiceMatches";
 
 vi.mock(
-  "../layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches",
+  "../common/services/ServiceMatches",
   () => ({
     ServiceMatches: {
       updateMatchStatsInSeason: vi.fn().mockResolvedValue(undefined),

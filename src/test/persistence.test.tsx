@@ -5,12 +5,13 @@ import { useLineupPersistence } from '../pages/Match/components/LineupTab/hooks/
 import { ServiceLineup } from '../pages/Match/services/ServiceLineup';
 import { useMatchTabAction } from '../pages/Match/hooks/useMatchTabAction';
 import { lineup, match, stat } from './factories/domain';
+import { clearAllToasts, toastStore } from '../common/services/ToastService';
 
 vi.mock('react-router-dom', () => ({ useParams: () => ({ careerId: 'c1', seasonId: 's1' }) }));
 vi.mock('../pages/Match/services/ServiceLineup', () => ({ ServiceLineup: { saveLineupToMatch: vi.fn() } }));
 beforeEach(() => {
-  vi.mocked(ServiceLineup.saveLineupToMatch).mockReset().mockResolvedValue(undefined);
-  vi.stubGlobal('alert', vi.fn());
+  vi.mocked(ServiceLineup.saveLineupToMatch).mockReset().mockImplementation(async (_c, _s, _m, _l, stats) => stats);
+  clearAllToasts();
 });
 afterEach(cleanup);
 
@@ -44,7 +45,7 @@ describe('persistência da escalação', () => {
       return { ...action, ...persistence };
     });
     await act(async () => { await result.current.handleActionClick(); });
-    expect(alert).toHaveBeenCalledTimes(1);
+    expect(toastStore.getSnapshot().some((t) => t.type === 'error')).toBe(true);
     expect(onSaved).not.toHaveBeenCalled();
     expect(openScreen).not.toHaveBeenCalled();
     expect(result.current.isActionLoading).toBe(false);

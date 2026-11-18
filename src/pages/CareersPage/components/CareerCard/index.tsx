@@ -4,7 +4,7 @@ import SummarySection from "./components/SummarySection";
 import Card from "../../../../ui/Card";
 import DataInCard from "./ui/DataInCard";
 import Styles from "./CareerCard.module.css";
-import { Buttons } from "../../../../common/elements/Buttons";
+import { CareerCardButtons } from "./components/CareerCardButtons";
 import { ClubNameInCard } from "./ui/ClubNameInCard";
 import { useCareerPage } from "../../contexts/CareerPageContext";
 
@@ -45,7 +45,7 @@ const CareerCard = ({
             <DataInCard createdAt={career.createdAt} />
             <ContainerButton>
               {buttons.map((button, i) => (
-                <Buttons.CareerCardButtons
+                <CareerCardButtons
                   key={i}
                   career={career}
                   setSelectedCareer={setSelectedCareer}

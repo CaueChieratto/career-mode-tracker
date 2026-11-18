@@ -1,22 +1,15 @@
 import Styles from "./StatisticsTable_Title.module.css";
 import { RiCloseCircleLine } from "react-icons/ri";
 import { UseOverallColor } from "../../../common/hooks/Colors/GetOverallColor";
-import {
-  Dispatch,
-  ReactNode,
-  SetStateAction,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { ReactNode } from "react";
 import { IoIosArrowUp, IoIosArrowDown } from "react-icons/io";
 import { MdExpandLess, MdExpandMore } from "react-icons/md";
+import { OverflowText } from "../../OverflowText";
 
 type StatisticsTable_TitleProps = {
   type: "info" | "expand" | "league";
   expand?: boolean;
   isPlayer?: boolean;
-  setExpand?: Dispatch<SetStateAction<boolean>>;
   playerName?: string;
   overall?: number;
   leagueName?: string;
@@ -36,56 +29,6 @@ const StatisticsTable_Title = ({
   icon,
   teamBadge,
 }: StatisticsTable_TitleProps) => {
-  const nameRef = useRef<HTMLHeadingElement>(null);
-  const leagueRef = useRef<HTMLDivElement>(null);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-
-  useEffect(() => {
-    const el = nameRef.current;
-    if (!el || !el.parentElement) return;
-
-    const parentWidth = el.parentElement.clientWidth;
-    const contentWidth = el.scrollWidth;
-
-    const buffer = 15;
-    const totalWidth = contentWidth + buffer;
-
-    const isOverflow = contentWidth > parentWidth;
-
-    setIsOverflowing(isOverflow);
-
-    if (isOverflow) {
-      const distance = totalWidth - parentWidth;
-      el.style.setProperty("--scroll-distance", `${distance}px`);
-      el.style.setProperty("--dynamic-min-width", `${totalWidth}px`);
-    } else {
-      el.style.setProperty("--dynamic-min-width", `100%`);
-    }
-  }, [playerName, overall]);
-
-  useEffect(() => {
-    const el = leagueRef.current;
-    if (!el || !el.parentElement) return;
-
-    const parentWidth = el.parentElement.clientWidth;
-    const contentWidth = el.scrollWidth;
-
-    const buffer = 15;
-    const totalWidth = contentWidth + buffer;
-
-    const isOverflow = contentWidth > parentWidth;
-
-    setIsOverflowing(isOverflow);
-
-    if (isOverflow) {
-      const distance = totalWidth - parentWidth;
-      el.style.setProperty("--scroll-distance", `${distance}px`);
-      el.style.setProperty("--dynamic-min-width", `${totalWidth}px`);
-    } else {
-      el.style.setProperty("--dynamic-min-width", `100%`);
-    }
-  }, [leagueName]);
-
   const content = {
     info: {
       name: playerName,
@@ -118,7 +61,7 @@ const StatisticsTable_Title = ({
             <div className={`${Styles.logo_container} ${Styles.positon}`}>
               <img src={badge} className={Styles.logo} />
             </div>
-            <h3 ref={nameRef} className={Styles.season_number}>
+            <h3 className={Styles.season_number}>
               <span className={Styles.name_season}>{name}</span>
             </h3>
           </div>
@@ -129,13 +72,8 @@ const StatisticsTable_Title = ({
             }
             onTouchMove={(e) => e.stopPropagation()}
           >
-            <h3
-              ref={nameRef}
-              className={`${!isPlayer ? Styles.name : Styles.season} ${
-                !isPlayer && isOverflowing ? Styles.marquee : ""
-              }`}
-            >
-              <span className={Styles.no_wrap}>{name}</span>
+            <h3 className={!isPlayer ? Styles.name : Styles.season}>
+              <OverflowText text={name || ""} className={Styles.no_wrap} />
               <span
                 className={Styles.over}
                 style={{ color: UseOverallColor(overall ?? 0) }}
@@ -206,14 +144,10 @@ const StatisticsTable_Title = ({
               />
             </div>
             <div className={Styles.league_name_container}>
-              <span
-                ref={leagueRef}
-                className={`${Styles.league_name} ${Styles.no_wrap} ${
-                  isOverflowing ? Styles.marquee : ""
-                }`}
-              >
-                {leagueName}
-              </span>
+              <OverflowText
+                text={leagueName || ""}
+                className={`${Styles.league_name} ${Styles.no_wrap}`}
+              />
             </div>
           </div>
         );

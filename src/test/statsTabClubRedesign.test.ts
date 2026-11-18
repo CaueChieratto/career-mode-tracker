@@ -13,6 +13,7 @@ import { Players } from "../common/interfaces/playersInfo/players";
 import { Match } from "../common/interfaces/Match";
 import { AggregatedLeagueStats } from "../layout/SectionView/features/ClubTabs/StatsTab_Club/types/clubStats.types";
 import { LeagueStats } from "../common/interfaces/playersStats/leagueStats";
+import { clearAllToasts, toastStore, settleConfirm } from "../common/services/ToastService";
 
 const mockPlayer = (id: string, name: string, manualStats?: LeagueStats[]): Players => ({
   id,
@@ -219,11 +220,11 @@ describe("Redesenho do StatsTab_Club: Agregação Pura e Regras de Negócio", ()
 describe("Redesenho do StatsTab_Club: Comportamento da Lixeira e Aviso Visual", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    clearAllToasts();
   });
 
-  it("5. Clicar na lixeira em liga 100% de partidas exibe aviso visual e NÃO chama handleDeleteLeague", () => {
-    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
-    const confirmMock = vi.spyOn(window, "confirm").mockImplementation(() => true);
+  it("5. Clicar na lixeira em liga 100% de partidas exibe aviso visual e NÃO chama handleDeleteLeague", async () => {
+    clearAllToasts();
     const deleteMock = vi.fn();
 
     const leagueStatsWithMatches: AggregatedLeagueStats = {
@@ -244,20 +245,19 @@ describe("Redesenho do StatsTab_Club: Comportamento da Lixeira e Aviso Visual", 
     const deleteItem = result.current.filteredStats.find((s) => s.label === "Deletar");
     expect(deleteItem).toBeDefined();
 
-    act(() => {
-      deleteItem?.onClick?.();
+    await act(async () => {
+      await deleteItem?.onClick?.();
     });
 
-    expect(alertMock).toHaveBeenCalledWith(
-      expect.stringContaining("são calculadas automaticamente a partir de partidas finalizadas e não podem ser excluídas por aqui"),
+    const infoToast = toastStore.getSnapshot().find((t) => t.type === "info");
+    expect(infoToast?.message).toContain(
+      "são calculadas automaticamente a partir de partidas finalizadas e não podem ser excluídas por aqui",
     );
     expect(deleteMock).not.toHaveBeenCalled();
-    expect(confirmMock).not.toHaveBeenCalled();
   });
 
-  it("6. Clicar na lixeira em liga manual pede confirmação padrão e executa exclusão", () => {
-    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
-    const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true);
+  it("6. Clicar na lixeira em liga manual pede confirmação padrão e executa exclusão", async () => {
+    clearAllToasts();
     const deleteMock = vi.fn();
 
     const manualLeague: AggregatedLeagueStats = {
@@ -278,20 +278,23 @@ describe("Redesenho do StatsTab_Club: Comportamento da Lixeira e Aviso Visual", 
     const deleteItem = result.current.filteredStats.find((s) => s.label === "Deletar");
     expect(deleteItem).toBeDefined();
 
-    act(() => {
-      deleteItem?.onClick?.();
+    deleteItem?.onClick?.();
+
+    const confirmToast = toastStore.getSnapshot().find((t) => t.type === "confirm");
+    expect(confirmToast?.message).toContain(
+      "Deseja excluir permanentemente as estatísticas manuais",
+    );
+
+    await act(async () => {
+      settleConfirm(confirmToast!.id, true);
+      await Promise.resolve();
     });
 
-    expect(confirmMock).toHaveBeenCalledWith(
-      expect.stringContaining("Deseja excluir permanentemente as estatísticas manuais"),
-    );
     expect(deleteMock).toHaveBeenCalledWith("Liga Regional");
-    expect(alertMock).not.toHaveBeenCalled();
   });
 
-  it("7. Clicar na lixeira em liga mista alerta que apenas a parte manual será removida", () => {
-    const alertMock = vi.spyOn(window, "alert").mockImplementation(() => {});
-    const confirmMock = vi.spyOn(window, "confirm").mockReturnValue(true);
+  it("7. Clicar na lixeira em liga mista alerta que apenas a parte manual será removida", async () => {
+    clearAllToasts();
     const deleteMock = vi.fn();
 
     const mixedLeague: AggregatedLeagueStats = {
@@ -312,18 +315,22 @@ describe("Redesenho do StatsTab_Club: Comportamento da Lixeira e Aviso Visual", 
     const deleteItem = result.current.filteredStats.find((s) => s.label === "Deletar");
     expect(deleteItem).toBeDefined();
 
-    act(() => {
-      deleteItem?.onClick?.();
+    deleteItem?.onClick?.();
+
+    const confirmToast = toastStore.getSnapshot().find((t) => t.type === "confirm");
+    expect(confirmToast?.message).toContain(
+      "Esta competição possui dados manuais e partidas disputadas",
+    );
+    expect(confirmToast?.message).toContain(
+      "Os números gerados a partir das partidas continuarão salvos normalmente",
+    );
+
+    await act(async () => {
+      settleConfirm(confirmToast!.id, true);
+      await Promise.resolve();
     });
 
-    expect(confirmMock).toHaveBeenCalledWith(
-      expect.stringContaining("Esta competição possui dados manuais e partidas disputadas"),
-    );
-    expect(confirmMock).toHaveBeenCalledWith(
-      expect.stringContaining("Os números gerados a partir das partidas continuarão salvos normalmente"),
-    );
     expect(deleteMock).toHaveBeenCalledWith("Copa Nacional");
-    expect(alertMock).not.toHaveBeenCalled();
   });
 });
 

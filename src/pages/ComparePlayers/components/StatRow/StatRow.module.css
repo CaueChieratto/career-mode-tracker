@@ -33,10 +33,3 @@
 .statValue:last-child {
   justify-content: flex-end;
 }
-
-.ratingBadge {
-  color: #fff;
-  font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 4px;
-}

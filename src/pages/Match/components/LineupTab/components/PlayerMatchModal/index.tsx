@@ -2,10 +2,10 @@ import Modal from "../../../../../../components/Modal";
 import SlideUpModal from "../../../../../../ui/modals/SlideUpModal";
 import { Match } from "../../../../../../common/interfaces/Match";
 import { Players } from "../../../../../../common/interfaces/playersInfo/players";
-import { UseRatingColor } from "../../../../../../common/hooks/Colors/GetOverallColor";
+import { RatingBadge } from "../../../../../../components/RatingBadge";
 import { FiClock } from "react-icons/fi";
 import Styles from "./PlayerMatchModal.module.css";
-import { PlayerCircle } from "../../layouts/Section/components/SlotButton/components/PlayerDetails/PlayerCircle";
+import { PlayerCircle } from "../../../../../../components/PlayerCircle";
 import React from "react";
 
 type PlayerMatchModalProps = {
@@ -121,12 +121,10 @@ export const PlayerMatchModal = ({
           <div className={Styles.playerInfo}>
             <span className={Styles.playerName}>{playerName}</span>
             {rating !== "-" && (
-              <span
-                className={Styles.ratingBadge}
-                style={{ backgroundColor: UseRatingColor(Number(rating)) }}
-              >
-                {Number(rating).toFixed(1)}
-              </span>
+              <RatingBadge
+                rating={Number(rating)}
+                displayValue={Number(rating).toFixed(1)}
+              />
             )}
           </div>
         </div>
@@ -166,14 +164,10 @@ export const PlayerMatchModal = ({
                   <div className={Styles.statLabel}>{stat.label}</div>
                   <div className={Styles.statValue}>
                     {stat.isRating && stat.value !== "-" ? (
-                      <span
-                        className={Styles.ratingBadge}
-                        style={{
-                          backgroundColor: UseRatingColor(Number(stat.value)),
-                        }}
-                      >
-                        {Number(stat.value).toFixed(1)}
-                      </span>
+                      <RatingBadge
+                        rating={Number(stat.value)}
+                        displayValue={Number(stat.value).toFixed(1)}
+                      />
                     ) : (
                       stat.value
                     )}

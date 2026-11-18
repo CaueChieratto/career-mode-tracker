@@ -2,7 +2,7 @@ import { FirebaseError } from "firebase/app";
 import { expect, it } from "vitest";
 import type { Match } from "../../src/common/interfaces/Match";
 import type { TableTeamData } from "../../src/common/interfaces/TableTeamData";
-import { ServiceMatches } from "../../src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../src/common/services/ServiceMatches";
 import { ServiceLineup } from "../../src/pages/Match/services/ServiceLineup";
 import { savePlayerMatchStats } from "../../src/pages/Match/components/LineupTab/views/AddMatchStatsPlayer/services/savePlayerMatchStats";
 import {

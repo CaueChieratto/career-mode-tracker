@@ -1,5 +1,5 @@
-import { AcademyTournaments } from "../../../../interfaces/AcademyTournaments/AcademyTournaments";
-import { PlayerMatchesStats } from "../../../../interfaces/AcademyTournaments/AcademyMatches/PlayerMatchesStats";
+import { AcademyTournaments } from "../../../../../../../../common/interfaces/AcademyData";
+import { PlayerMatchesStats } from "../../../../../../../../common/interfaces/AcademyData";
 
 export const buildPlayerAcademyTournaments = (
   tournaments: AcademyTournaments[],

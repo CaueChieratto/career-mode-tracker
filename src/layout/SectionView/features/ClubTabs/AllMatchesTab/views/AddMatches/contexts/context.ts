@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 import { useForm } from "../../../../../../../../common/hooks/UseForm";
 import { Career } from "../../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../../common/interfaces/club/clubData";
-import { OptimisticMatchData } from "..";
+import { OptimisticMatchData } from "../types";
 
 type UseFormReturn = ReturnType<typeof useForm>;
 

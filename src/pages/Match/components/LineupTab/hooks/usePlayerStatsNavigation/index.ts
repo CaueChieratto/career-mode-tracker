@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import type { SavedLineup } from "../../../../../../common/interfaces/Lineup";
 import { getLineupPlayerIds } from "../../helpers/getLineupPlayerIds";
 import type { OpenMatchScreen } from "../../types";
+import { toast } from "../../../../../../common/services/ToastService";
 
 const SAVE_LINEUP_FIRST_MESSAGE =
   "Salve a escalação antes de editar as estatísticas deste jogador.";
@@ -21,7 +22,7 @@ export const usePlayerStatsNavigation = ({
       const savedPlayerIds = getLineupPlayerIds(savedLineup);
 
       if (!savedPlayerIds.has(playerId)) {
-        window.alert(SAVE_LINEUP_FIRST_MESSAGE);
+        toast.info(SAVE_LINEUP_FIRST_MESSAGE);
         return;
       }
 

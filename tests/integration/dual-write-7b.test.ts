@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ServiceLineup } from "../../src/pages/Match/services/ServiceLineup";
-import { ServiceMatches } from "../../src/layout/SectionView/features/ClubTabs/AllMatchesTab/views/AddMatches/services/ServiceMatches";
+import { ServiceMatches } from "../../src/common/services/ServiceMatches";
 import { db, auth } from "../../src/common/services/Firebase";
 import {
   getDoc,
@@ -12,7 +12,7 @@ import {
 } from "firebase/firestore";
 import { login, resetData } from "./helpers";
 import { stat, player, season, career } from "../../src/test/factories/domain";
-import { augmentCareerWithMatchStats } from "../../src/layout/SectionView/helpers/mergeMatchStats";
+import { augmentCareerWithMatchStats } from "../../src/common/stats/helpers/mergeMatchStats";
 import type { PlayerMatchStat } from "../../src/common/interfaces/PlayerMatchStat";
 import type { Match } from "../../src/common/interfaces/Match";
 import type { Career } from "../../src/common/interfaces/Career";

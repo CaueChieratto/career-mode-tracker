@@ -9,14 +9,15 @@ Requisitos: Node compatível com a aplicação e Java 21+ no PATH. Nesta máquin
 ```sh
 npm ci
 npm ci --prefix tests/emulator-tools
+npm ci --prefix functions
 npm run test:emulators:prepare
 npm run test:integration
 npm run test:coverage:all
 ```
 
-`test:firebase` é um alias explícito de `test:integration`: inicia Firestore/Auth, executa a suíte e encerra ambos. `test:integration:coverage` mede apenas integração; `test:coverage:all` executa unitários e integração em uma única coleta V8. `test:coverage` continua medindo apenas os unitários. Os dois comandos que usam a pasta `coverage` substituem seu conteúdo; para o relatório completo execute `test:coverage:all` por último.
+`test:firebase` é um alias explícito de `test:integration`: inicia Firestore/Auth/Functions, executa a suíte e encerra todos os emuladores. `test:integration:coverage` mede apenas integração; `test:coverage:all` executa unitários e integração em uma única coleta V8. `test:coverage` continua medindo apenas os unitários. Os dois comandos que usam a pasta `coverage` substituem seu conteúdo; para o relatório completo execute `test:coverage:all` por último.
 
-O pacote separado `tests/emulator-tools` fixa Firebase CLI 14.12.0 e possui lockfile próprio. Não adiciona dependências à aplicação. `test:emulators:prepare` baixa somente o JAR oficial definido na CLI e verifica SHA-256. Downloads de ferramentas acontecem antes dos testes, sem carregar credenciais. Java pode ser obtido no [Adoptium](https://adoptium.net/installation); o diretório portátil usado localmente é ignorado pelo Git.
+O pacote separado `tests/emulator-tools` fixa Firebase CLI 14.12.0 e possui lockfile próprio. Não adiciona dependências à aplicação. `npm ci --prefix functions` instala as dependências das Cloud Functions exclusivamente a partir de `functions/package-lock.json`; antes de subir os emuladores, `tests/integration/run-emulators.mjs` valida essa instalação e compila automaticamente `functions/lib/` (artefato gerado localmente e ignorado pelo Git). `test:emulators:prepare` baixa somente o JAR oficial definido na CLI e verifica SHA-256. Downloads de ferramentas acontecem antes dos testes, sem carregar credenciais. Java pode ser obtido no [Adoptium](https://adoptium.net/installation); o diretório portátil usado localmente é ignorado pelo Git.
 
 CLI 14.12.0 utiliza Firestore Emulator 1.19.8; Auth faz parte da CLI. A instalação informou um engine warning em `superstatic`, usado por Hosting, para Node 24. Hosting não é iniciado; Firestore/Auth e os testes passaram nesse ambiente. Não foi atualizado nenhum pacote da aplicação para contornar esse aviso.
 

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState, useMemo, useCallback, useEffect } from "react";
 import { Career } from "../../../../../common/interfaces/Career";
 import { getConfig } from "../../AcademyContent/config";
 import { useAcademyActions } from "../../AcademyContent/hooks/useAcademyActions";
@@ -15,9 +15,7 @@ import {
   useSortedTournaments,
 } from "../../AcademyContent/hooks/Sorts/useSortedTournaments";
 import { useAcademyFeed } from "../../AcademyContent/components/FeedItem/hooks/useAcademyFeed";
-import { getDocs, collection } from "firebase/firestore";
-import { db } from "../../../../../common/services/Firebase";
-import { getAsyncUser } from "../../AcademyContent/services/AcademyService/helpers";
+import { ServiceCareer } from "../../../../../common/services/ServiceCareer";
 
 type ProviderProps = {
   children: ReactNode;
@@ -31,6 +29,24 @@ export const AcademyProvider = ({
   seasonId,
 }: ProviderProps) => {
   const [allCareers, setAllCareers] = useState<Career[]>([career]);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    try {
+      unsubscribe = ServiceCareer.getAll((careers) => {
+        if (careers && careers.length > 0) {
+          setAllCareers(careers);
+        }
+      });
+    } catch {
+      // Fallback gracioso em ambientes de teste sem mocks de Firestore configurados
+    }
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
+
   const [editingEvolutionEvent, setEditingEvolutionEvent] =
     useState<EditingEvolutionEvent | null>(null);
 
@@ -50,28 +66,12 @@ export const AcademyProvider = ({
     return "academy";
   });
 
-  useEffect(() => {
-    const fetchAllCareers = async () => {
-      try {
-        const user = await getAsyncUser();
-        const querySnapshot = await getDocs(
-          collection(db, `users/${user.uid}/careers`),
-        );
-        const careers = querySnapshot.docs.map((doc) => doc.data() as Career);
-        setAllCareers(careers);
-      } catch (error) {
-        console.error("Erro ao carregar todas as carreiras:", error);
-      }
-    };
-    fetchAllCareers();
-  }, []);
-
   const {
     playersAcademy: rawPlayers,
     allPlayersAcademy,
     setPlayersAcademy,
     applyPromotedPlayer,
-    isLoading,
+    isLoading: isLoadingPlayers,
     refetchPlayers,
   } = useAcademyPlayers(career, seasonId, isGeral);
 
@@ -79,6 +79,7 @@ export const AcademyProvider = ({
     tournamentsAcademy: rawTournaments,
     allTournamentsAcademy,
     hasLoadedAllTournaments,
+    isLoadingTournaments,
     setTournamentsAcademy,
     refetchTournaments,
   } = useAcademyTournaments(career, seasonId, isGeral);
@@ -115,7 +116,7 @@ export const AcademyProvider = ({
     setSelectedTournamentId,
   } = useAcademyViewState(career.id);
 
-  const togglePlayerListMode = () => {
+  const togglePlayerListMode = useCallback(() => {
     setPlayerListMode((prev) => {
       const next =
         prev === "academy"
@@ -128,12 +129,12 @@ export const AcademyProvider = ({
     });
 
     setSelectedPlayerId(null);
-  };
+  }, [career.id, setSelectedPlayerId]);
 
-  const backWrapper = () => {
+  const backWrapper = useCallback(() => {
     setEditingEvolutionEvent(null);
     back();
-  };
+  }, [back]);
 
   const playerClickWrapper = (id: string, forceOpen?: boolean) => {
     if (!forceOpen) {
@@ -206,51 +207,96 @@ export const AcademyProvider = ({
     togglePlayerListMode,
   });
 
+  const contextValue = useMemo(
+    () => ({
+      isGeral,
+      career,
+      allCareers,
+      seasonId,
+      playersAcademy,
+      allPlayersAcademy,
+      tournamentsAcademy,
+      allTournamentsAcademy,
+      hasLoadedAllTournaments,
+      isLoading: isLoadingPlayers || isLoadingTournaments,
+      isAddingPlayer,
+      isAddingTournament,
+      isPromotingPlayer,
+      activeCardIndex,
+      selectedPlayer,
+      selectedTournament,
+      dashboardCards,
+      isAnimationDisabled,
+      seasonNumber,
+      selectedTournamentId,
+      isFocusedViewActive,
+      playerListMode,
+      editingEvolutionEvent,
+      setEditingEvolutionEvent,
+      togglePlayerListMode,
+      setSelectedTournamentId,
+      setIsAddingPlayer,
+      setIsAddingTournament,
+      setIsPromotingPlayer,
+      setActiveCardIndex,
+      onUpdatePlayer: updatePlayer,
+      onDeletePlayer: deletePlayer,
+      onReleasePlayer: releasePlayer,
+      onUpdateTournament: updateTournament,
+      onDeleteTournament: deleteTournament,
+      refetchTournaments,
+      refetchPlayers,
+      applyPromotedPlayer,
+      playerClick: handlePlayerClick,
+      back: backWrapper,
+    }),
+    [
+      isGeral,
+      career,
+      allCareers,
+      seasonId,
+      playersAcademy,
+      allPlayersAcademy,
+      tournamentsAcademy,
+      allTournamentsAcademy,
+      hasLoadedAllTournaments,
+      isLoadingPlayers,
+      isLoadingTournaments,
+      isAddingPlayer,
+      isAddingTournament,
+      isPromotingPlayer,
+      activeCardIndex,
+      selectedPlayer,
+      selectedTournament,
+      dashboardCards,
+      isAnimationDisabled,
+      seasonNumber,
+      selectedTournamentId,
+      isFocusedViewActive,
+      playerListMode,
+      editingEvolutionEvent,
+      setEditingEvolutionEvent,
+      togglePlayerListMode,
+      setSelectedTournamentId,
+      setIsAddingPlayer,
+      setIsAddingTournament,
+      setIsPromotingPlayer,
+      setActiveCardIndex,
+      updatePlayer,
+      deletePlayer,
+      releasePlayer,
+      updateTournament,
+      deleteTournament,
+      refetchTournaments,
+      refetchPlayers,
+      applyPromotedPlayer,
+      handlePlayerClick,
+      backWrapper,
+    ],
+  );
+
   return (
-    <AcademyContext.Provider
-      value={{
-        isGeral,
-        career,
-        allCareers,
-        seasonId,
-        playersAcademy,
-        allPlayersAcademy,
-        tournamentsAcademy,
-        allTournamentsAcademy,
-        hasLoadedAllTournaments,
-        isLoading,
-        isAddingPlayer,
-        isAddingTournament,
-        isPromotingPlayer,
-        activeCardIndex,
-        selectedPlayer,
-        selectedTournament,
-        dashboardCards,
-        isAnimationDisabled,
-        seasonNumber,
-        selectedTournamentId,
-        isFocusedViewActive,
-        playerListMode,
-        editingEvolutionEvent,
-        setEditingEvolutionEvent,
-        togglePlayerListMode,
-        setSelectedTournamentId,
-        setIsAddingPlayer,
-        setIsAddingTournament,
-        setIsPromotingPlayer,
-        setActiveCardIndex,
-        onUpdatePlayer: updatePlayer,
-        onDeletePlayer: deletePlayer,
-        onReleasePlayer: releasePlayer,
-        onUpdateTournament: updateTournament,
-        onDeleteTournament: deleteTournament,
-        refetchTournaments,
-        refetchPlayers,
-        applyPromotedPlayer,
-        playerClick: handlePlayerClick,
-        back: backWrapper,
-      }}
-    >
+    <AcademyContext.Provider value={contextValue}>
       {children}
     </AcademyContext.Provider>
   );

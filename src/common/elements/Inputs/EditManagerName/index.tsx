@@ -22,7 +22,7 @@ export const EditManagerName = ({
     id="manager"
     value={managerName}
     onChange={(e) => setManagerName(e.target.value)}
-    placeholder={managerName}
+    placeholder={managerName || "Ex: Hansi Flick"}
     onFocus={onFocus}
     onBlur={onBlur}
   />

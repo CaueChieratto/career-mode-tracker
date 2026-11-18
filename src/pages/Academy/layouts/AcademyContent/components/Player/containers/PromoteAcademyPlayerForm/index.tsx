@@ -6,8 +6,9 @@ import { useAcademyContext } from "../../../../../contexts/AcademyContext/hooks/
 import { AcademyService } from "../../../../services/AcademyService";
 import { getSeasonStartYear } from "../../../../utils/getSeasonStartYear";
 import { FormInput } from "../../../FormInput";
-import { toSingular } from "../../../FeedItem/helpers/toSingular";
+import { toSingular } from "../../../../../../../../common/utils/toSingular";
 import { isEuropeanSeason } from "../../../../utils/isEuropeanSeason";
+import { toast } from "../../../../../../../../common/services/ToastService";
 
 type PromoteAcademyPlayerFormProps = {
   onComplete: () => void;
@@ -67,10 +68,11 @@ export const PromoteAcademyPlayerForm = ({
         allTournamentsAcademy,
       );
       applyPromotedPlayer(promotedPlayer);
+      toast.success("Jogador promovido ao elenco principal com sucesso!");
       onComplete();
     } catch (error) {
       console.error(error);
-      alert("Falha ao promover o jogador. Tente novamente.");
+      toast.error("Falha ao promover o jogador. Tente novamente.");
     } finally {
       submitLockRef.current = false;
       setIsLoading(false);

@@ -1,6 +1,6 @@
 import { ElementsCardTitles } from "../../../../../../common/elements/ElementsCardTitles";
 import { Trophy } from "../../../../../../common/interfaces/club/trophy";
-import Styles from "../SeasonsPlayerTab.module.css";
+import Styles from "../../PlayerTabs.module.css";
 
 type LeagueStatsRowProps = {
   leagueImage: string;

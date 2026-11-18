@@ -1,4 +1,4 @@
-import { toSingular } from "../toSingular";
+import { toSingular } from "../../../../../../../../common/utils/toSingular";
 
 interface FormattedFeedText {
   professional: string;

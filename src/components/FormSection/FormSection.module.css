@@ -18,6 +18,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .form_group {
@@ -26,12 +28,23 @@
   gap: 8px;
   flex: 1;
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .form_row {
   display: flex;
   gap: 16px;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .form_row {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 }
 
 .isMatch {
@@ -52,10 +65,21 @@
   background-color: transparent;
   height: auto;
   justify-content: flex-start;
+  box-sizing: border-box;
 }
 
 .icon {
   position: static;
   height: auto;
   color: var(--border-input);
+}
+
+.vertical_group {
+  align-items: center;
+  width: 100%;
+}
+
+.centered_label {
+  justify-content: center;
+  text-align: center;
 }

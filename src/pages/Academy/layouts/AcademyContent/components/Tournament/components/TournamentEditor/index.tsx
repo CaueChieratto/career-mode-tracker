@@ -55,7 +55,6 @@ export const TournamentEditor = () => {
 
   const handleCloseModal = () => {
     setIsDeleteModalOpen(false);
-    document.body.classList.remove("modal-open");
   };
 
   return (

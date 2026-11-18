@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  findPlayerInList,
   getPlayerIdentityKey,
   isSamePlayerId,
 } from "../common/utils/playerIdentity";
-import { matchesPlayerIdentity } from "../pages/Players/helpers/matchesPlayerIdentity";
-import { createSpoofedCareer } from "../pages/Players/helpers/createSpoofedCareer";
+import { matchesPlayerIdentity } from "../layout/SectionView/views/Players/helpers/matchesPlayerIdentity";
+import { createSpoofedCareer } from "../layout/SectionView/views/Players/helpers/createSpoofedCareer";
 import { mapFormDataToPlayerData } from "../common/helpers/Mappers";
 import { Career } from "../common/interfaces/Career";
 import { ClubData } from "../common/interfaces/club/clubData";
@@ -14,7 +15,7 @@ import { processMatches } from "../layout/SectionView/features/ClubTabs/AllMatch
 import {
   getAggregatedPlayersForCareer,
   augmentSeasonWithMatchStats,
-} from "../layout/SectionView/helpers/mergeMatchStats";
+} from "../common/stats/helpers/mergeMatchStats";
 
 describe("Identidade Unificada de Jogadores (playedWithUs)", () => {
   const userCasePlayerSeason1: Players = {
@@ -437,5 +438,71 @@ describe("Identidade Unificada de Jogadores (playedWithUs)", () => {
     expect(augmentedSameSeason.players.length).toBe(1);
     expect(augmentedSameSeason.players[0].id).toBe(lucianoS2.id);
     expect(augmentedSameSeason.players[0].overall).toBe(68);
+  });
+});
+
+describe("findPlayerInList (Padrão FC Barcelona)", () => {
+  const mockPedri = {
+    id: "pedri_fcb_8",
+    name: "Pedri",
+    nation: "Espanha",
+    position: "MC",
+    club: "FC Barcelona",
+  };
+
+  const mockLamineYamal = {
+    id: "academy-lamine_fcb_19",
+    name: "Lamine Yamal",
+    nation: "Espanha",
+    position: "PD",
+    club: "FC Barcelona",
+    isAcademy: true,
+    academyData: { id: "lamine_fcb_19" },
+  };
+
+  const mockGavi = {
+    id: "gavi_fcb_6_new",
+    name: "Gavi",
+    nation: "Espanha",
+    position: "MC",
+    club: "FC Barcelona",
+    playedWithUs: "gavi_fcb_6_origin",
+  };
+
+  const squad = [mockPedri, mockLamineYamal, mockGavi];
+
+  it("encontra jogador por id exato", () => {
+    expect(findPlayerInList(squad, { id: "pedri_fcb_8" })).toEqual(mockPedri);
+  });
+
+  it("encontra jogador promovido da base via prefixo academy- e via playedWithUs", () => {
+    expect(findPlayerInList(squad, { id: "lamine_fcb_19" })).toEqual(
+      mockLamineYamal,
+    );
+    expect(findPlayerInList(squad, { id: "gavi_fcb_6_origin" })).toEqual(
+      mockGavi,
+    );
+  });
+
+  it("faz fallback por nome + nacionalidade ignorando caixa e espaços extras", () => {
+    expect(
+      findPlayerInList(squad, {
+        id: "outro_id",
+        name: "  PEDRI  ",
+        nation: " espanha ",
+      }),
+    ).toEqual(mockPedri);
+  });
+
+  it("retorna undefined quando jogador não existe ou entrada é nula/indefinida", () => {
+    expect(
+      findPlayerInList(squad, {
+        id: "inexistente",
+        name: "Andrés Iniesta",
+        nation: "Espanha",
+      }),
+    ).toBeUndefined();
+    expect(findPlayerInList(undefined, mockPedri)).toBeUndefined();
+    expect(findPlayerInList(squad, null)).toBeUndefined();
   });
 });

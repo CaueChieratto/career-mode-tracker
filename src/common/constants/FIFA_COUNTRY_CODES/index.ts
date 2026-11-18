@@ -137,7 +137,7 @@ export const FIFA_COUNTRY_CODES: Record<string, string> = {
   NIG: "NE",
   NGA: "NG",
   MKD: "MK",
-  NIR: "GB",
+  NIR: "GB-NIR",
   NOR: "NO",
   OMA: "OM",
   PAK: "PK",
@@ -161,7 +161,7 @@ export const FIFA_COUNTRY_CODES: Record<string, string> = {
   SMR: "SM",
   STP: "ST",
   KSA: "SA",
-  SCO: "GB",
+  SCO: "GB-SCT",
   SEN: "SN",
   SRB: "RS",
   SEY: "SC",
@@ -195,7 +195,11 @@ export const FIFA_COUNTRY_CODES: Record<string, string> = {
   UGA: "UG",
   UKR: "UA",
   UAE: "AE",
-  ENG: "GB",
+  ENG: "GB-ENG",
+  INGLATERRA: "GB-ENG",
+  ENGLAND: "GB-ENG",
+  SCOTLAND: "GB-SCT",
+  WALES: "GB-WLS",
   USA: "US",
   ISV: "VI",
   URU: "UY",
@@ -203,7 +207,7 @@ export const FIFA_COUNTRY_CODES: Record<string, string> = {
   VAN: "VU",
   VEN: "VE",
   VIE: "VN",
-  WAL: "GB",
+  WAL: "GB-WLS",
   YEM: "YE",
   ZAM: "ZM",
   ZIM: "ZW",
@@ -217,3 +221,11 @@ export const FIFA_COUNTRY_CODES: Record<string, string> = {
   TAH: "PF",
   VGB: "VG",
 };
+
+export const resolveCountryFlagCode = (nation?: string): string => {
+  if (!nation) return "";
+  const normalized = nation.trim().toUpperCase();
+  return FIFA_COUNTRY_CODES[normalized] || normalized;
+};
+
+export const getFlagCode = resolveCountryFlagCode;

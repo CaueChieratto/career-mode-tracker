@@ -5,4 +5,5 @@ export interface Teams {
   name: string;
   leagueName?: League["name"];
   showMatch?: boolean;
+  colors?: string[];
 }

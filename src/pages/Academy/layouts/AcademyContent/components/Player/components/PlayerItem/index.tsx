@@ -1,6 +1,6 @@
 import { FaTrash } from "react-icons/fa";
-import { PlayerCircle } from "../../../../../../../Match/components/LineupTab/layouts/Section/components/SlotButton/components/PlayerDetails/PlayerCircle";
-import { AcademyPlayers } from "../../../../interfaces/AcademyPlayers/AcademyPlayers";
+import { PlayerCircle } from "../../../../../../../../components/PlayerCircle";
+import { AcademyPlayers } from "../../../../../../../../common/interfaces/AcademyData";
 import { InfoItem } from "../../../../ui/InfoItem";
 import { AcademyListItem } from "../../../AcademyListItem";
 

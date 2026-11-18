@@ -6,197 +6,105 @@ import {
   SquadFormSection,
 } from "../layout/SectionView/features/ClubTabs/SquadTab/views/AddSquad_Player/helpers/filterFormFields";
 
-describe("filterFormSections - incomingLoan retorno", () => {
+describe("filterFormSections - SquadFormFields", () => {
   const dynamicFields = getSquadFormFields(
     "BRA",
     [],
     [],
   ) as SquadFormSection<SquadFormField>[];
 
-  it("não exibe isReturnIncomingLoan nem returnDate para jogador normal na edição", () => {
-    const sections = filterFormSections(dynamicFields, {
-      isEditing: true,
-      isLoaned: false,
-      isIncomingLoanPlayer: false,
-      isReturningIncomingLoan: false,
-      isSigning: false,
-      isIncomingLoan: false,
-      isKnownPlayer: false,
-      hasGroupId: false,
-    });
-
-    const contractSection = sections.find(
-      (s) => s.title === "Detalhes Contratuais",
-    );
-    expect(contractSection).toBeDefined();
-    const allFieldIds = contractSection!.fields.flat().map((f) => f.id);
-    expect(allFieldIds).not.toContain("isReturnIncomingLoan");
-    expect(allFieldIds).not.toContain("returnDate");
-    expect(allFieldIds).toContain("salary");
-    expect(allFieldIds).toContain("contractTime");
-  });
-
-  it("não exibe campos de transferência nem de retorno de empréstimo para jogador incomingLoan na edição", () => {
-    const sections = filterFormSections(dynamicFields, {
-      isEditing: true,
-      isLoaned: false,
-      isIncomingLoanPlayer: true,
-      isSigning: false,
-      isIncomingLoan: true,
-      isKnownPlayer: false,
-      hasGroupId: false,
-    });
-
-    const contractSection = sections.find(
-      (s) => s.title === "Detalhes Contratuais",
-    );
-    expect(contractSection).toBeDefined();
-    const allFieldIds = contractSection!.fields.flat().map((f) => f.id);
-    expect(allFieldIds).not.toContain("isReturnIncomingLoan");
-    expect(allFieldIds).not.toContain("returnDate");
-    expect(allFieldIds).not.toContain("fromClub");
-    expect(allFieldIds).not.toContain("buyValue");
-    expect(allFieldIds).not.toContain("loanDuration");
-    expect(allFieldIds).not.toContain("wagePercentage");
-    expect(allFieldIds).not.toContain("dateArrival");
-    expect(allFieldIds).not.toContain("contractTime");
-    expect(allFieldIds).toEqual([
-      "playerValue",
-      "salary",
-      "isKnownPlayer",
-    ]);
-  });
-
-  it("não exibe contractTime para jogador em empréstimo recebido (incomingLoan) na criação ou edição", () => {
-    // Na criação com isIncomingLoan = true
+  it("não exibe seção Manutenção na criação, mas exibe na edição", () => {
     const creationSections = filterFormSections(dynamicFields, {
       isEditing: false,
       isLoaned: false,
       isIncomingLoanPlayer: false,
-      isReturningIncomingLoan: false,
-      isSigning: false,
-      isIncomingLoan: true,
-      isKnownPlayer: false,
-      hasGroupId: false,
-    });
-    const creationFields = creationSections
-      .flatMap((s) => s.fields.flat().map((f) => f.id));
-    expect(creationFields).not.toContain("contractTime");
-
-    // Na edição com isIncomingLoanPlayer = true
-    const editSections = filterFormSections(dynamicFields, {
-      isEditing: true,
-      isLoaned: false,
-      isIncomingLoanPlayer: true,
-      isReturningIncomingLoan: false,
-      isSigning: false,
-      isIncomingLoan: true,
-      isKnownPlayer: false,
-      hasGroupId: false,
-    });
-    const editFields = editSections
-      .flatMap((s) => s.fields.flat().map((f) => f.id));
-    expect(editFields).not.toContain("contractTime");
-  });
-
-  it("ao editar jogador com apenas valor e salário (ex: incomingLoanPlayer sem contractTime), coloca playerValue e salary lado a lado na mesma linha", () => {
-    const editSections = filterFormSections(dynamicFields, {
-      isEditing: true,
-      isLoaned: false,
-      isIncomingLoanPlayer: true,
-      isReturningIncomingLoan: false,
-      isSigning: false,
-      isIncomingLoan: true,
-      isKnownPlayer: false,
-      hasGroupId: false,
-      hasInitialPlayedWithUs: true,
-    });
-    const contractSection = editSections.find(
-      (s) => s.title === "Detalhes Contratuais",
-    );
-    expect(contractSection).toBeDefined();
-
-    // Deve ter uma linha contendo exatamente [playerValue, salary]
-    const rows = contractSection!.fields;
-    const valueSalaryRow = rows.find(
-      (r) =>
-        r.length === 2 &&
-        r[0].id === "playerValue" &&
-        r[1].id === "salary",
-    );
-    expect(valueSalaryRow).toBeDefined();
-  });
-
-  it("exibe contractTime para jogador que pertence ao clube e saiu de empréstimo (isLoaned: true)", () => {
-    const sections = filterFormSections(dynamicFields, {
-      isEditing: true,
-      isLoaned: true,
-      isIncomingLoanPlayer: false,
-      isReturningIncomingLoan: false,
       isSigning: false,
       isIncomingLoan: false,
       isKnownPlayer: false,
       hasGroupId: false,
     });
-    const contractSection = sections.find(
-      (s) => s.title === "Detalhes Contratuais",
-    );
-    expect(contractSection).toBeDefined();
-    const contractFields = contractSection!.fields.flat().map((f) => f.id);
-    expect(contractFields).toContain("contractTime");
-  });
+    expect(creationSections.find((s) => s.title === "Manutenção")).toBeUndefined();
 
-  it("na edição, com jogador já vinculado (hasInitialPlayedWithUs: true), não exibe o searchable-select mesmo com isKnownPlayer = true", () => {
-    const fieldsWithPast = getSquadFormFields(
-      "BRA",
-      ["Emprestimo"],
-      [],
-    ) as SquadFormSection<SquadFormField>[];
-
-    const sections = filterFormSections(fieldsWithPast, {
+    const editSections = filterFormSections(dynamicFields, {
       isEditing: true,
       isLoaned: false,
       isIncomingLoanPlayer: false,
       isSigning: false,
       isIncomingLoan: false,
-      isKnownPlayer: true,
+      isKnownPlayer: false,
       hasGroupId: false,
-      hasInitialPlayedWithUs: true,
     });
-
-    const contractSection = sections.find(
-      (s) => s.title === "Detalhes Contratuais",
-    );
-    expect(contractSection).toBeDefined();
-    const allFieldIds = contractSection!.fields.flat().map((f) => f.id);
-    expect(allFieldIds).not.toContain("selectedPastPlayer");
-    expect(allFieldIds).toContain("isKnownPlayer");
+    expect(editSections.find((s) => s.title === "Manutenção")).toBeDefined();
   });
 
-  it("não exibe isKnownPlayer se não for compra nem empréstimo", () => {
-    const fieldsWithPast = getSquadFormFields(
-      "BRA",
-      ["Emprestimo"],
-      [],
-    ) as SquadFormSection<SquadFormField>[];
-    const sectionsWithoutBuyOrLoan = filterFormSections(fieldsWithPast, {
+  it("não exibe mais a seção Detalhes Contratuais nem na criação nem na edição", () => {
+    const creationSections = filterFormSections(dynamicFields, {
       isEditing: false,
       isLoaned: false,
       isIncomingLoanPlayer: false,
-      isReturningIncomingLoan: false,
+      isSigning: false,
+      isIncomingLoan: false,
+      isKnownPlayer: false,
+      hasGroupId: false,
+    });
+    expect(creationSections.find((s) => s.title === "Detalhes Contratuais")).toBeUndefined();
+
+    const editSections = filterFormSections(dynamicFields, {
+      isEditing: true,
+      isLoaned: false,
+      isIncomingLoanPlayer: false,
+      isSigning: false,
+      isIncomingLoan: false,
+      isKnownPlayer: false,
+      hasGroupId: false,
+    });
+    expect(editSections.find((s) => s.title === "Detalhes Contratuais")).toBeUndefined();
+  });
+
+  it("exibe Informações do Contrato e Status abaixo de Informações do Jogador", () => {
+    const sections = filterFormSections(dynamicFields, {
+      isEditing: false,
+      isLoaned: false,
+      isIncomingLoanPlayer: false,
       isSigning: false,
       isIncomingLoan: false,
       isKnownPlayer: false,
       hasGroupId: false,
     });
 
-    const allFieldIds = sectionsWithoutBuyOrLoan.flatMap((s) =>
-      s.fields.flat().map((f) => f.id),
-    );
-    expect(allFieldIds).not.toContain("isKnownPlayer");
+    expect(sections[0].title).toBe("Informações do Jogador");
+    expect(sections[1].title).toBe("Informações do Contrato");
+    expect(sections[2].title).toBe("Status");
+
+    const contractSection = sections[1];
+    expect(contractSection.fields[0][0].id).toBe("playerValue");
+    expect(contractSection.fields[0][0].name).toBe("Valor de mercado");
+    expect(contractSection.fields[0][1].id).toBe("salary");
+    expect(contractSection.fields[0][1].name).toBe("Salário semanal");
+    expect(contractSection.fields[1][0].id).toBe("contractUntil");
+    expect(contractSection.fields[1][0].name).toBe("Contrato até");
+    expect(contractSection.fields[1][0].maxLength).toBe(10);
   });
 
-  it("exibe isKnownPlayer ao adicionar jogador com compra ou empréstimo, desabilitado se não houver ex-jogadores", () => {
+  it("exibe isKnownPlayer e isCaptain na seção Status", () => {
+    const sections = filterFormSections(dynamicFields, {
+      isEditing: false,
+      isLoaned: false,
+      isIncomingLoanPlayer: false,
+      isSigning: false,
+      isIncomingLoan: false,
+      isKnownPlayer: false,
+      hasGroupId: false,
+    });
+
+    const statusSection = sections.find((s) => s.title === "Status");
+    expect(statusSection).toBeDefined();
+    const statusFieldIds = statusSection!.fields.flat().map((f) => f.id);
+    expect(statusFieldIds).toContain("isKnownPlayer");
+    expect(statusFieldIds).toContain("isCaptain");
+  });
+
+  it("exibe isKnownPlayer desabilitado se não houver ex-jogadores, e habilitado quando houver", () => {
     const fieldsEmptyPast = getSquadFormFields(
       "BRA",
       [],
@@ -206,112 +114,116 @@ describe("filterFormSections - incomingLoan retorno", () => {
       isEditing: false,
       isLoaned: false,
       isIncomingLoanPlayer: false,
-      isReturningIncomingLoan: false,
-      isSigning: true,
+      isSigning: false,
       isIncomingLoan: false,
       isKnownPlayer: false,
       hasGroupId: false,
     });
 
-    const statusSection = sectionsEmpty.find((s) => s.title === "Status");
-    expect(statusSection).toBeDefined();
-    const isKnownPlayerField = statusSection!.fields
-      .flat()
+    const isKnownPlayerEmpty = sectionsEmpty
+      .find((s) => s.title === "Status")!
+      .fields.flat()
       .find((f) => f.id === "isKnownPlayer");
-    expect(isKnownPlayerField).toBeDefined();
-    expect(isKnownPlayerField?.disabled).toBe(true);
-    expect(isKnownPlayerField?.note).toBe(
+    expect(isKnownPlayerEmpty?.disabled).toBe(true);
+    expect(isKnownPlayerEmpty?.note).toBe(
       "Nenhum ex-jogador disponível para recontratação.",
     );
 
     const fieldsWithPast = getSquadFormFields(
       "BRA",
-      ["Emprestimo"],
+      ["Ex-Jogador 1"],
       [],
     ) as SquadFormSection<SquadFormField>[];
     const sectionsWithPast = filterFormSections(fieldsWithPast, {
       isEditing: false,
       isLoaned: false,
       isIncomingLoanPlayer: false,
-      isReturningIncomingLoan: false,
-      isSigning: true,
-      isIncomingLoan: false,
-      isKnownPlayer: false,
-      hasGroupId: false,
-    });
-
-    const isKnownPlayerFieldActive = sectionsWithPast
-      .find((s) => s.title === "Status")!
-      .fields.flat()
-      .find((f) => f.id === "isKnownPlayer");
-    expect(isKnownPlayerFieldActive).toBeDefined();
-    expect(isKnownPlayerFieldActive?.disabled).toBe(false);
-    expect(isKnownPlayerFieldActive?.note).toBeUndefined();
-  });
-
-  it("na edição, exibe 'Esse jogador ja jogou conosco antes?' em Detalhes Contratuais e exibe searchable-select se marcado", () => {
-    const fieldsWithPast = getSquadFormFields(
-      "BRA",
-      ["Emprestimo"],
-      [],
-    ) as SquadFormSection<SquadFormField>[];
-
-    // Com isKnownPlayer = false: checkbox aparece em Detalhes Contratuais, mas não o searchable-select
-    const sectionsEditUnchecked = filterFormSections(fieldsWithPast, {
-      isEditing: true,
-      isLoaned: false,
-      isIncomingLoanPlayer: false,
-      isReturningIncomingLoan: false,
       isSigning: false,
       isIncomingLoan: false,
       isKnownPlayer: false,
       hasGroupId: false,
     });
 
-    const statusSection = sectionsEditUnchecked.find((s) => s.title === "Status");
-    const statusFieldIds = statusSection!.fields.flat().map((f) => f.id);
-    expect(statusFieldIds).not.toContain("isSigning");
-    expect(statusFieldIds).not.toContain("isLoan");
-    expect(statusFieldIds).not.toContain("isKnownPlayer");
+    const isKnownPlayerActive = sectionsWithPast
+      .find((s) => s.title === "Status")!
+      .fields.flat()
+      .find((f) => f.id === "isKnownPlayer");
+    expect(isKnownPlayerActive?.disabled).toBe(false);
+    expect(isKnownPlayerActive?.note).toBeUndefined();
+  });
 
-    const buscarJogadorSection = sectionsEditUnchecked.find(
-      (s) => s.title === "Buscar Jogador",
-    );
-    expect(buscarJogadorSection).toBeUndefined();
+  it("só exibe Buscar Jogador quando isKnownPlayer for true e não vinculado inicialmente", () => {
+    const fieldsWithPast = getSquadFormFields(
+      "BRA",
+      ["Ex-Jogador 1"],
+      [],
+    ) as SquadFormSection<SquadFormField>[];
 
-    const contractSection = sectionsEditUnchecked.find(
-      (s) => s.title === "Detalhes Contratuais",
-    );
-    expect(contractSection).toBeDefined();
-    const contractFields = contractSection!.fields.flat();
-    const knownPlayerField = contractFields.find((f) => f.id === "isKnownPlayer");
-    expect(knownPlayerField).toBeDefined();
-    expect(knownPlayerField?.name).toBe("Esse jogador ja jogou conosco antes?");
-    expect(knownPlayerField?.disabled).toBe(false);
-
-    // Sem marcar isKnownPlayer, selectedPastPlayer não deve aparecer
-    expect(contractFields.map((f) => f.id)).not.toContain("selectedPastPlayer");
-
-    // Com isKnownPlayer = true: searchable-select aparece em Detalhes Contratuais
-    const sectionsEditChecked = filterFormSections(fieldsWithPast, {
-      isEditing: true,
+    // isKnownPlayer = false: Buscar Jogador não aparece
+    const sectionsWithoutKnown = filterFormSections(fieldsWithPast, {
+      isEditing: false,
       isLoaned: false,
       isIncomingLoanPlayer: false,
-      isReturningIncomingLoan: false,
+      isSigning: false,
+      isIncomingLoan: false,
+      isKnownPlayer: false,
+      hasGroupId: false,
+    });
+    expect(sectionsWithoutKnown.find((s) => s.title === "Buscar Jogador")).toBeUndefined();
+
+    // isKnownPlayer = true: Buscar Jogador aparece
+    const sectionsWithKnown = filterFormSections(fieldsWithPast, {
+      isEditing: false,
+      isLoaned: false,
+      isIncomingLoanPlayer: false,
       isSigning: false,
       isIncomingLoan: false,
       isKnownPlayer: true,
       hasGroupId: false,
     });
+    const buscarSection = sectionsWithKnown.find((s) => s.title === "Buscar Jogador");
+    expect(buscarSection).toBeDefined();
+    expect(buscarSection!.fields.flat()[0].id).toBe("selectedPastPlayer");
 
-    const contractSectionChecked = sectionsEditChecked.find(
-      (s) => s.title === "Detalhes Contratuais",
-    );
-    const contractFieldsChecked = contractSectionChecked!.fields.flat();
-    const selectedPastPlayerField = contractFieldsChecked.find(
-      (f) => f.id === "selectedPastPlayer",
-    );
-    expect(selectedPastPlayerField).toBeDefined();
-    expect(selectedPastPlayerField?.options).toEqual(["Emprestimo"]);
+    // Na edição, se já estava vinculado inicialmente, Buscar Jogador não aparece mesmo com isKnownPlayer = true
+    const sectionsEditLinked = filterFormSections(fieldsWithPast, {
+      isEditing: true,
+      isLoaned: false,
+      isIncomingLoanPlayer: false,
+      isSigning: false,
+      isIncomingLoan: false,
+      isKnownPlayer: true,
+      hasGroupId: false,
+      hasInitialPlayedWithUs: true,
+    });
+    expect(sectionsEditLinked.find((s) => s.title === "Buscar Jogador")).toBeUndefined();
+  });
+
+  it("altura e peso estão em Informações do Jogador com configuração correta", () => {
+    const sections = filterFormSections(dynamicFields, {
+      isEditing: false,
+      isLoaned: false,
+      isIncomingLoanPlayer: false,
+      isSigning: false,
+      isIncomingLoan: false,
+      isKnownPlayer: false,
+      hasGroupId: false,
+    });
+
+    const playerInfo = sections.find((s) => s.title === "Informações do Jogador");
+    expect(playerInfo).toBeDefined();
+    const allFields = playerInfo!.fields.flat();
+
+    const heightField = allFields.find((f) => f.id === "height");
+    expect(heightField).toBeDefined();
+    expect(heightField?.name).toBe("Altura (cm)");
+    expect(heightField?.placeholder).toBe("Ex: 169");
+    expect(heightField?.maxLength).toBe(3);
+
+    const weightField = allFields.find((f) => f.id === "weight");
+    expect(weightField).toBeDefined();
+    expect(weightField?.name).toBe("Peso (kg)");
+    expect(weightField?.placeholder).toBe("Ex: 67");
+    expect(weightField?.maxLength).toBe(3);
   });
 });

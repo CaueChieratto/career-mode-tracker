@@ -1,0 +1,310 @@
+.gridContainer {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-input);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.titleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0 14px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.15));
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  color: var(--club-color, #3b82f6);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blackColor);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.subtitleBadge {
+  font-size: 11px;
+  color: var(--color);
+  font-weight: 600;
+  background: var(--bg-overlay, rgba(128, 128, 128, 0.08));
+  border: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.2));
+  padding: 4px 10px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.gridSingleColumn {
+  grid-template-columns: 1fr !important;
+}
+
+.card {
+  background: var(--groupCard);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.cardTitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.iconBox {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.iconBlue {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.iconAmber {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.iconEmerald {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.iconPurple {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #a855f7;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--blackColor);
+  margin: 0;
+}
+
+.cardTitleColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.targetBadgePlayer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  width: fit-content;
+}
+
+.targetBadgeClub {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  width: fit-content;
+}
+
+.targetBadgeClubReceivable {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #d97706;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  padding: 2px 7px;
+  border-radius: 9999px;
+  width: fit-content;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.badgeActive {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.badgeInactive {
+  background: var(--bg-overlay, rgba(128, 128, 128, 0.1));
+  color: var(--color-tertiary);
+  border-color: var(--border-overlay, rgba(128, 128, 128, 0.2));
+}
+
+.cardDescription {
+  font-size: 13px;
+  color: var(--color-secondary);
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+  min-height: 38px;
+}
+
+.cardDescription strong {
+  color: var(--blackColor);
+  font-weight: 700;
+}
+
+.actionButton {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.actionButtonBlue {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+}
+
+.actionButtonBlue:hover {
+  background: rgba(59, 130, 246, 0.22);
+  border-color: #3b82f6;
+}
+
+.actionButtonAmber {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.actionButtonAmber:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: #f59e0b;
+}
+
+.actionButtonEmerald {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.actionButtonEmerald:hover {
+  background: rgba(16, 185, 129, 0.22);
+  border-color: #10b981;
+}
+
+.actionButtonPurple {
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: #a855f7;
+}
+
+.actionButtonPurple:hover {
+  background: rgba(168, 85, 247, 0.22);
+  border-color: #a855f7;
+}
+
+.gridFooter {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-overlay, rgba(128, 128, 128, 0.15));
+}
+
+.btnBackToList {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--color-secondary);
+  border: 1px solid var(--border-input);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnBackToList:hover {
+  background: var(--color-background-subtle, rgba(0, 0, 0, 0.04));
+  color: var(--blackColor);
+}

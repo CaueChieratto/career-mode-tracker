@@ -5,11 +5,15 @@ import {
   OpponentGoal,
   OpponentOwnGoal,
 } from "../../../../../../../../../common/interfaces/OpponentEventsMatches";
-import { normalizeOpponentEvents } from "../../../../../../../helpers/opponentCards";
+import { normalizeOpponentEvents } from "../../../../../../../../../common/services/ServiceOpponentPlayers/helpers/opponentCards";
 
 interface InitialMatchState {
   initialFormValues: Record<string, string>;
   booleansToSet: { key: string; value: boolean }[];
+  initialSelectedPlayers?: Record<
+    string,
+    { id: string; name: string; isFormerPlayer?: boolean }
+  >;
 }
 
 export const buildInitialFormValues = (
@@ -43,6 +47,19 @@ export const buildInitialFormValues = (
       : "",
   };
 
+  const initialSelectedPlayers: Record<
+    string,
+    { id: string; name: string; isFormerPlayer?: boolean }
+  > = {};
+
+  if (match.opponentMvpName && match.opponentMvpPlayerId) {
+    initialSelectedPlayers["opponentMvpName"] = {
+      id: match.opponentMvpPlayerId,
+      name: match.opponentMvpName,
+      isFormerPlayer: match.opponentMvpIsFormerPlayer,
+    };
+  }
+
   const booleansToSet: { key: string; value: boolean }[] = [];
   const oppEv = normalizeOpponentEvents(match.opponentEvents);
 
@@ -50,10 +67,24 @@ export const buildInitialFormValues = (
     oppEv.goals?.forEach((g: OpponentGoal, i: number) => {
       initialFormValues[`opponentGoalPlayer_${i}`] = g.player;
       initialFormValues[`opponentGoalMinute_${i}`] = g.minute;
+      if (g.playerId) {
+        initialSelectedPlayers[`opponentGoalPlayer_${i}`] = {
+          id: g.playerId,
+          name: g.player,
+          isFormerPlayer: g.isFormerPlayer,
+        };
+      }
     });
     oppEv.assists?.forEach((a: OpponentAssist, i: number) => {
       initialFormValues[`opponentAssistPlayer_${i}`] = a.player;
       initialFormValues[`opponentAssistTo_${i}`] = a.goalReference;
+      if (a.playerId) {
+        initialSelectedPlayers[`opponentAssistPlayer_${i}`] = {
+          id: a.playerId,
+          name: a.player,
+          isFormerPlayer: a.isFormerPlayer,
+        };
+      }
     });
 
     if (oppEv.cards?.length) {
@@ -64,6 +95,13 @@ export const buildInitialFormValues = (
         initialFormValues[`opponentSecondYellowMin_${i}`] =
           c.secondYellowMinute;
         initialFormValues[`opponentRedMin_${i}`] = c.redMinute;
+        if (c.playerId) {
+          initialSelectedPlayers[`opponentCardPlayer_${i}`] = {
+            id: c.playerId,
+            name: c.player,
+            isFormerPlayer: c.isFormerPlayer,
+          };
+        }
         booleansToSet.push({ key: `opponentYellow_${i}`, value: c.yellow });
         booleansToSet.push({
           key: `opponentSecondYellow_${i}`,
@@ -78,6 +116,13 @@ export const buildInitialFormValues = (
       oppEv.ownGoals.forEach((og: OpponentOwnGoal, i: number) => {
         initialFormValues[`opponentOwnGoalPlayer_${i}`] = og.player;
         initialFormValues[`opponentOwnGoalMinute_${i}`] = og.minute;
+        if (og.playerId) {
+          initialSelectedPlayers[`opponentOwnGoalPlayer_${i}`] = {
+            id: og.playerId,
+            name: og.player,
+            isFormerPlayer: og.isFormerPlayer,
+          };
+        }
       });
     }
   }
@@ -92,5 +137,5 @@ export const buildInitialFormValues = (
 
   booleansToSet.push({ key: "hasExtraTime", value: !!match.hasExtraTime });
 
-  return { initialFormValues, booleansToSet };
+  return { initialFormValues, booleansToSet, initialSelectedPlayers };
 };

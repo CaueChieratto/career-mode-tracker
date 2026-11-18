@@ -1,7 +1,7 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .noTransfers {
@@ -17,7 +17,6 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  padding-bottom: 120px;
 }
 
 .item {
@@ -44,12 +43,15 @@
   font-size: 18px;
   font-weight: bold;
   text-align: right;
+  align-self: flex-start;
+  width: 100%;
 }
 
 .date {
   font-size: 14px;
   color: var(--color-add-player);
   text-align: right;
+  width: 100%;
 }
 
 .playerInfo {
@@ -63,7 +65,7 @@
 .transferInfo {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 4px;
   overflow: hidden;
   width: 170px;

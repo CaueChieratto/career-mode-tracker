@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, expect, it, vi } from 'vitest';
 import AddSeasonPlayerScreen from '../layout/SectionView/features/ClubTabs/StatsTab_Club/views/AddSeason_Player/screens/AddSeason_PlayerScreen';
 import PlayerStats from '../layout/SectionView/features/ClubTabs/StatsTab_Club/components/PlayerStatsList/components/PlayerStats';
-import { augmentSeasonWithMatchStats } from '../layout/SectionView/helpers/mergeMatchStats';
+import { augmentSeasonWithMatchStats } from '../common/stats/helpers/mergeMatchStats';
 import { career, leagueStats } from './factories/domain';
 import { mixedStatsSeason } from './fixtures/scenarios';
 
@@ -15,7 +15,11 @@ vi.mock('../common/hooks/Seasons/UseSeasonTheme', () => ({ useSeasonTheme: () =>
 vi.mock('../common/constants/ModalManager', () => ({ default: () => null }));
 vi.mock('../components/HeaderSeason', () => ({ default: () => null }));
 vi.mock('../common/hooks/Players/UsePlayerStats', () => ({ usePlayerStats: ({ handleGoBack }: { handleGoBack: () => void }) => ({ handleStatsSave: handleGoBack, isStatsLoading: false }) }));
-vi.mock('../common/hooks/Players/UsePlayerSeasonStats', () => ({ usePlayerSeasonStats: () => ({ handleDeleteLeague: state.remove, isDeletingLeague: false }) }));
+vi.mock('../common/services/ServicePlayers', () => ({
+  ServicePlayers: {
+    deleteLeagueStatsFromPlayer: (...args: unknown[]) => state.remove(...args),
+  },
+}));
 vi.mock('../ui/Navbar', async () => {
   const { createElement } = await import('react');
   return { default: ({ save }: { save: () => void }) => createElement('button', { onClick: save }, 'Salvar') };

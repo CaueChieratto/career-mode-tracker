@@ -15,6 +15,7 @@ import { removePlayerFromSlot } from "../../helpers/removePlayerFromSlot";
 import { swapLineupPlayers } from "../../helpers/swapLineupPlayers";
 import { scheduleLineupSlotScroll } from "../../services/scheduleLineupSlotScroll";
 import { LineupState } from "../../types";
+import { isPlayerSoldOrDeparted } from "../../../../../../common/services/ServicePlayers/helpers/transferTimingHelpers";
 
 export const useLineup = (season: ClubData, initialLineup?: SavedLineup) => {
   const initialFormation = useMemo(
@@ -100,8 +101,11 @@ export const useLineup = (season: ClubData, initialLineup?: SavedLineup) => {
   );
 
   const activePlayers = useMemo(
-    () => season.players.filter((player) => !player.sell),
-    [season.players],
+    () =>
+      season.players.filter(
+        (player) => !isPlayerSoldOrDeparted(player, season.matches),
+      ),
+    [season.players, season.matches],
   );
 
   return {

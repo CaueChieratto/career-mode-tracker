@@ -1,4 +1,5 @@
-import Styles from "../../InfoPlayerTab.module.css";
+import React from "react";
+import { SectionSummaryItem } from "../../../../../ui/SectionSummaryCard";
 
 type InfoItemProps = {
   label: string | number;
@@ -8,11 +9,7 @@ type InfoItemProps = {
 };
 
 const InfoItem: React.FC<InfoItemProps> = ({ label, value, icon, color }) => (
-  <div className={Styles.contents} style={{ color }}>
-    <h1 className={Styles.info}>{label}</h1>
-    <h2 className={Styles.value}>{value}</h2>
-    <h3 className={Styles.icon}>{icon}</h3>
-  </div>
+  <SectionSummaryItem label={label} value={value} icon={icon} color={color} />
 );
 
 export default InfoItem;

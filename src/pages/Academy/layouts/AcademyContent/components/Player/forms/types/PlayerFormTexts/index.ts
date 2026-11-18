@@ -4,6 +4,8 @@ export type PlayerFormTexts = {
   nationalityLabel: string;
   nationalityPlaceholder: string;
   ageLabel: string;
+  birthDateLabel?: string;
+  birthDatePlaceholder?: string;
   agePlaceholder: string;
   sectorLabel: string;
   sectorPlaceholder: string;

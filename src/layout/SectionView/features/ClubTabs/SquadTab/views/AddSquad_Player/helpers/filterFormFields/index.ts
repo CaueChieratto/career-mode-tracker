@@ -30,6 +30,7 @@ export interface SquadFormField {
   returnIncomingLoanOnly?: boolean;
   hideOnReturnIncomingLoan?: boolean;
   disabled?: boolean;
+  useAlternateStyle?: boolean;
 }
 
 export interface SquadFormSection<T extends SquadFormField> {
@@ -135,7 +136,19 @@ export const filterFormSections = <T extends SquadFormField>(
         }
       }
 
-      return { ...section, fields: filteredRows };
+      const mappedRows = filteredRows.map((row) =>
+        row.map((field) => {
+          if (field.id === "isKnownPlayer" && context.isEditing) {
+            return {
+              ...field,
+              name: "Esse jogador ja jogou conosco antes?",
+            };
+          }
+          return field;
+        }),
+      );
+
+      return { ...section, fields: mappedRows };
     })
     .filter((section) => section.fields.length > 0);
 };

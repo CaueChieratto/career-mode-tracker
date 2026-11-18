@@ -1,3 +1,56 @@
+import { getContinentByCountry } from "./league";
+
+export const isFirestoreTimestamp = (
+  val: unknown,
+): val is { seconds: number; nanoseconds?: number; toDate?: () => Date } =>
+  Boolean(
+    val && typeof val === "object" && ("seconds" in val || "toDate" in val),
+  );
+
+export const getValidDate = (dateInput: unknown): Date => {
+  if (!dateInput) return new Date(0);
+  if (dateInput instanceof Date) {
+    return isNaN(dateInput.getTime()) ? new Date(0) : dateInput;
+  }
+  if (isFirestoreTimestamp(dateInput)) {
+    if (typeof dateInput.toDate === "function") return dateInput.toDate();
+    return new Date(dateInput.seconds * 1000);
+  }
+  if (typeof dateInput === "string" || typeof dateInput === "number") {
+    const parsed = new Date(dateInput);
+    return isNaN(parsed.getTime()) ? new Date(0) : parsed;
+  }
+  return new Date(0);
+};
+
+export const isEuropeanSeason = (nation?: string): boolean =>
+  Boolean(nation && getContinentByCountry(nation) === "Europa");
+
+export const getSeasonStartYear = (
+  createdAt: unknown,
+  seasonNumber: number,
+): number => {
+  const validDate = getValidDate(createdAt);
+  const baseYear =
+    validDate.getTime() === 0
+      ? new Date().getFullYear()
+      : validDate.getFullYear();
+  return baseYear + (seasonNumber - 1);
+};
+
+export const formatSeasonShortLabel = (
+  createdAt: unknown,
+  nation: string | undefined,
+  seasonNumber: number,
+): string => {
+  const startYear = getSeasonStartYear(createdAt, seasonNumber);
+  if (isEuropeanSeason(nation)) {
+    const endYear = startYear + 1;
+    return `${String(startYear).slice(-2)}/${String(endYear).slice(-2)}`;
+  }
+  return `${startYear}`;
+};
+
 export function formatDateInput(value: string) {
   const digits = value.replace(/\D/g, "");
   const limited = digits.slice(0, 8);
@@ -65,6 +118,13 @@ export function parseBrasilDate(dateStr: string, year: number): Date | null {
   }
 
   return parsed;
+}
+
+export function formatFullBrasilDate(date: Date): string {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 export function brasilDatePlaceholder(date: Date): string {

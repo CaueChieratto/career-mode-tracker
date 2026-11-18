@@ -5,7 +5,7 @@ import Styles from "./GroupEditModal.module.css";
 import { FaImage } from "react-icons/fa";
 import Modal from "../../../../../../components/Modal";
 import Button from "../../../../../../components/Button";
-import ContainerButton from "../../../../../../components/ContainerButton";
+import { CardsModal } from "../../../../../../ui/modals/SeasonConfigs/components/CardsModal";
 
 type GroupEditModalProps = {
   careers: Career[];
@@ -41,43 +41,29 @@ export const GroupEditModal = ({
               career.colorsTeams[0] ||
               "#333";
             const darkClubColor = career.colorsTeams[1] || clubColor;
-
             const isSelected = selectedCareer?.id === career.id;
 
             return (
-              <ContainerButton
+              <CardsModal
                 key={career.id}
-                className={`${Styles.card} ${isSelected ? Styles.selected_card : ""}`}
-                style={
-                  {
-                    "--club-color": clubColor,
-                    "--club-color-dark": darkClubColor,
-                  } as React.CSSProperties
+                icon={
+                  career.teamBadge ? (
+                    <img
+                      src={career.teamBadge}
+                      alt={`Escudo do ${career.clubName}`}
+                      className={Styles.badge}
+                    />
+                  ) : (
+                    <FaImage size={18} color={clubColor} />
+                  )
                 }
-              >
-                <div
-                  className={Styles.card_inner}
-                  onClick={() => setSelectedCareer(career)}
-                >
-                  <div className={Styles.icon_wrap}>
-                    {career.teamBadge ? (
-                      <img
-                        src={career.teamBadge}
-                        alt={`Escudo do ${career.clubName}`}
-                        className={Styles.badge}
-                      />
-                    ) : (
-                      <FaImage size={18} color={clubColor} />
-                    )}
-                  </div>
-                  <div className={Styles.card_content}>
-                    <span className={Styles.card_label}>
-                      {career.managerName}
-                    </span>
-                    <span className={Styles.card_title}>{career.clubName}</span>
-                  </div>
-                </div>
-              </ContainerButton>
+                label={career.managerName}
+                title={career.clubName}
+                clubColor={clubColor}
+                darkClubColor={darkClubColor}
+                isSelected={isSelected}
+                onClick={() => setSelectedCareer(career)}
+              />
             );
           })}
         </div>

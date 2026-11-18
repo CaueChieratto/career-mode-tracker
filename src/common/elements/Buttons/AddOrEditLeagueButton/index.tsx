@@ -1,16 +1,20 @@
 import Button from "../../../../components/Button";
 import ContainerButton from "../../../../components/ContainerButton";
 import { useSeasonTheme } from "../../../hooks/Seasons/UseSeasonTheme";
-import Styles from "../../../../layout/SectionView/features/ClubTabs/StatsTab_Club/views/AddSeason_Player/screens/AddSeason_PlayerScreen/AddSeason_PlayerScreen.module.css";
+import Styles from "./AddOrEditLeagueButton.module.css";
 
-type AddOrEditLeagueButtonProps = {
+export type AddOrEditLeagueButtonProps = {
   isEditing: boolean;
   onClick: () => void;
+  addLabel?: string;
+  editLabel?: string;
 };
 
-const AddOrEditLeagueButton = ({
+export const AddOrEditLeagueButton = ({
   isEditing,
   onClick,
+  addLabel = "Adicionar Liga",
+  editLabel = "Salvar Alterações",
 }: AddOrEditLeagueButtonProps) => {
   const { clubColor } = useSeasonTheme();
 
@@ -25,7 +29,7 @@ const AddOrEditLeagueButton = ({
         onClick={onClick}
         style={{ border: `1px solid ${clubColor}`, color: clubColor }}
       >
-        {isEditing ? "Salvar Alterações" : "Adicionar Liga"}
+        {isEditing ? editLabel : addLabel}
       </Button>
     </ContainerButton>
   );

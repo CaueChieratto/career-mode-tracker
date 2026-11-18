@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { ClubData } from "../../../../../../common/interfaces/club/clubData";
-import { calculateTotalStats } from "../../../ClubTabs/StatsTab_Club/components/PlayerStatsList/utils/calculateTotalStats";
+import { calculateTotalStats } from "../../../../../../common/stats/helpers/calculateTotalStats";
 import { Players } from "../../../../../../common/interfaces/playersInfo/players";
 import { Career } from "../../../../../../common/interfaces/Career";
-import { isSamePlayerId } from "../../../../../../common/utils/playerIdentity";
+import { findPlayerInList } from "../../../../../../common/utils/playerIdentity";
+import { getSeasonStartYear } from "../../../../../../common/utils/Date";
 
 export type SeasonCareerData = {
   season: ClubData;
@@ -16,16 +17,9 @@ export const useRenderableSeasons = (
 ): SeasonCareerData[] => {
   const renderableSeasons = useMemo(() => {
     if (!player) return [];
-    const normalizedName = player.name.trim().toLowerCase();
-    const normalizedNation = player.nation.trim().toLowerCase();
 
     const filtered = seasonsPlayerPlayed.filter(({ season }) => {
-      const playerInSeason = season.players.find(
-        (p) =>
-          isSamePlayerId(p, player) ||
-          (p.name.trim().toLowerCase() === normalizedName &&
-            p.nation.trim().toLowerCase() === normalizedNation),
-      );
+      const playerInSeason = findPlayerInList(season.players, player);
 
       if (!playerInSeason) {
         return false;
@@ -43,22 +37,15 @@ export const useRenderableSeasons = (
     });
 
     return filtered.sort((a, b) => {
-      const getYear = (data: SeasonCareerData) => {
-        const dateVal: unknown = data.career.createdAt;
-        let createdDate = new Date();
-
-        if (dateVal && typeof dateVal === "object" && "seconds" in dateVal) {
-          createdDate = new Date(
-            (dateVal as { seconds: number }).seconds * 1000,
-          );
-        } else if (dateVal) {
-          createdDate = new Date(dateVal as string | Date | number);
-        }
-
-        return createdDate.getFullYear() + data.season.seasonNumber - 1;
-      };
-
-      return getYear(a) - getYear(b);
+      const yearA = getSeasonStartYear(
+        a.career.createdAt,
+        a.season.seasonNumber,
+      );
+      const yearB = getSeasonStartYear(
+        b.career.createdAt,
+        b.season.seasonNumber,
+      );
+      return yearA - yearB;
     });
   }, [seasonsPlayerPlayed, player]);
 

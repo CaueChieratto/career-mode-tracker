@@ -1,0 +1,124 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
+.bonus_card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  background-color: var(--groupCard);
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.bonus_card.editing {
+  border-color: var(--club-color, #3b82f6);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.category_title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--blackColor);
+}
+
+.trophy_icon {
+  color: #f59e0b;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action_btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: var(--border-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.action_btn:hover {
+  color: var(--club-color, #3b82f6);
+}
+
+.delete_btn:hover {
+  color: #ef4444;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.badge {
+  color: white;
+  padding: 10px 14px;
+  margin: 0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.statusPaid {
+  padding: 10px 14px;
+  margin: 0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.statusPending {
+  padding: 10px 14px;
+  margin: 0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}

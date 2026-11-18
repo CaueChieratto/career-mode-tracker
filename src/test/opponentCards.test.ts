@@ -11,7 +11,7 @@ import {
   hasAuthoritativeOpponentCards,
   isUserHomeTeam,
   normalizeOpponentEvents,
-} from "../pages/Match/helpers/opponentCards";
+} from "../common/services/ServiceOpponentPlayers/helpers/opponentCards";
 
 describe("Opponent Cards - Pure Counting and Business Rules", () => {
   it("amarelo simples: contabiliza 1 amarelo e 0 vermelhos", () => {

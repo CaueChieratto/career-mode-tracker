@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { AcademyPlayers } from "../../../../interfaces/AcademyPlayers/AcademyPlayers";
-import { AcademyTournaments } from "../../../../interfaces/AcademyTournaments/AcademyTournaments";
+import { AcademyPlayers } from "../../../../../../../../common/interfaces/AcademyData";
+import { AcademyTournaments } from "../../../../../../../../common/interfaces/AcademyData";
 import { isEuropeanSeason } from "../../../../utils/isEuropeanSeason";
 import { Career } from "../../../../../../../../common/interfaces/Career";
 import { extractDateInfo } from "../../helpers/extractDateInfo";

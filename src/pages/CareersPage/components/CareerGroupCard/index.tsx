@@ -35,7 +35,7 @@ export const CareerGroupCard = ({ save }: CareerGroupCardProps) => {
 
   const handleEditCareer = (career: Career) => {
     setSelectedCareer(career);
-    onOpenModal(ModalType.ADD_CLUB_IMG, career);
+    onOpenModal(ModalType.EDIT_CLUB, career);
     setIsEditModalOpen(false);
   };
 

@@ -1,100 +1,157 @@
 import { useMemo } from "react";
 import { getTableTeamFormFields } from "../../constants/TableTeamFormFields";
-import { leaguesByContinent } from "../../../../../../../../../common/utils/league";
+import { getAllLeaguesFlat } from "../../../../../../../../../common/utils/league";
 import { useAddTeamsToTableContext } from "../../contexts/context";
 import { getTableTeamStatPlaceholders } from "../../helpers/tableTeamFormStats";
+import { TableRowData } from "../../../../../../../../../common/interfaces/Table";
 
 interface UseTableTeamFormParams {
   addedTeamNames?: string[];
+  resolvedTeamToEdit?: TableRowData;
 }
+
+const normalizeTeamName = (name?: string): string =>
+  (name || "").trim().toLowerCase();
+
+const normalizeLeagueKey = (name?: string): string =>
+  (name || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "");
 
 export function useTableTeamForm({
   addedTeamNames = [],
+  resolvedTeamToEdit,
 }: UseTableTeamFormParams = {}) {
   const { career, season, formValues, teamId, teamToEdit } =
     useAddTeamsToTableContext();
+  const effectiveTeamToEdit = teamToEdit ?? resolvedTeamToEdit;
   const isEditing = !!teamId;
 
-  const validLeagueNames = useMemo(() => {
-    const names = new Set<string>();
-    Object.values(leaguesByContinent).forEach((continent) => {
-      Object.values(continent).forEach((countryLeagues) => {
-        countryLeagues.forEach((league) => {
-          if (league.league === true) {
-            names.add(league.name);
-          }
-        });
-      });
+  const validLeagueKeys = useMemo(() => {
+    const keys = new Set<string>();
+    getAllLeaguesFlat().forEach((league) => {
+      if (league.league === true) {
+        keys.add(normalizeLeagueKey(league.name));
+      }
     });
-    return names;
-  }, []);
+    season?.leagues?.forEach((league) => {
+      if (league.league === true) {
+        keys.add(normalizeLeagueKey(league.name));
+      }
+    });
+    return keys;
+  }, [season?.leagues]);
 
-  const teamsInValidMatches = useMemo(() => {
-    const teamNames = new Set<string>();
+  const teamsInValidMatchesMap = useMemo(() => {
+    const teamNames = new Map<string, string>();
     if (season?.matches) {
       season.matches.forEach((match) => {
-        if (validLeagueNames.has(match.league)) {
-          teamNames.add(match.homeTeam.toLowerCase().trim());
-          teamNames.add(match.awayTeam.toLowerCase().trim());
+        if (validLeagueKeys.has(normalizeLeagueKey(match.league))) {
+          const home = match.homeTeam?.trim();
+          const away = match.awayTeam?.trim();
+          if (home) {
+            const key = normalizeTeamName(home);
+            if (!teamNames.has(key)) teamNames.set(key, home);
+          }
+          if (away) {
+            const key = normalizeTeamName(away);
+            if (!teamNames.has(key)) teamNames.set(key, away);
+          }
         }
       });
     }
     return teamNames;
-  }, [season?.matches, validLeagueNames]);
+  }, [season?.matches, validLeagueKeys]);
 
   const validSeasonTeams = useMemo(() => {
     if (!season?.teams) return [];
     return season.teams.filter((t) => {
+      const teamNameLower = normalizeTeamName(t.name);
+      const hasValidLeagueInMatches = teamsInValidMatchesMap.has(teamNameLower);
+      if (hasValidLeagueInMatches) return true;
       if (t.showMatch === false) return false;
-      const teamNameLower = t.name.toLowerCase().trim();
       const hasValidLeagueInTeamObj =
-        t.leagueName && validLeagueNames.has(t.leagueName);
-      const hasValidLeagueInMatches = teamsInValidMatches.has(teamNameLower);
-      if (!hasValidLeagueInTeamObj && !hasValidLeagueInMatches) return false;
-      return true;
+        Boolean(t.leagueName) &&
+        validLeagueKeys.has(normalizeLeagueKey(t.leagueName));
+      return hasValidLeagueInTeamObj;
     });
-  }, [season, validLeagueNames, teamsInValidMatches]);
+  }, [season, validLeagueKeys, teamsInValidMatchesMap]);
+
+  const allEligibleTeamNames = useMemo(() => {
+    const seen = new Set<string>();
+    const names: string[] = [];
+
+    const addUnique = (name?: string) => {
+      const trimmed = name?.trim();
+      if (!trimmed) return;
+      const key = normalizeTeamName(trimmed);
+      if (!seen.has(key)) {
+        seen.add(key);
+        names.push(trimmed);
+      }
+    };
+
+    validSeasonTeams.forEach((t) => addUnique(t.name));
+    teamsInValidMatchesMap.forEach((name) => addUnique(name));
+    addUnique(career?.clubName);
+    if (isEditing && effectiveTeamToEdit?.name) {
+      addUnique(effectiveTeamToEdit.name);
+    }
+
+    return names;
+  }, [
+    validSeasonTeams,
+    teamsInValidMatchesMap,
+    career?.clubName,
+    isEditing,
+    effectiveTeamToEdit?.name,
+  ]);
+
+  const effectiveTeamName =
+    formValues.teamName !== undefined
+      ? formValues.teamName
+      : isEditing
+        ? effectiveTeamToEdit?.name || ""
+        : "";
 
   const teamOptions = useMemo(() => {
-    let options = validSeasonTeams.map((t) => t.name);
-    if (
-      career?.clubName &&
-      !options.some(
-        (name) =>
-          name.trim().toLowerCase() === career.clubName.trim().toLowerCase(),
-      )
-    ) {
-      options.push(career.clubName);
-    }
+    let options = [...allEligibleTeamNames];
     if (addedTeamNames.length > 0) {
-      const addedTeamsSet = new Set(addedTeamNames);
+      const addedTeamsSet = new Set(addedTeamNames.map(normalizeTeamName));
+      const editingNameKey = normalizeTeamName(
+        effectiveTeamName || effectiveTeamToEdit?.name,
+      );
       options = options.filter((name) => {
-        const isCurrentEditingTeam = isEditing && name === formValues.teamName;
-        return !addedTeamsSet.has(name) || isCurrentEditingTeam;
+        const key = normalizeTeamName(name);
+        const isCurrentEditingTeam = isEditing && key === editingNameKey;
+        return !addedTeamsSet.has(key) || isCurrentEditingTeam;
       });
     }
-    if (formValues.teamName) {
-      const searchValue = formValues.teamName.trim().toLowerCase();
+    if (effectiveTeamName) {
+      const searchValue = normalizeTeamName(effectiveTeamName);
       options = options.filter((name) =>
-        name.toLowerCase().includes(searchValue),
+        normalizeTeamName(name).includes(searchValue),
       );
     }
     return options;
   }, [
-    validSeasonTeams,
-    career,
-    formValues.teamName,
+    allEligibleTeamNames,
     addedTeamNames,
     isEditing,
+    effectiveTeamName,
+    effectiveTeamToEdit?.name,
   ]);
 
   const hasSelectedTeam = useMemo(() => {
-    if (!formValues.teamName) return false;
-    const searchName = formValues.teamName.trim().toLowerCase();
-    const allOptions = validSeasonTeams.map((t) => t.name);
-    if (career?.clubName) allOptions.push(career.clubName);
-    return allOptions.some((name) => name.trim().toLowerCase() === searchName);
-  }, [formValues.teamName, validSeasonTeams, career]);
+    if (!effectiveTeamName) return false;
+    const searchName = normalizeTeamName(effectiveTeamName);
+    return allEligibleTeamNames.some(
+      (name) => normalizeTeamName(name) === searchName,
+    );
+  }, [effectiveTeamName, allEligibleTeamNames]);
 
   const formFields = useMemo(
     () =>
@@ -102,9 +159,9 @@ export function useTableTeamForm({
         teamOptions,
         hasSelectedTeam,
         isEditing,
-        getTableTeamStatPlaceholders(teamToEdit),
+        getTableTeamStatPlaceholders(effectiveTeamToEdit),
       ),
-    [teamOptions, hasSelectedTeam, isEditing, teamToEdit],
+    [teamOptions, hasSelectedTeam, isEditing, effectiveTeamToEdit],
   );
 
   return { formFields };

@@ -1,6 +1,6 @@
 import { Players } from "../../../../interfaces/playersInfo/players";
 import { LeagueStats } from "../../../../interfaces/playersStats/leagueStats";
-import { areLeagueStatsIdentical } from "../../../../../layout/SectionView/helpers/mergeMatchStats";
+import { areLeagueStatsIdentical } from "../../../../stats/helpers/mergeMatchStats";
 
 export const aggregatePlayerStats = (
   playerHistoryMap: Map<string, Players[]>,

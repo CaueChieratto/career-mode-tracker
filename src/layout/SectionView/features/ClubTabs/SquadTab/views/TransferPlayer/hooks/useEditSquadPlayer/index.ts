@@ -8,6 +8,8 @@ import { Career } from "../../../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../../../common/interfaces/club/clubData";
 import { Players } from "../../../../../../../../../common/interfaces/playersInfo/players";
 import { ServicePlayers } from "../../../../../../../../../common/services/ServicePlayers";
+import { SellPlayerOptions } from "../../../../../../../../../common/services/ServicePlayers/PlayersContractService";
+import { LoanTerms } from "../../../../../../../../../common/interfaces/playersInfo/transferTerms";
 
 type UseEditSquadPlayerProps = {
   careerId: string;
@@ -31,11 +33,11 @@ export const useEditSquadPlayer = ({
   const editPlayer = async (formData: FormData) => {
     validateMonetaryInput(
       formData.get("playerValue") as string,
-      "Valor do Jogador",
+      "Valor de mercado",
     );
     validateMonetaryInput(
       formData.get("salary") as string,
-      "Salário (Semanal)",
+      "Salário semanal",
     );
     validateRequiredFields(formData);
 
@@ -59,8 +61,12 @@ export const useEditSquadPlayer = ({
     const isAcademy = formData.get("isAcademy") === "true";
     if (isAcademy) {
       updatedPlayerData.isAcademy = true;
-      updatedPlayerData.academyNickname =
-        (formData.get("academyNickname") as string) || undefined;
+      const nick = (formData.get("academyNickname") as string)?.trim();
+      if (nick) {
+        updatedPlayerData.academyNickname = nick;
+      } else {
+        delete updatedPlayerData.academyNickname;
+      }
 
       const academyDataStr = formData.get("academyData") as string;
       if (academyDataStr)
@@ -83,6 +89,18 @@ export const useEditSquadPlayer = ({
     delete updatedPlayerData.statsLeagues;
     delete updatedPlayerData.ballonDor;
 
+    const optionalKeys = [
+      "playerValue",
+      "salary",
+      "contractTime",
+      "contractUntil",
+    ] as const;
+    for (const key of optionalKeys) {
+      if (formData.has(key) && !(key in updatedPlayerData)) {
+        (updatedPlayerData as Record<string, unknown>)[key] = undefined;
+      }
+    }
+
     try {
       await ServicePlayers.editPlayerInSeason(
         careerId,
@@ -101,6 +119,7 @@ export const useEditSquadPlayer = ({
     sellValue: string,
     toClub: string,
     dateExit: string,
+    options?: SellPlayerOptions,
   ) => {
     try {
       await ServicePlayers.sellPlayerFromSeason(
@@ -110,6 +129,7 @@ export const useEditSquadPlayer = ({
         sellValue,
         toClub,
         dateExit,
+        options,
       );
       onPlayerEdited();
     } catch (error) {
@@ -124,6 +144,7 @@ export const useEditSquadPlayer = ({
     dateLoan: string,
     loanDuration: string,
     wagePercentage: string,
+    loanTerms?: LoanTerms,
   ) => {
     try {
       await ServicePlayers.loanPlayerFromSeason(
@@ -135,6 +156,7 @@ export const useEditSquadPlayer = ({
         dateLoan,
         loanDuration,
         wagePercentage,
+        loanTerms,
       );
       onPlayerEdited();
     } catch (error) {
