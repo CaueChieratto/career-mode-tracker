@@ -21,6 +21,8 @@ import { formatPlayerName } from "../common/utils/formatPlayerName";
 import { applyEditToCareer } from "../layout/SectionView/features/ClubTabs/SquadTab/views/TransferPlayer/helpers/transferCareerStateReducers";
 import { ServiceProposals } from "../common/services/ServiceProposals";
 import { TransferProposal } from "../common/interfaces/proposals/transferProposal";
+import { ServiceFinance } from "../common/services/ServiceFinance";
+import { FinancialEntry } from "../common/interfaces/finance";
 
 // Mock ServiceProposals
 vi.mock("../common/services/ServiceProposals", () => ({
@@ -410,6 +412,139 @@ describe("PlayersContractService.editTransferInSeason", () => {
     expect(player.contract![0].fromClub).toBe("Base");
     expect(player.contract![0].dataArrival).toEqual(new Date(2024, 7, 5));
     expect(mockAddTeamToSeason).not.toHaveBeenCalled();
+  });
+
+  it("NÃO altera a data original nem re-executa a transferência no TransfersPanel da temporada atual ao editar cláusulas de contratação de temporada passada", async () => {
+    const addEntrySpy = vi
+      .spyOn(ServiceFinance, "addEntry")
+      .mockResolvedValue({ id: "fin-1" } as FinancialEntry);
+
+    const originalArrivalDate = new Date(2024, 7, 9); // 09/08/2024 (Temporada 1 - Espanha)
+    const olmoSeason1Contract: Contract = {
+      buyValue: 55_000_000,
+      sellValue: 0,
+      fromClub: "RB Leipzig",
+      leftClub: "",
+      dataArrival: originalArrivalDate,
+      dataExit: null,
+      isLoan: false,
+      bonuses: [
+        {
+          id: "bonus_olmo_1",
+          direction: "payable",
+          category: "objective",
+          name: "Ser campeão",
+          targetObjective: "Ser campeão",
+          targetLeague: "LaLiga",
+          partnerClub: "RB Leipzig",
+          value: 5_000_000,
+          status: "pending",
+        },
+      ],
+    };
+
+    const olmoInSeason2: Players = {
+      id: "p_dani_olmo",
+      name: "Dani Olmo",
+      overall: 85,
+      sector: "Meio-Campo",
+      position: "MEI",
+      age: 27,
+      salary: 180_000,
+      nation: "ESP",
+      shirtNumber: "20",
+      buy: false,
+      sell: false,
+      loan: false,
+      incomingLoan: false,
+      captain: false,
+      ballonDor: 0,
+      statsLeagues: [],
+      contract: [olmoSeason1Contract],
+    };
+
+    const barcaSeason1: ClubData = {
+      id: "season-barca-1",
+      seasonNumber: 1,
+      teams: [{ name: "RB Leipzig", showMatch: false }],
+      players: [{ ...olmoInSeason2, buy: true }],
+    } as unknown as ClubData;
+
+    const barcaSeason2: ClubData = {
+      id: "season-barca-2",
+      seasonNumber: 2,
+      teams: [{ name: "RB Leipzig", showMatch: false }],
+      players: [olmoInSeason2],
+    } as unknown as ClubData;
+
+    mockCareer = {
+      id: "career-barca",
+      clubName: "FC Barcelona",
+      createdAt: new Date("2024-07-01"),
+      nation: "Espanha",
+      currency: "€",
+      clubData: [barcaSeason1, barcaSeason2],
+    } as unknown as Career;
+
+    await PlayersContractService.editTransferInSeason({
+      careerId: "career-barca",
+      seasonId: "season-barca-2",
+      playerId: "p_dani_olmo",
+      contractIndex: 0,
+      direction: "arrivals",
+      transferType: "Compra",
+      clubName: "RB Leipzig",
+      transferValue: "55m",
+      date: "09/08",
+      preserveTransferDate: true,
+      bonuses: [
+        ...olmoSeason1Contract.bonuses!,
+        {
+          id: "bonus_olmo_2",
+          direction: "payable",
+          category: "performance",
+          name: "20 Partidas",
+          value: 2_000_000,
+          partnerClub: "RB Leipzig",
+          status: "pending",
+        },
+      ],
+    });
+
+    // 1. A data original da Temporada 1 permanece intacta e buy não é reativado na Temporada 2
+    expect(olmoInSeason2.contract![0].dataArrival).toEqual(originalArrivalDate);
+    expect(olmoInSeason2.buy).toBe(false);
+    expect(olmoInSeason2.contract![0].bonuses).toHaveLength(2);
+    expect(addEntrySpy).not.toHaveBeenCalled();
+
+    // 2. O TransfersPanel da Temporada 2 NÃO exibe Dani Olmo como chegada da Temporada 2
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        transferType="arrivals"
+        players={[olmoInSeason2]}
+        career={mockCareer}
+        season={barcaSeason2}
+      />,
+    );
+    expect(screen.queryByText(/Dani Olmo|D\. Olmo/i)).toBeNull();
+    expect(
+      screen.getByText("Nenhuma transferência nesta temporada."),
+    ).toBeTruthy();
+
+    cleanup();
+
+    // 3. O TransfersPanel da Temporada 1 continua exibindo Dani Olmo normalmente
+    render(
+      <TransfersPanel
+        title="Chegadas"
+        transferType="arrivals"
+        players={[olmoInSeason2]}
+        career={mockCareer}
+        season={barcaSeason1}
+      />,
+    );
+    expect(screen.getByText(/Dani Olmo|D\. Olmo/i)).toBeTruthy();
   });
 });
 

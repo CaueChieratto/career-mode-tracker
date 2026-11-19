@@ -5,7 +5,11 @@ import { Match } from "../../interfaces/Match";
 import { QualificationZone, TableRowData } from "../../interfaces/Table";
 import { TableTeamData } from "../../interfaces/TableTeamData";
 import { Players } from "../../interfaces/playersInfo/players";
-import { TransferBonus, ClauseStatus } from "../../interfaces/playersInfo/transferTerms";
+import { Contract } from "../../interfaces/playersInfo/contract";
+import {
+  TransferBonus,
+  ClauseStatus,
+} from "../../interfaces/playersInfo/transferTerms";
 import { ContractDetails } from "../../interfaces/playersInfo/contractClauses";
 import {
   contributesToLeagueStandings,
@@ -145,8 +149,7 @@ export const normalizeTableRows = (
       sorted.length,
       isFirstDivision,
     );
-    const customZone =
-      "customZone" in team ? team.customZone : undefined;
+    const customZone = "customZone" in team ? team.customZone : undefined;
     const existingZone = "zone" in team ? team.zone : undefined;
     const zone: QualificationZone =
       customZone && customZone !== "default"
@@ -369,7 +372,10 @@ export interface CheckLeagueTableObjectiveOptions {
   enforceCompletionOrClinch?: boolean;
 }
 
-const isContinentalZone = (zone: QualificationZone, position: number): boolean =>
+const isContinentalZone = (
+  zone: QualificationZone,
+  position: number,
+): boolean =>
   zone === "champions" ||
   zone === "europa" ||
   zone === "conference" ||
@@ -377,9 +383,7 @@ const isContinentalZone = (zone: QualificationZone, position: number): boolean =
   position <= 4;
 
 const isPromotionZone = (zone: QualificationZone): boolean =>
-  zone === "promotion_playoff" ||
-  zone === "promotion" ||
-  zone === "first";
+  zone === "promotion_playoff" || zone === "promotion" || zone === "first";
 
 const isMathematicallyAhead = (
   userRow: TableRowData,
@@ -472,7 +476,8 @@ export const checkLeagueTableObjective = (
   ) {
     const isSafePosition =
       userRow.zone !== "relegation" &&
-      (normalizedTable.length === 1 || userRow.position < normalizedTable.length);
+      (normalizedTable.length === 1 ||
+        userRow.position < normalizedTable.length);
     if (!isSafePosition) return false;
     if (!enforceCompletionOrClinch || isSeasonFinished) return true;
     const topRelegationRow = normalizedTable.find(
@@ -550,7 +555,8 @@ export const evaluateBonus = (
   if (bonus.status === "paid" || bonus.paid) {
     return {
       bonus,
-      calculatedProgress: bonus.currentMetricProgress ?? bonus.metricTarget ?? 0,
+      calculatedProgress:
+        bonus.currentMetricProgress ?? bonus.metricTarget ?? 0,
       target: bonus.metricTarget ?? 0,
       isAchieved: true,
       isReadyToPay: false,
@@ -567,7 +573,8 @@ export const evaluateBonus = (
       isAchieved: false,
       isReadyToPay: false,
       status: bonus.status || "pending",
-      evaluationDetail: "Status mantido manualmente como pendente pelo usuário.",
+      evaluationDetail:
+        "Status mantido manualmente como pendente pelo usuário.",
     };
   }
 
@@ -594,13 +601,14 @@ export const evaluateBonus = (
       target,
       isAchieved,
       isReadyToPay: isAchieved,
-      status: isAchieved ? "pending" : (bonus.status || "pending"),
+      status: isAchieved ? "pending" : bonus.status || "pending",
       evaluationDetail: `${progress} / ${target} ${metric}`,
     };
   }
 
   // Avaliação de Conquista / Prêmio
-  const objective = bonus.bonusTarget || bonus.targetObjective || bonus.name || "";
+  const objective =
+    bonus.bonusTarget || bonus.targetObjective || bonus.name || "";
   const objectiveNorm = normalizeStageName(objective);
   const targetLeague = bonus.targetLeague?.trim();
 
@@ -688,7 +696,7 @@ export const evaluateBonus = (
       target: 1,
       isAchieved,
       isReadyToPay: isAchieved,
-      status: isAchieved ? "pending" : (bonus.status || "pending"),
+      status: isAchieved ? "pending" : bonus.status || "pending",
       evaluationDetail: detail,
     };
   }
@@ -721,7 +729,9 @@ export const evaluateBonus = (
     objectiveNorm.includes("titulo da copa")
   ) {
     isAchieved = checkCupTitleWon(matches, userClubName);
-    detail = isAchieved ? "Título de copa conquistado na Final!" : "Copa em disputa.";
+    detail = isAchieved
+      ? "Título de copa conquistado na Final!"
+      : "Copa em disputa.";
   } else if (getStageWeight(objective) > 0) {
     isAchieved = checkCupStageReached(objective, matches);
     detail = isAchieved
@@ -741,14 +751,82 @@ export const evaluateBonus = (
     target: 1,
     isAchieved,
     isReadyToPay: isAchieved,
-    status: isAchieved ? "pending" : (bonus.status || "pending"),
+    status: isAchieved ? "pending" : bonus.status || "pending",
     evaluationDetail: detail,
   };
 };
 
 /**
+ * Identifica se um bônus pertence a Termos do Atleta (renovação, passe livre,
+ * contraparte de troca, opção de compra de chegada, bônus em contractDetails
+ * ou bônus a pagar sem clube parceiro). Bônus de Termos do Atleta nunca
+ * devem ser liquidados automaticamente — exigem ação manual do usuário.
+ */
+export const isPlayerTermsBonus = (
+  bonus: TransferBonus,
+  contract?: Contract,
+  isContractDetailsBonus = false,
+): boolean => {
+  if (isContractDetailsBonus) return true;
+
+  const unified = bonus as unknown as Record<string, unknown>;
+  if (unified.bonusOrigin === "player" || unified.bonusCategory === "player") {
+    return true;
+  }
+
+  const detailsBonuses = contract?.contractDetails?.performanceBonuses || [];
+  if (
+    detailsBonuses.length > 0 &&
+    detailsBonuses.some(
+      (db) =>
+        (Boolean(db.id) && db.id === bonus.id) ||
+        (db.category === bonus.category &&
+          Number(db.value) === Number(bonus.value) &&
+          Number(db.metricTarget ?? 0) === Number(bonus.metricTarget ?? 0) &&
+          (db.targetObjective || db.name || "") ===
+            (bonus.targetObjective || bonus.name || "")),
+    )
+  ) {
+    return true;
+  }
+
+  if (contract) {
+    const isRenewal = Boolean(
+      contract.isRenewal || contract.contractDetails?.isRenewal,
+    );
+    const isLoanBuyOptionArrival = Boolean(
+      contract.fromLoanBuyOption && !contract.leftClub,
+    );
+    const isSwapCounterpart = Boolean(
+      contract.swapPlayer?.isCounterpart && !contract.leftClub,
+    );
+    const normalizedFromClub = (contract.fromClub || "").trim().toLowerCase();
+    const isFreeAgentArrival =
+      !contract.leftClub &&
+      (normalizedFromClub === "passes livres" ||
+        normalizedFromClub === "passe livre");
+
+    if (
+      isRenewal ||
+      isLoanBuyOptionArrival ||
+      isSwapCounterpart ||
+      isFreeAgentArrival
+    ) {
+      return true;
+    }
+  }
+
+  if (bonus.direction !== "receivable" && !bonus.partnerClub?.trim()) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
  * Identifica todos os bônus pendentes de "Objetivo atingido" (com liga vinculada)
  * cujo objetivo já foi cumprido na liga selecionada via partidas ou tabela.
+ * Bônus de Termos do Atleta são ignorados (liquidação estritamente manual).
  */
 export const findAchievedObjectiveBonusesToSettle = (
   career?: Pick<Career, "clubName">,
@@ -759,7 +837,8 @@ export const findAchievedObjectiveBonusesToSettle = (
   }
 
   const matches = season.matches || [];
-  const table = (season.table as unknown as Array<TableRowData | TableTeamData>) || [];
+  const table =
+    (season.table as unknown as Array<TableRowData | TableTeamData>) || [];
   const leagues = season.leagues;
   const candidates: AchievedObjectiveBonusCandidate[] = [];
 
@@ -769,11 +848,12 @@ export const findAchievedObjectiveBonusesToSettle = (
     const evaluateAndCollect = (
       bonus: TransferBonus,
       contractIndex: number | undefined,
-      isContractDetailsBonus: boolean,
+      contract?: Contract,
     ) => {
       if (!bonus?.id || seenBonusIds.has(bonus.id)) return;
       seenBonusIds.add(bonus.id);
 
+      if (isPlayerTermsBonus(bonus, contract, false)) return;
       if (!isObjectiveAchievedCategory(bonus)) return;
       if (!bonus.targetLeague?.trim()) return;
       if (bonus.status === "paid" || bonus.paid) return;
@@ -794,7 +874,7 @@ export const findAchievedObjectiveBonusesToSettle = (
           playerId: player.id,
           playerName: player.name,
           contractIndex,
-          isContractDetailsBonus,
+          isContractDetailsBonus: false,
           bonus,
           evaluation,
         });
@@ -804,15 +884,8 @@ export const findAchievedObjectiveBonusesToSettle = (
     const contracts = player.contract || [];
     contracts.forEach((contract, contractIndex) => {
       (contract.bonuses || []).forEach((bonus) => {
-        evaluateAndCollect(bonus, contractIndex, false);
+        evaluateAndCollect(bonus, contractIndex, contract);
       });
-      (contract.contractDetails?.performanceBonuses || []).forEach((bonus) => {
-        evaluateAndCollect(bonus, contractIndex, false);
-      });
-    });
-
-    (player.contractDetails?.performanceBonuses || []).forEach((bonus) => {
-      evaluateAndCollect(bonus, undefined, true);
     });
   }
 
@@ -855,8 +928,8 @@ export const evaluateWageAdjustment = (
     filteredMatches = (matches || []).filter(
       (m) => m.league?.trim().toLowerCase() === normTargetLeague,
     );
-    const hasRowWithLeague = (table || []).some(
-      (t) => Boolean((t as { league?: string }).league),
+    const hasRowWithLeague = (table || []).some((t) =>
+      Boolean((t as { league?: string }).league),
     );
     if (hasRowWithLeague) {
       filteredTable = (table || []).filter(
@@ -873,7 +946,6 @@ export const evaluateWageAdjustment = (
       }
     }
   }
-
 
   let achieved = false;
 
@@ -998,7 +1070,8 @@ export const findAchievedWageAdjustmentsToApply = (
       );
 
       if (
-        (wageAdj.direction === "Diminuir" && evalResult.outcome === "decreased") ||
+        (wageAdj.direction === "Diminuir" &&
+          evalResult.outcome === "decreased") ||
         (wageAdj.direction !== "Diminuir" && evalResult.outcome === "increased")
       ) {
         candidates.push({

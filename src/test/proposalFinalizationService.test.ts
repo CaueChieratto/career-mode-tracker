@@ -701,6 +701,96 @@ describe("ProposalFinalizationService (Unit Tests - Padrão FC Barcelona)", () =
     );
   });
 
+  it("permite finalizar compra de opção de compra (originLoanBuyOption: true) mesmo após encerramento do empréstimo de chegada (sell: true, incomingLoan: false)", async () => {
+    const endedLoanBuyProposal: TransferProposal = {
+      id: "prop_cancelo_ended_loan_buy",
+      careerId: "c_barca",
+      seasonId: "s1",
+      type: "compra",
+      overallStatus: "aguardando_confirmacao",
+      originLoanBuyOption: true,
+      playerId: "player_cancelo_2",
+      playerName: "João Cancelo",
+      playerNation: "POR",
+      playerPosition: "LD",
+      playerSector: "Defesa",
+      playerOverall: 86,
+      playerAge: 30,
+      timing: "Imediata",
+      clubNegotiation: {
+        partnerClub: "Manchester City",
+        transferFee: 25_000_000,
+        status: "aceita",
+      },
+      playerNegotiation: {
+        weeklyWage: 120_000,
+        durationYears: 3,
+        squadRole: "Importante",
+        status: "aceita",
+      },
+    };
+
+    getDoc
+      .mockResolvedValueOnce(
+        documentSnapshot(endedLoanBuyProposal.id, endedLoanBuyProposal, true),
+      )
+      .mockResolvedValueOnce(
+        documentSnapshot(
+          "player_cancelo_2",
+          {
+            id: "player_cancelo_2",
+            name: "João Cancelo",
+            sell: true,
+            incomingLoan: false,
+            loan: false,
+            contract: [
+              {
+                isLoan: true,
+                fromClub: "Manchester City",
+                leftClub: "Manchester City",
+                buyValue: 0,
+                sellValue: 0,
+                buyOptionValue: 25_000_000,
+                dataArrival: new Date("2026-07-15"),
+                dataExit: new Date("2027-06-30"),
+                loanTerms: {
+                  durationYears: 1,
+                  hasBuyOption: true,
+                  buyOptionFee: 25_000_000,
+                  partnerClub: "Manchester City",
+                },
+              },
+            ],
+          },
+          true,
+        ),
+      );
+    getDocs.mockResolvedValueOnce(querySnapshot([]));
+
+    await ProposalFinalizationService.finalizeProposal({
+      careerId: "c_barca",
+      seasonId: "s1",
+      proposalId: endedLoanBuyProposal.id,
+      agreementDate: "01/07/2027",
+    });
+
+    expect(PlayersContractService.signPlayerWithTerms).toHaveBeenCalledWith(
+      expect.objectContaining({
+        careerId: "c_barca",
+        seasonId: "s1",
+        player: expect.objectContaining({
+          id: "player_cancelo_2",
+          name: "João Cancelo",
+        }),
+        contract: expect.objectContaining({
+          fromLoanBuyOption: true,
+          buyOptionFinalized: true,
+          buyValue: 25_000_000,
+        }),
+      }),
+    );
+  });
+
   it("lança PlayerIneligibleError ao tentar compra normal de atleta definitivo que já pertence ao elenco", async () => {
     const regularBuyProposal: TransferProposal = {
       id: "prop_gavi_buy",

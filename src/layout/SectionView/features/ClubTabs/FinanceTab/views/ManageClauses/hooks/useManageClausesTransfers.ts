@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Career } from "../../../../../../../../common/interfaces/Career";
 import { ClubData } from "../../../../../../../../common/interfaces/club/clubData";
 import { SectionScreen } from "../../../../../../config/screens";
@@ -13,11 +13,16 @@ import {
 } from "../../../../../../../../common/services/ServicePlayers/helpers/transferTimingHelpers";
 import {
   checkIsIncomingLoanExit,
+  checkIsLoanReturnArrival,
+  hasDefinedLoanBuyOption,
 } from "../../../../../../../../common/services/ServicePlayers/helpers/contractHelpers";
 import { Contract } from "../../../../../../../../common/interfaces/playersInfo/contract";
 import {
   isContractedArrivalTransfer,
   hasArrivalActiveClauses,
+  hasIncomingLoanEnded,
+  hasOutgoingLoanEnded,
+  findOutgoingLoanForReturnArrival,
 } from "../helpers/arrivalTransferFilter";
 import {
   TransferDraftService,
@@ -181,8 +186,8 @@ export const useManageClausesTransfers = ({
     if (hadSellOn) {
       const isReceived = Boolean(
         clauses?.sellOnReceived ||
-          clauses?.sellOnExercised ||
-          contract.loanTerms?.sellOnReceived,
+        clauses?.sellOnExercised ||
+        contract.loanTerms?.sellOnReceived,
       );
       if (!isReceived) return false;
     }
@@ -190,15 +195,15 @@ export const useManageClausesTransfers = ({
     return true;
   };
 
-  const isContractCurrentSeason = (
-    contract: Contract,
-    direction: "arrivals" | "exit",
-  ): boolean => {
-    if (contract.seasonId) {
-      return contract.seasonId === season.id;
-    }
-    return isContractInSeasonRange(contract, direction, seasonRange);
-  };
+  const isContractCurrentSeason = useCallback(
+    (contract: Contract, direction: "arrivals" | "exit"): boolean => {
+      if (contract.seasonId) {
+        return contract.seasonId === season.id;
+      }
+      return isContractInSeasonRange(contract, direction, seasonRange);
+    },
+    [season.id, seasonRange],
+  );
 
   const exitTransfers = useMemo(() => {
     void localVersion;
@@ -214,7 +219,30 @@ export const useManageClausesTransfers = ({
           c.leftClub !== "Aposentou"
         ) {
           if (c.swapPlayer?.isCounterpart) return;
-          if (checkIsIncomingLoanExit(p, c, "exit")) return;
+          if (c.isLoanBackReturn) return;
+
+          if (checkIsIncomingLoanExit(p, c, "exit")) {
+            if (
+              hasIncomingLoanEnded(p, c) &&
+              isContractCurrentSeason(c, "exit")
+            ) {
+              const hasIncomingLoanContent =
+                hasDefinedLoanBuyOption(c) ||
+                hasArrivalActiveClauses(c) ||
+                hasTransferActiveClauses(c) ||
+                isContractCurrentSeason(c, "exit");
+              if (hasIncomingLoanContent) {
+                list.push({
+                  player: p,
+                  contract: c,
+                  contractIndex: idx,
+                  direction: "exit",
+                  loanOriginDirection: "arrivals",
+                });
+              }
+            }
+            return;
+          }
 
           if (
             c.fromLoanBuyOption &&
@@ -234,6 +262,13 @@ export const useManageClausesTransfers = ({
           const isOutgoingLoan = Boolean(
             c.isLoan || (p.loan && !isExplicitlyNotLoan),
           );
+
+          if (
+            isOutgoingLoan &&
+            hasOutgoingLoanEnded(p, c, idx, career, season.seasonNumber)
+          ) {
+            return;
+          }
 
           // Um card de saída só é exibido se tiver algo a ser feito:
           // 1. Cláusulas pendentes (parcelas a receber, metas/bônus a receber, recompra, sell-on ativo, loan-back)
@@ -268,14 +303,98 @@ export const useManageClausesTransfers = ({
       });
     });
     return list;
-  }, [season.players, season.id, seasonRange, localVersion]);
+  }, [
+    career,
+    season.players,
+    season.seasonNumber,
+    isContractCurrentSeason,
+    localVersion,
+  ]);
 
   const arrivalTransfers = useMemo(() => {
     void localVersion;
     const list: TransferItem[] = [];
+    const emittedOutgoingLoanReturnKeys = new Set<string>();
+
     (season.players || []).forEach((p) => {
       (p.contract || []).forEach((c, idx) => {
-        if (!isContractedArrivalTransfer(p, c, idx, career, season.seasonNumber)) {
+        if (checkIsLoanReturnArrival(p, c, idx, career, season.seasonNumber)) {
+          const foundLoan = findOutgoingLoanForReturnArrival(p, c, idx);
+          if (foundLoan) {
+            const { loanContract, loanContractIndex } = foundLoan;
+            const dedupeKey = `${p.id}_${loanContractIndex}`;
+            const isReturnCurrentSeason = isContractCurrentSeason(
+              c,
+              "arrivals",
+            );
+            const hasPendingLoanContent =
+              hasDefinedLoanBuyOption(loanContract) ||
+              hasTransferActiveClauses(loanContract);
+
+            if (
+              (isReturnCurrentSeason || hasPendingLoanContent) &&
+              !emittedOutgoingLoanReturnKeys.has(dedupeKey)
+            ) {
+              emittedOutgoingLoanReturnKeys.add(dedupeKey);
+              list.push({
+                player: p,
+                contract: {
+                  ...loanContract,
+                  isLoan: true,
+                  fromClub: c.fromClub || loanContract.leftClub || "",
+                  leftClub: loanContract.leftClub,
+                  dataArrival: c.dataArrival || loanContract.dataArrival,
+                  dataExit: c.dataArrival || loanContract.dataExit,
+                },
+                contractIndex: loanContractIndex,
+                direction: "arrivals",
+                loanOriginDirection: "exit",
+              });
+            }
+          }
+          return;
+        }
+
+        const hasReturnAfter = (p.contract || [])
+          .slice(idx + 1)
+          .some((nextC, offset) =>
+            checkIsLoanReturnArrival(
+              p,
+              nextC,
+              idx + 1 + offset,
+              career,
+              season.seasonNumber,
+            ),
+          );
+
+        if (
+          !hasReturnAfter &&
+          hasOutgoingLoanEnded(p, c, idx, career, season.seasonNumber)
+        ) {
+          const dedupeKey = `${p.id}_${idx}`;
+          const isLoanCurrentSeason = isContractCurrentSeason(c, "exit");
+          const hasPendingLoanContent =
+            hasDefinedLoanBuyOption(c) || hasTransferActiveClauses(c);
+
+          if (
+            (isLoanCurrentSeason || hasPendingLoanContent) &&
+            !emittedOutgoingLoanReturnKeys.has(dedupeKey)
+          ) {
+            emittedOutgoingLoanReturnKeys.add(dedupeKey);
+            list.push({
+              player: p,
+              contract: c,
+              contractIndex: idx,
+              direction: "arrivals",
+              loanOriginDirection: "exit",
+            });
+          }
+          return;
+        }
+
+        if (
+          !isContractedArrivalTransfer(p, c, idx, career, season.seasonNumber)
+        ) {
           return;
         }
 
@@ -314,7 +433,13 @@ export const useManageClausesTransfers = ({
       });
     });
     return list;
-  }, [career, season.players, season.id, season.seasonNumber, seasonRange, localVersion]);
+  }, [
+    career,
+    season.players,
+    season.seasonNumber,
+    isContractCurrentSeason,
+    localVersion,
+  ]);
 
   const renewalTransfers = useMemo(() => {
     void localVersion;
@@ -358,7 +483,7 @@ export const useManageClausesTransfers = ({
     season.seasonNumber,
     localVersion,
     deletedRenewalKeys,
-    seasonRange,
+    isContractCurrentSeason,
   ]);
 
   const activeProposals = useMemo(() => {
@@ -413,7 +538,9 @@ export const useManageClausesTransfers = ({
   const playerSearchOptions = useMemo(() => {
     const transferNames = currentList.map((item) => item.player.name);
     const proposalNames = currentProposals.map((p) => p.playerName);
-    return Array.from(new Set([...transferNames, ...proposalNames])).filter(Boolean);
+    return Array.from(new Set([...transferNames, ...proposalNames])).filter(
+      Boolean,
+    );
   }, [currentList, currentProposals]);
 
   const handlePlayerSearchChange = (event: {
@@ -432,7 +559,7 @@ export const useManageClausesTransfers = ({
       const cardKey = `${matchTransfer.player.id}_${matchTransfer.contractIndex}_${matchTransfer.direction}`;
       const element = document.getElementById(`transfer-card-${cardKey}`);
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
         if (onHighlightCard) {
           onHighlightCard(cardKey);
         }
@@ -442,14 +569,15 @@ export const useManageClausesTransfers = ({
 
     const matchProposal = currentProposals.find(
       (p) =>
-        p.playerName.trim().toLowerCase() ===
-        selectedName.trim().toLowerCase(),
+        p.playerName.trim().toLowerCase() === selectedName.trim().toLowerCase(),
     );
 
     if (matchProposal) {
-      const element = document.getElementById(`proposal-card-${matchProposal.id}`);
+      const element = document.getElementById(
+        `proposal-card-${matchProposal.id}`,
+      );
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
         if (onHighlightCard) {
           onHighlightCard(matchProposal.id);
         }
@@ -474,7 +602,9 @@ export const useManageClausesTransfers = ({
       let targetKey: string | null = null;
 
       if (selectedProposalId) {
-        targetEl = document.getElementById(`proposal-card-${selectedProposalId}`);
+        targetEl = document.getElementById(
+          `proposal-card-${selectedProposalId}`,
+        );
         targetKey = selectedProposalId;
       }
 
@@ -485,7 +615,9 @@ export const useManageClausesTransfers = ({
             selectedPlayerName.trim().toLowerCase(),
         );
         if (matchProposal) {
-          targetEl = document.getElementById(`proposal-card-${matchProposal.id}`);
+          targetEl = document.getElementById(
+            `proposal-card-${matchProposal.id}`,
+          );
           targetKey = matchProposal.id;
         } else {
           const matchTransfer = currentList.find(
@@ -501,7 +633,7 @@ export const useManageClausesTransfers = ({
       }
 
       if (targetEl) {
-        targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
         if (onHighlightCard && targetKey) {
           onHighlightCard(targetKey);
         }

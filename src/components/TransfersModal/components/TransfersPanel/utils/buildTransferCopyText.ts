@@ -315,7 +315,19 @@ export const buildTransferCopyText = ({
       return `${prefix}, ${contractWageSegment}, foi promovido da base.`;
     }
 
-    // 2. Empréstimo (Chegada)
+    // 2. Retorno de Empréstimo (prioridade sobre flags de empréstimo posterior)
+    const isLoanReturn = checkIsLoanReturnArrival(
+      player,
+      contract,
+      undefined,
+      career,
+      season?.seasonNumber,
+    );
+    if (isLoanReturn) {
+      return `${prefix}, retornou de empréstimo do ${contract.fromClub}.`;
+    }
+
+    // 3. Empréstimo (Chegada)
     const isLoanBackArrival = Boolean(
       contract.leftClub &&
       !contract.isLoan &&
@@ -343,19 +355,6 @@ export const buildTransferCopyText = ({
         return `${prefix}, ${durationText} com um salario semanal de ${salaryStr}, foi contratado por empréstimo do ${club}${loanClauses}.`;
       }
       return `${prefix}, ${contractWageSegment}, foi contratado por empréstimo do ${club}${loanClauses}.`;
-    }
-
-    // 3. Retorno de Empréstimo
-    if (
-      checkIsLoanReturnArrival(
-        player,
-        contract,
-        undefined,
-        career,
-        season?.seasonNumber,
-      )
-    ) {
-      return `${prefix}, retornou de empréstimo do ${contract.fromClub}.`;
     }
 
     // 4. Passes Livres / Custo Zero

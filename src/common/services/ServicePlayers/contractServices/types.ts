@@ -60,6 +60,7 @@ export type EditTransferParams = {
   clubName?: string;
   transferValue?: string;
   date: string;
+  preserveTransferDate?: boolean;
   loanDuration?: string;
   wagePercentage?: string;
   buyOptionValue?: string;

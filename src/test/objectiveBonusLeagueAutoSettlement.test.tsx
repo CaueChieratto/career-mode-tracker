@@ -424,23 +424,23 @@ describe("Bônus de 'Objetivo atingido' com Liga dedicada e Auto-Liquidação (P
     ).toBe(false);
   });
 
-  it("auto-liquida bônus cumprido e respeita autoSettlementDisabled quando o usuário reverte manualmente para Pendente", async () => {
+  it("auto-liquida bônus cumprido de Cláusulas do Clube e respeita autoSettlementDisabled quando o usuário reverte manualmente para Pendente", async () => {
     const settleSpy = vi
       .spyOn(clauseSettlementService, "settleBonus")
       .mockResolvedValue(undefined);
 
-    const yamal = player({
-      id: "p_yamal",
-      name: "Lamine Yamal",
+    const olmo = player({
+      id: "p_olmo_club_bonus",
+      name: "Dani Olmo",
+      buy: true,
       contract: [
         {
-          fromClub: "Base",
+          fromClub: "RB Leipzig",
           leftClub: "",
-          buyValue: 0,
+          buyValue: 55_000_000,
           sellValue: 0,
-          dataArrival: new Date("2026-07-01"),
-          isRenewal: true,
-          salary: 300_000,
+          dataArrival: new Date("2026-08-09"),
+          salary: 180_000,
           contractTime: 5,
           bonuses: [
             {
@@ -452,6 +452,8 @@ describe("Bônus de 'Objetivo atingido' com Liga dedicada e Auto-Liquidação (P
               bonusTarget: "Chegar à final",
               targetObjective: "Chegar à final",
               targetLeague: "Champions League",
+              partnerClub: "RB Leipzig",
+              bonusOrigin: "club",
               value: 4_000_000,
               status: "pending",
               paid: false,
@@ -477,7 +479,7 @@ describe("Bônus de 'Objetivo atingido' com Liga dedicada e Auto-Liquidação (P
     const barcaSeason: ClubData = season({
       id: "s1",
       seasonNumber: 1,
-      players: [yamal],
+      players: [olmo],
       matches: [uclFinal],
       leagues: [
         { name: "LaLiga", logo: "", trophy: "", league: true, isFirstDivision: true },
@@ -510,18 +512,18 @@ describe("Bônus de 'Objetivo atingido' com Liga dedicada e Auto-Liquidação (P
     expect(settleSpy).toHaveBeenCalledWith(
       "c_barca",
       "s1",
-      "p_yamal",
+      "p_olmo_club_bonus",
       "b_ucl_final",
       0,
       false,
       true,
     );
-    expect(yamal.contract[0].bonuses?.[0].status).toBe("paid");
-    expect(yamal.contract[0].bonuses?.[0].paid).toBe(true);
+    expect(olmo.contract[0].bonuses?.[0].status).toBe("paid");
+    expect(olmo.contract[0].bonuses?.[0].paid).toBe(true);
 
     // Simula o usuário revertendo o status para Pendente com autoSettlementDisabled=true
-    yamal.contract[0].bonuses![0] = {
-      ...yamal.contract[0].bonuses![0],
+    olmo.contract[0].bonuses![0] = {
+      ...olmo.contract[0].bonuses![0],
       status: "pending",
       paid: false,
       autoSettlementDisabled: true,
@@ -532,6 +534,173 @@ describe("Bônus de 'Objetivo atingido' com Liga dedicada e Auto-Liquidação (P
       barcaSeason,
     );
     expect(candidatesAfterManualRevert).toHaveLength(0);
+  });
+
+  it("NUNCA liquida automaticamente bônus e metas de Termos do Atleta (renovação, contractDetails ou bonusOrigin='player'), mantendo status='pending' até liquidação manual", async () => {
+    const settleSpy = vi
+      .spyOn(clauseSettlementService, "settleBonus")
+      .mockResolvedValue(undefined);
+
+    const yamalRenewal = player({
+      id: "p_yamal_terms",
+      name: "Lamine Yamal",
+      contractDetails: {
+        weeklyWage: 300_000,
+        durationYears: 5,
+        performanceBonuses: [
+          {
+            id: "b_yamal_player_details",
+            direction: "payable",
+            category: "objective",
+            bonusCategory: "Objetivo atingido",
+            name: "Ser campeão",
+            bonusTarget: "Ser campeão",
+            targetObjective: "Ser campeão",
+            targetLeague: "LaLiga",
+            value: 3_000_000,
+            status: "pending",
+            paid: false,
+            bonusOrigin: "player",
+          },
+        ],
+      },
+      contract: [
+        {
+          fromClub: "",
+          leftClub: "",
+          buyValue: 0,
+          sellValue: 0,
+          dataArrival: new Date("2026-07-01"),
+          isRenewal: true,
+          salary: 300_000,
+          contractTime: 5,
+          bonuses: [
+            {
+              id: "b_yamal_renewal_laliga",
+              direction: "payable",
+              category: "objective",
+              bonusCategory: "Objetivo atingido",
+              name: "Ser campeão",
+              bonusTarget: "Ser campeão",
+              targetObjective: "Ser campeão",
+              targetLeague: "LaLiga",
+              value: 4_000_000,
+              status: "pending",
+              paid: false,
+            },
+          ],
+          contractDetails: {
+            weeklyWage: 300_000,
+            durationYears: 5,
+            isRenewal: true,
+            performanceBonuses: [
+              {
+                id: "b_yamal_contract_details",
+                direction: "payable",
+                category: "objective",
+                bonusCategory: "Objetivo atingido",
+                name: "Chegar à final",
+                bonusTarget: "Chegar à final",
+                targetObjective: "Chegar à final",
+                targetLeague: "Champions League",
+                value: 2_500_000,
+                status: "pending",
+                paid: false,
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const pedriArrivalPlayerTerms = player({
+      id: "p_pedri_terms",
+      name: "Pedri González",
+      buy: true,
+      contract: [
+        {
+          fromClub: "UD Las Palmas",
+          leftClub: "",
+          buyValue: 20_000_000,
+          sellValue: 0,
+          dataArrival: new Date("2026-07-05"),
+          bonuses: [
+            {
+              id: "b_pedri_player_origin",
+              direction: "payable",
+              category: "objective",
+              bonusCategory: "Objetivo atingido",
+              name: "Ser campeão",
+              bonusTarget: "Ser campeão",
+              targetObjective: "Ser campeão",
+              targetLeague: "LaLiga",
+              value: 2_000_000,
+              status: "pending",
+              paid: false,
+              bonusOrigin: "player",
+            },
+          ],
+        },
+      ],
+    });
+
+    const tableLaLiga = buildSpanishLeagueTable(38, 92, 85, 35, "first");
+    const uclFinal: Match = {
+      matchesId: "m_ucl_final",
+      date: "31/05",
+      league: "Champions League",
+      stage: "Final",
+      homeTeam: "FC Barcelona",
+      awayTeam: "Arsenal",
+      homeScore: 2,
+      awayScore: 1,
+      result: "V",
+      status: "FINISHED",
+    };
+
+    const barcaSeason: ClubData = season({
+      id: "s1",
+      seasonNumber: 1,
+      players: [yamalRenewal, pedriArrivalPlayerTerms],
+      table: tableLaLiga,
+      matches: [uclFinal],
+      leagues: [
+        { name: "LaLiga", logo: "", trophy: "", league: true, isFirstDivision: true },
+        { name: "Champions League", logo: "", trophy: "" },
+      ],
+    });
+    const barcaCareer: Career = career({
+      id: "c_barca",
+      clubName: "FC Barcelona",
+      nation: "Espanha",
+      createdAt: new Date("2026-07-01T00:00:00Z"),
+      clubData: [barcaSeason],
+    });
+
+    const candidates = findAchievedObjectiveBonusesToSettle(
+      barcaCareer,
+      barcaSeason,
+    );
+    expect(candidates).toHaveLength(0);
+
+    const result = await PlayersContractService.autoSettleAchievedObjectiveBonuses(
+      barcaCareer.id,
+      barcaSeason.id,
+      barcaCareer,
+      barcaSeason,
+    );
+    expect(result.settledCount).toBe(0);
+    expect(settleSpy).not.toHaveBeenCalled();
+    expect(yamalRenewal.contract[0].bonuses?.[0].status).toBe("pending");
+    expect(
+      yamalRenewal.contract[0].contractDetails?.performanceBonuses?.[0].status,
+    ).toBe("pending");
+    expect(yamalRenewal.contractDetails?.performanceBonuses?.[0].status).toBe(
+      "pending",
+    );
+    expect(pedriArrivalPlayerTerms.contract[0].bonuses?.[0].status).toBe(
+      "pending",
+    );
   });
 
   it("permite alterar status de bônus de Liquidado para Pendente no menu lateral ao editar Cláusulas do Clube de uma Chegada", async () => {

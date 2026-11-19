@@ -6,6 +6,7 @@ export interface TransferItem {
   contract: Contract;
   contractIndex: number;
   direction: "exit" | "arrivals" | "renewals";
+  loanOriginDirection?: "arrivals" | "exit";
   cardKey?: string;
 }
 

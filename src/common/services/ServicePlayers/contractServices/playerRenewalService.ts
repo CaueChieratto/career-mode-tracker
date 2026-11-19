@@ -92,6 +92,7 @@ export const playerRenewalService = {
         `bonus_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       direction: "payable" as const,
       status: b.status || "pending",
+      bonusOrigin: "player" as const,
     }));
 
     const contractDetails: ContractDetails = {
@@ -429,6 +430,7 @@ export const playerRenewalService = {
         `bonus_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       direction: "payable" as const,
       status: b.status || "pending",
+      bonusOrigin: "player" as const,
     }));
 
     const existingBase =

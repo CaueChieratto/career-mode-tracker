@@ -7,7 +7,10 @@ import { ContractDetails } from "../../interfaces/playersInfo/contractClauses";
 import { SellPlayerOptions } from "../ServicePlayers/contractServices/types";
 import { PlayersContractService } from "../ServicePlayers/PlayersContractService";
 import { isNextSeasonTiming } from "../ServicePlayers/helpers/transferTimingHelpers";
-import { hasDefinedLoanBuyOption } from "../ServicePlayers/helpers/contractHelpers";
+import {
+  checkIsIncomingLoanExit,
+  hasDefinedLoanBuyOption,
+} from "../ServicePlayers/helpers/contractHelpers";
 import { parseBrasilDate, parseFullBrasilDate } from "../../utils/Date";
 import { mergeClubAndPlayerBonuses } from "../../helpers/contractPlayerClauses";
 import { toast } from "../ToastService";
@@ -152,7 +155,21 @@ export const ProposalFinalizationService = {
       }
 
       if (initialProposal.originLoanBuyOption) {
-        if (!activePlayer || (activePlayer.sell && !activePlayer.incomingLoan)) {
+        const isEndedIncomingLoan = Boolean(
+          activePlayer?.sell &&
+            !activePlayer?.incomingLoan &&
+            activePlayer?.contract?.some(
+              (c) =>
+                hasDefinedLoanBuyOption(c) &&
+                checkIsIncomingLoanExit(activePlayer, c, "exit"),
+            ),
+        );
+        if (
+          !activePlayer ||
+          (activePlayer.sell &&
+            !activePlayer.incomingLoan &&
+            !isEndedIncomingLoan)
+        ) {
           throw new PlayerIneligibleError(
             "Operação cancelada: o atleta não faz mais parte do elenco.",
           );

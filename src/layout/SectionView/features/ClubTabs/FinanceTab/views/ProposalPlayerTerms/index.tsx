@@ -486,6 +486,7 @@ export const ProposalPlayerTerms: React.FC<ProposalPlayerTermsProps> = ({
         description: objective,
         value: parseValue(bonusVal),
         status: "pending",
+        bonusOrigin: "player",
       };
 
       if (editingBonusIndex !== null) {
@@ -608,6 +609,11 @@ export const ProposalPlayerTerms: React.FC<ProposalPlayerTermsProps> = ({
         };
       }
 
+      const playerBonusesWithOrigin = bonuses.map((b) => ({
+        ...b,
+        bonusOrigin: "player" as const,
+      }));
+
       const playerStage: PlayerNegotiationStage = {
         status: "aceita",
         weeklyWage: rawSalary,
@@ -627,7 +633,10 @@ export const ProposalPlayerTerms: React.FC<ProposalPlayerTermsProps> = ({
             ? rawReleaseClause
             : undefined,
         wageAdjustment,
-        performanceBonuses: bonuses.length > 0 ? bonuses : undefined,
+        performanceBonuses:
+          playerBonusesWithOrigin.length > 0
+            ? playerBonusesWithOrigin
+            : undefined,
       };
 
       const updatedFormValues: Record<string, string> = {

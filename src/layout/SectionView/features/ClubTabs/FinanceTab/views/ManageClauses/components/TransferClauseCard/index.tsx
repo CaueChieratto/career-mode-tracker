@@ -75,15 +75,17 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
   const [badgeError, setBadgeError] = React.useState(false);
 
   const { player, contract, contractIndex, direction } = item;
+  const effectiveDirection = item.loanOriginDirection ?? direction;
+  const isOutgoingLoanOrigin = item.loanOriginDirection === "exit";
   const cardKey = `${player.id}_${contractIndex}_${direction}`;
   const isLoanCard = Boolean(contract.isLoan);
 
   const partnerClub =
-    direction === "renewals"
+    effectiveDirection === "renewals"
       ? career.clubName || "Não informado"
-      : direction === "exit"
-        ? contract.leftClub || "Não informado"
-        : contract.fromClub || "Não informado";
+      : effectiveDirection === "exit"
+        ? contract.leftClub || contract.fromClub || "Não informado"
+        : contract.fromClub || contract.leftClub || "Não informado";
 
   const clubBadgeUrl = getClubBadgeUrl(partnerClub);
 
@@ -91,16 +93,18 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
     setBadgeError(false);
   }, [clubBadgeUrl]);
 
-  const isEditAllowed = canEditTransferContract({
-    player,
-    contract,
-    contractIndex,
-    direction,
-    career,
-    season,
-    readOnly,
-    hasOpenScreen: Boolean(onOpenScreen),
-  });
+  const isEditAllowed =
+    !isOutgoingLoanOrigin &&
+    canEditTransferContract({
+      player,
+      contract,
+      contractIndex,
+      direction: effectiveDirection,
+      career,
+      season,
+      readOnly,
+      hasOpenScreen: Boolean(onOpenScreen),
+    });
 
   const previousContract =
     contractIndex > 0 ? player.contract?.[contractIndex - 1] : undefined;
@@ -139,7 +143,7 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
 
   const playerClauses = resolveContractPlayerClauses(contract);
   const resolvedReleaseClause =
-    direction === "arrivals" || direction === "renewals"
+    effectiveDirection === "arrivals" || effectiveDirection === "renewals"
       ? playerClauses.releaseClause
       : undefined;
   const hasReleaseClause = Boolean(
@@ -148,19 +152,19 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
   const releaseClauseValue = resolvedReleaseClause || 0;
 
   const resolvedWageAdjustment =
-    direction === "arrivals" || direction === "renewals"
+    effectiveDirection === "arrivals" || effectiveDirection === "renewals"
       ? playerClauses.wageAdjustment
       : undefined;
   const hasWageAdjustment = Boolean(resolvedWageAdjustment);
 
-  const isArrivalPurchase = direction === "arrivals" && !isLoanCard;
+  const isArrivalPurchase = effectiveDirection === "arrivals" && !isLoanCard;
   const isPassesLivres =
-    direction === "arrivals" &&
+    effectiveDirection === "arrivals" &&
     (contract.fromClub?.trim().toLowerCase() === "passes livres" ||
       contract.fromClub?.trim().toLowerCase() === "passe livre");
 
   const hasClauses =
-    direction === "renewals"
+    effectiveDirection === "renewals"
       ? hasBonuses ||
         hasWageAdjustment ||
         hasReleaseClause ||
@@ -177,7 +181,7 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
             playerClauses.hasAnyPlayerClauses));
 
   const totalFee =
-    direction === "exit"
+    effectiveDirection === "exit"
       ? isLoanCard
         ? contract.buyOptionValue || contract.loanTerms?.buyOptionFee || 0
         : contract.sellValue || 0
@@ -191,7 +195,7 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
         .slice(0, 3)
         .join("")
         .toUpperCase()
-    : direction === "exit"
+    : effectiveDirection === "exit"
       ? "DEST"
       : "ORIG";
 
@@ -219,7 +223,12 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
     0,
   );
 
-  const isArrivalLoan = direction === "arrivals" && isLoanCard;
+  const isArrivalLoan =
+    effectiveDirection === "arrivals" &&
+    Boolean(
+      (contract.isLoan || (player.incomingLoan && contract.isLoan !== false)) &&
+        !contract.fromLoanBuyOption,
+    );
   const annualLoanSalary = isArrivalLoan
     ? Math.round(Number(contract.salary || 0) * 52)
     : 0;
@@ -390,11 +399,11 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
   const isExplicitlyNotLoan =
     Boolean(contract.fromLoanBuyOption) ||
     contract.isLoan === false ||
-    (direction === "exit"
+    (effectiveDirection === "exit"
       ? Number(contract.sellValue) > 0
       : Number(contract.buyValue) > 0);
   const isLoanTransfer =
-    direction === "exit"
+    effectiveDirection === "exit"
       ? Boolean(contract.isLoan || (player.loan && !isExplicitlyNotLoan))
       : Boolean(
           contract.isLoan || (player.incomingLoan && !isExplicitlyNotLoan),
@@ -528,7 +537,7 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
                     data-testid="btn-edit-club-transfer"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (direction === "arrivals") {
+                      if (effectiveDirection === "arrivals") {
                         onOpenScreen?.({
                           key: "addTransferPlayer",
                           seasonId: season.id,
@@ -539,7 +548,7 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
                           },
                           returnToScreen: {
                             key: "manageClauses",
-                            initialTab: "arrivals",
+                            initialTab: direction === "exit" ? "exit" : "arrivals",
                           },
                         });
                       } else {
@@ -555,7 +564,7 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
                           },
                           returnToScreen: {
                             key: "manageClauses",
-                            initialTab: "exit",
+                            initialTab: direction === "arrivals" ? "arrivals" : "exit",
                           },
                         });
                       }
@@ -707,7 +716,7 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
                 <div className={Styles.breakdownRow}>
                   <span className={Styles.breakdownLabel}>
                     <span className={`${Styles.dot} ${Styles.dotGreen}`}></span>
-                    {direction === "exit"
+                    {effectiveDirection === "exit"
                       ? "À vista (Imediato no Caixa):"
                       : "À vista (Pago no Caixa):"}
                   </span>
@@ -744,7 +753,7 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
                         className={`${Styles.dot} ${Styles.dotAmber}`}
                       ></span>
                       Bônus: {contract.bonuses.length} meta(s){" "}
-                      {direction === "exit" ? "a Receber" : "a Pagar"}:
+                      {effectiveDirection === "exit" ? "a Receber" : "a Pagar"}:
                     </span>
                     <span className={Styles.valueAmber}>
                       + {formatDisplayValue(bonusTotal, career.currency)}
@@ -828,7 +837,7 @@ export const TransferClauseCard: React.FC<TransferClauseCardProps> = ({
         ) : (
           <div className={Styles.totalSection}>
             <span className={Styles.totalLabel}>
-              {direction === "exit"
+              {effectiveDirection === "exit"
                 ? "Receita Máxima Projetada"
                 : "Investimento Máximo Projetado"}
             </span>

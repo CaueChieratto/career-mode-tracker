@@ -564,7 +564,7 @@ export const useManageClausesInlineActions = ({
           document.getElementById(`transfer-card-${cardKeyToScroll}`) ||
           document.getElementById(`proposal-card-${cardKeyToScroll}`);
         if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
           setHighlightedCardKey(cardKeyToScroll);
           setTimeout(() => {
             if (isMountedRef.current) {
@@ -591,7 +591,7 @@ export const useManageClausesInlineActions = ({
     cancelInline();
   };
 
-  const resetScrollState = () => {
+  const resetScrollState = (options?: { scrollToTop?: boolean }) => {
     lastClickedCardKeyRef.current = null;
     setHighlightedCardKey(null);
     try {
@@ -600,7 +600,9 @@ export const useManageClausesInlineActions = ({
     } catch {
       // ignore in test/restricted environments
     }
-    safeScrollToTop();
+    if (options?.scrollToTop !== false) {
+      safeScrollToTop();
+    }
   };
 
   const handleCustomInputChange = (
@@ -895,7 +897,10 @@ export const useManageClausesInlineActions = ({
 
       // 2. Termos do Atleta (Renovações, Opção de Compra, Contrapartida de Troca, ou Chegada -> Termos do Atleta)
       if (savingPlayerScope) {
-        const finalPlayerBonuses = [...editingBonuses];
+        const finalPlayerBonuses = editingBonuses.map((b) => ({
+          ...b,
+          bonusOrigin: "player" as const,
+        }));
         const isRenewal = item.direction === "renewals";
         const releaseClauseVal = parseValue(editingValues.releaseClause || "");
         const existingAdj =
@@ -1142,6 +1147,7 @@ export const useManageClausesInlineActions = ({
             transferValue: preservedTransferValue,
             clubName: item.contract.fromClub || "",
             date: getContractFormattedDate(item.contract),
+            preserveTransferDate: true,
             timing: item.contract.timing || "Imediata",
             salary: finalSalaryStr || undefined,
             contractTime: parsedContractTime,
@@ -1391,6 +1397,7 @@ export const useManageClausesInlineActions = ({
         transferValue: formFeeRaw || "0",
         clubName: editingValues.toClub || editingValues.fromClub || "",
         date: editingValues.dateExit || getContractFormattedDate(item.contract),
+        preserveTransferDate: true,
         timing: nextTiming,
         installments: installmentsData,
         swapPlayer: swapData,

@@ -1,8 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
   checkIsIncomingLoanExit,
+  checkIsLoanReturnArrival,
   buildSellContractHistory,
 } from "../common/services/ServicePlayers/helpers/contractHelpers";
+import { resolveTransferDisplayValue } from "../components/TransfersModal/components/TransfersPanel/helpers/resolveTransferDisplayValue";
+import { buildTransferCopyText } from "../components/TransfersModal/components/TransfersPanel/utils/buildTransferCopyText";
 import { Players } from "../common/interfaces/playersInfo/players";
 import { Contract } from "../common/interfaces/playersInfo/contract";
 import { player } from "./factories/domain";
@@ -135,5 +138,102 @@ describe("checkIsIncomingLoanExit & buildSellContractHistory", () => {
     };
 
     expect(checkIsIncomingLoanExit(p, loanBackContract, "exit")).toBe(false);
+  });
+
+  it("retorna true e exibe 'Fim do Empréstimo' para empréstimo de chegada ao FC Barcelona com opção de compra não exercida ao encerrar", () => {
+    const endedIncomingLoanContract: Contract = {
+      buyValue: 0,
+      fromClub: "Manchester City",
+      sellValue: 0,
+      leftClub: "Manchester City",
+      isLoan: true,
+      buyOptionValue: 25_000_000,
+      dataArrival: new Date("2026-07-15"),
+      dataExit: new Date("2027-06-30"),
+      loanTerms: {
+        durationYears: 1,
+        ourWagePercentage: 100,
+        theirWagePercentage: 0,
+        hasBuyOption: true,
+        buyOptionFee: 25_000_000,
+        buyOptionExercised: false,
+        partnerClub: "Manchester City",
+      },
+    };
+
+    const endedLoanPlayer = player({
+      id: "p_cancelo_barca",
+      name: "João Cancelo",
+      incomingLoan: false,
+      sell: true,
+      loan: false,
+      contract: [endedIncomingLoanContract],
+    });
+
+    expect(
+      checkIsIncomingLoanExit(endedLoanPlayer, endedIncomingLoanContract, "exit"),
+    ).toBe(true);
+
+    const displayValue = resolveTransferDisplayValue({
+      player: endedLoanPlayer,
+      contract: endedIncomingLoanContract,
+      contractIndex: 0,
+      direction: "exit",
+      currency: "€",
+      value: 0,
+    });
+    expect(displayValue).toBe("Fim do Empréstimo");
+  });
+
+  it("retorna true em checkIsLoanReturnArrival e exibe 'Fim do Empréstimo' em Chegadas mesmo após novo empréstimo posterior na mesma temporada", () => {
+    const outgoingLoanToBrighton: Contract = {
+      buyValue: 0,
+      fromClub: "",
+      sellValue: 0,
+      leftClub: "Brighton",
+      isLoan: true,
+      dataArrival: new Date("2025-07-10"),
+      dataExit: new Date("2025-08-01"),
+    };
+
+    const returnAndReLoanedContract: Contract = {
+      buyValue: 0,
+      fromClub: "Brighton",
+      sellValue: 0,
+      leftClub: "Real Betis",
+      isLoan: true,
+      dataArrival: new Date("2026-06-30"),
+      dataExit: new Date("2026-07-15"),
+    };
+
+    const ansuFati = player({
+      id: "p_ansu_fati",
+      name: "Ansu Fati",
+      loan: true,
+      incomingLoan: false,
+      contract: [outgoingLoanToBrighton, returnAndReLoanedContract],
+    });
+
+    expect(
+      checkIsLoanReturnArrival(ansuFati, returnAndReLoanedContract, 1),
+    ).toBe(true);
+
+    const displayValue = resolveTransferDisplayValue({
+      player: ansuFati,
+      contract: returnAndReLoanedContract,
+      contractIndex: 1,
+      direction: "arrivals",
+      currency: "€",
+      value: 0,
+    });
+    expect(displayValue).toBe("Fim do Empréstimo");
+
+    const copyText = buildTransferCopyText({
+      player: ansuFati,
+      contract: returnAndReLoanedContract,
+      direction: "arrivals",
+      currency: "€",
+    });
+    expect(copyText).toContain("retornou de empréstimo do Brighton");
   });
 });

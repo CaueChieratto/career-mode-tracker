@@ -742,6 +742,12 @@ export const transferExecutionService = {
       seasonToUpdate.players.push(finalPlayer);
     }
 
+    if (contract.fromLoanBuyOption) {
+      finalPlayer.sell = false;
+      finalPlayer.buy = true;
+      finalPlayer.incomingLoan = false;
+    }
+
     const playerRef = doc(
       db,
       `users/${user.uid}/careers/${careerId}/seasons/${seasonId}/players`,
@@ -1022,7 +1028,22 @@ export const transferExecutionService = {
       },
     };
 
-    const existingSaleIdx = contracts.findIndex(
+    const loanPartnerNorm = (loanContract.leftClub || "").trim().toLowerCase();
+    const cleanedAfterReturn = contracts.filter((c, i) => {
+      if (i <= contractIndex) return true;
+      const isSyntheticReturn =
+        !c.isLoan &&
+        !c.isRenewal &&
+        !c.fromLoanBuyOption &&
+        !c.leftClub &&
+        (Number(c.buyValue) || 0) === 0 &&
+        (Number(c.sellValue) || 0) === 0 &&
+        ((c.fromClub || "").trim().toLowerCase() === loanPartnerNorm ||
+          (c.fromClub || "").trim().toLowerCase() === "fim de empréstimo");
+      return !isSyntheticReturn;
+    });
+
+    const existingSaleIdx = cleanedAfterReturn.findIndex(
       (c, i) =>
         i !== contractIndex &&
         c.fromLoanBuyOption &&
@@ -1052,9 +1073,9 @@ export const transferExecutionService = {
     };
 
     if (existingSaleIdx >= 0) {
-      contracts[existingSaleIdx] = saleContract;
+      cleanedAfterReturn[existingSaleIdx] = saleContract;
     } else {
-      contracts.push(saleContract);
+      cleanedAfterReturn.push(saleContract);
     }
 
     const finalPlayer: Players = {
@@ -1062,7 +1083,7 @@ export const transferExecutionService = {
       sell: true,
       loan: false,
       incomingLoan: false,
-      contract: contracts,
+      contract: cleanedAfterReturn,
     };
 
     const playerRef = doc(

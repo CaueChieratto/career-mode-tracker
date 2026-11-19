@@ -11,6 +11,8 @@ import { toast } from "../../../../../../../../../common/services/ToastService";
 import { NavigationSessionStore } from "../../../../../../../../../common/services/NavigationSessionStore";
 import { OptimisticUpdateData } from "../../../../../../../helpers/updateSectionCareer";
 import { getSortedCaptains } from "../../../../../GeneralTab/components/CaptainsHierarchyCard/helpers/getSortedCaptains";
+import { buildReturnContractHistory } from "../../../../../../../../../common/services/ServicePlayers/helpers/contractHelpers";
+import { getSeasonDateRange } from "../../../../../../../../../common/utils/GetSeasonDateRange";
 
 type usePlayerActionsProps = {
   careerId: string;
@@ -274,11 +276,23 @@ export const usePlayerActions = ({
     try {
       await returnLoanPlayer(returnDate);
       if (player) {
+        const { startDate, endDate } = getSeasonDateRange(
+          season.seasonNumber,
+          career.createdAt,
+          career.nation,
+        );
+        const { contractHistory } = buildReturnContractHistory(
+          player,
+          returnDate,
+          startDate,
+          endDate,
+        );
         const updated = {
           ...player,
           ...(player.incomingLoan
             ? { sell: true, incomingLoan: false }
-            : { loan: false }),
+            : { loan: false, sell: false }),
+          contract: contractHistory,
         };
         onSuccess({
           type: "UPDATE_PLAYER",

@@ -14,6 +14,7 @@ import {
   isNextSeasonTiming,
   isNextWindowTiming,
   getLoanBackEndSeasonNumber,
+  parseMatchDateToDate,
 } from "../helpers/transferTimingHelpers";
 import { parseBrasilDate } from "../../../utils/Date";
 import { parseValue, formatTransferValue } from "../../../utils/FormatValue";
@@ -85,15 +86,6 @@ export const transferEditRevertService = {
       career.nation,
     );
 
-    const [, month] = date.split("/").map(Number);
-    const m = (month || 1) - 1;
-    const year =
-      m < startDate.getMonth()
-        ? endDate.getFullYear()
-        : startDate.getFullYear();
-    const parsedDate = parseBrasilDate(date, year);
-    if (!parsedDate) throw new Error("Data inválida");
-
     const contracts = player.contract ? [...player.contract] : [];
     let idx = contractIndex;
     if (idx < 0 || idx >= contracts.length) {
@@ -106,6 +98,48 @@ export const transferEditRevertService = {
     }
 
     const currentContract = { ...(contracts[idx] || {}) };
+    const existingTransferDate =
+      direction === "exit"
+        ? currentContract.dataExit
+        : currentContract.dataArrival;
+    const existingDateParsed = existingTransferDate
+      ? parseMatchDateToDate(existingTransferDate, startDate.getFullYear())
+      : null;
+    const isExistingDateInCurrentSeason = existingDateParsed
+      ? existingDateParsed.getTime() >= startDate.getTime() &&
+        existingDateParsed.getTime() <= endDate.getTime()
+      : true;
+    const isPastSeasonContract = Boolean(
+      existingDateParsed && !isExistingDateInCurrentSeason,
+    );
+    const shouldPreserveOriginalDate = Boolean(
+      params.preserveTransferDate && existingTransferDate,
+    );
+
+    let parsedDate: Date | null = null;
+    if (shouldPreserveOriginalDate && existingDateParsed) {
+      parsedDate = existingDateParsed;
+    } else {
+      const [, month] = date.split("/").map(Number);
+      const m = (month || 1) - 1;
+      let year: number;
+      if (isPastSeasonContract && existingDateParsed) {
+        const origStartYear =
+          existingDateParsed.getMonth() < startDate.getMonth()
+            ? existingDateParsed.getFullYear() - 1
+            : existingDateParsed.getFullYear();
+        const origEndYear = origStartYear + 1;
+        year = m < startDate.getMonth() ? origEndYear : origStartYear;
+      } else {
+        year =
+          m < startDate.getMonth()
+            ? endDate.getFullYear()
+            : startDate.getFullYear();
+      }
+      parsedDate = parseBrasilDate(date, year);
+      if (!parsedDate) throw new Error("Data inválida");
+    }
+
     let finalPlayer: Players = { ...player };
 
     let effectiveBuyOpt: number | undefined;
@@ -132,7 +166,9 @@ export const transferEditRevertService = {
       transferType === "Fim de Empréstimo";
 
     if (direction === "exit") {
-      currentContract.dataExit = parsedDate;
+      if (!shouldPreserveOriginalDate) {
+        currentContract.dataExit = parsedDate;
+      }
 
       if (isIncomingReturn) {
         if (clubName) currentContract.leftClub = clubName;
@@ -302,7 +338,9 @@ export const transferEditRevertService = {
       }
     } else {
       // arrivals
-      currentContract.dataArrival = parsedDate;
+      if (!shouldPreserveOriginalDate) {
+        currentContract.dataArrival = parsedDate;
+      }
 
       if (!isSpecialArrival) {
         if (clubName) currentContract.fromClub = clubName;
@@ -966,6 +1004,16 @@ export const transferEditRevertService = {
       finalPlayer.squadRole = params.squadRole as SquadRole;
     }
 
+    if (isPastSeasonContract) {
+      finalPlayer.buy = player.buy;
+      finalPlayer.sell = player.sell;
+      finalPlayer.loan = player.loan;
+      finalPlayer.incomingLoan = player.incomingLoan;
+      if (player.shirtNumber !== undefined && finalPlayer.shirtNumber === "") {
+        finalPlayer.shirtNumber = player.shirtNumber;
+      }
+    }
+
     contracts[idx] = currentContract;
     finalPlayer.contract = contracts;
 
@@ -988,7 +1036,8 @@ export const transferEditRevertService = {
 
     Object.assign(player, finalPlayer);
 
-    // Sincronizar lançamento financeiro de transferência
+    // Sincronizar lançamento financeiro de transferência (apenas para transferências da temporada vigente)
+    if (!isPastSeasonContract) {
     try {
       if (direction === "exit") {
         const entryId = `transfer_sell_${playerId}_${idx}`;
@@ -1169,6 +1218,7 @@ export const transferEditRevertService = {
       }
     } catch (err) {
       console.warn("Erro ao sincronizar lançamento financeiro na edição:", err);
+    }
     }
 
     // Sincronizar proposals no Firestore para o atleta quando opção de compra ou taxa de revenda for editada

@@ -91,7 +91,20 @@ export const resolveContractPlayerClauses = (
     return `${b.category}_${b.metric || ""}_${b.targetObjective || ""}_${b.value}_${b.metricTarget || ""}`;
   };
 
-  // Processa bônus do clube
+  const normalizedFromClub = (contract.fromClub || "").trim().toLowerCase();
+  const isPlayerOnlyContract = Boolean(
+    contract.isRenewal ||
+      contract.contractDetails?.isRenewal ||
+      (contract.fromLoanBuyOption && !contract.leftClub) ||
+      (contract.swapPlayer?.isCounterpart && !contract.leftClub) ||
+      (!contract.leftClub &&
+        (normalizedFromClub === "passes livres" ||
+          normalizedFromClub === "passe livre")),
+  );
+
+  const playerBonusKeys = new Set(rawPlayerBonuses.map(getBonusKey));
+
+  // Processa bônus do clube (preservando origem de Termos do Atleta quando aplicável)
   for (const b of rawClubBonuses) {
     const key = getBonusKey(b);
     if (!seenIds.has(key)) {
@@ -99,7 +112,9 @@ export const resolveContractPlayerClauses = (
       const bRecord = b as unknown as Record<string, unknown>;
       const isPlayerBonus =
         bRecord.bonusOrigin === "player" ||
-        bRecord.bonusCategory === "player";
+        bRecord.bonusCategory === "player" ||
+        playerBonusKeys.has(key) ||
+        isPlayerOnlyContract;
       allBonuses.push({
         ...b,
         bonusOrigin: isPlayerBonus ? "player" : "club",

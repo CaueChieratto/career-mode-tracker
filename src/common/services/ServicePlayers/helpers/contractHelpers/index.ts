@@ -204,47 +204,56 @@ export const checkIsIncomingLoanExit = (
   direction: "arrivals" | "exit" = "exit",
 ): boolean => {
   if (direction !== "exit" || !contract) return false;
-
-  if (
-    contract.fromLoanBuyOption ||
-    contract.loanTerms?.hasBuyOption ||
-    contract.loanTerms?.buyOptionExercised ||
-    (contract.buyOptionValue && contract.buyOptionValue > 0)
-  ) {
-    return false;
-  }
+  if (contract.isLoanBackReturn) return true;
 
   // Se o contrato possui loanBackDuration ou é uma venda com valor e isLoan === false,
   // trata-se de uma venda (eventualmente com empréstimo de volta), NUNCA de um retorno de empréstimo.
   if (contract.transferClauses?.loanBackDuration) return false;
   if (contract.isLoan === false) return false;
-  if ((contract.sellValue ?? 0) > 0) return false;
+  if ((Number(contract.sellValue) || 0) > 0) return false;
 
-  if (contract.leftClub === "Fim de Empréstimo") return true;
+  // Compra definitiva (com valor de compra > 0) que depois foi emprestada não é empréstimo de chegada
+  const rawBuy =
+    typeof contract.buyValue === "string"
+      ? parseValue(contract.buyValue)
+      : typeof contract.buyValue === "number"
+        ? contract.buyValue
+        : 0;
+  if (rawBuy > 0) return false;
 
-  if (player?.incomingLoan && contract.isLoan === true && Boolean(contract.leftClub)) return true;
-
+  // Se a opção de compra já foi exercida/finalizada ou este é o contrato resultante da compra,
+  // não é saída por fim de empréstimo.
   if (
-    contract.fromClub &&
-    contract.leftClub &&
-    contract.fromClub !== "Base" &&
-    contract.fromClub === contract.leftClub &&
-    contract.isLoan
+    contract.fromLoanBuyOption ||
+    contract.buyOptionFinalized ||
+    contract.loanTerms?.buyOptionExercised ||
+    contract.loanTerms?.buyOptionFinalized
   ) {
-    return true;
+    return false;
   }
 
-  if (
-    contract.isLoan &&
-    contract.fromClub &&
-    contract.fromClub !== "Base" &&
-    Boolean(contract.leftClub) &&
-    !player?.loan
-  ) {
-    return true;
+  // Se o atleta está atualmente em empréstimo de saída ativo (e não chegada), não é fim de empréstimo de chegada
+  if (player?.loan && !player?.incomingLoan) {
+    return false;
   }
 
-  return false;
+  const fromClubNorm = (contract.fromClub || "").trim().toLowerCase();
+  const leftClubNorm = (contract.leftClub || "").trim().toLowerCase();
+
+  return Boolean(
+    leftClubNorm === "fim de empréstimo" ||
+    (player?.incomingLoan &&
+      contract.isLoan === true &&
+      Boolean(leftClubNorm)) ||
+    (contract.isLoan &&
+      fromClubNorm !== "" &&
+      fromClubNorm !== "base" &&
+      fromClubNorm === leftClubNorm) ||
+    (player?.incomingLoan &&
+      !contract.isLoan &&
+      Boolean(leftClubNorm) &&
+      (Number(contract.sellValue) || 0) === 0),
+  );
 };
 
 export const checkIsLoanReturnArrival = (
@@ -255,56 +264,54 @@ export const checkIsLoanReturnArrival = (
   currentSeasonNumber?: number,
 ): boolean => {
   if (!contract) return false;
-  if (contract.fromClub === "Base" || contract.fromClub === "Passes Livres") return false;
-  if (contract.isLoan) return false;
+  const fromClubNorm = (contract.fromClub || "").trim().toLowerCase();
+  if (fromClubNorm === "base" || fromClubNorm === "passes livres") return false;
+  if (contract.fromLoanBuyOption) return false;
 
   const rawBuy =
     typeof contract.buyValue === "string"
       ? parseValue(contract.buyValue)
       : typeof contract.buyValue === "number"
-      ? contract.buyValue
-      : 0;
+        ? contract.buyValue
+        : 0;
   if (rawBuy > 0) return false;
 
-  if (contract.fromClub === "Fim de Empréstimo") return true;
+  // Se isLoan é true e não possui leftClub, é um empréstimo de chegada puro, não retorno de empréstimo de saída
+  if (contract.isLoan && !contract.leftClub) return false;
 
-  // 1. Check contracts history on player (both fullContractHistory and contract)
+  if (fromClubNorm === "fim de empréstimo") return true;
+  if (!contract.fromClub) return false;
+
+  const targetClub = fromClubNorm;
+
+  // 1. Verificar contratos ANTERIORES a este contrato na mesma lista do atleta
   const contractsList = player?.fullContractHistory || player?.contract || [];
   if (contractsList.length > 0) {
     const idx = contractIndex ?? contractsList.indexOf(contract as Contract);
+    const priorContracts =
+      idx >= 0
+        ? contractsList.slice(0, idx)
+        : contractsList.filter((c) => c !== contract);
 
-    // If there is an immediately preceding contract that was a loan
-    if (idx > 0) {
-      const prev = contractsList[idx - 1];
-      if (prev?.isLoan && prev?.leftClub) {
-        return true;
-      }
-    }
-
-    // Check if any contract in history had a loan out to this club
-    const hadLoanOutToSameClub = contractsList.some(
+    const loanedToClubBefore = priorContracts.some(
       (c) =>
         c.isLoan &&
-        c.leftClub &&
-        contract.fromClub &&
-        c.leftClub.trim().toLowerCase() === contract.fromClub.trim().toLowerCase(),
+        Boolean(c.leftClub) &&
+        !checkIsIncomingLoanExit(player, c, "exit") &&
+        (c.leftClub || "").trim().toLowerCase() === targetClub,
     );
-    if (hadLoanOutToSameClub) return true;
+    if (loanedToClubBefore) return true;
 
-    // Check if any contract had isLoan: true and leftClub
-    const hadAnyLoanOut = contractsList.some(
-      (c) => c.isLoan && Boolean(c.leftClub) && c.leftClub !== "Fim de Empréstimo",
-    );
-    if (hadAnyLoanOut && contract.fromClub) {
-      const matchedClub = contractsList.some(
-        (c) =>
-          c.isLoan &&
-          c.leftClub &&
-          (c.leftClub.trim().toLowerCase() === contract.fromClub!.trim().toLowerCase() ||
-            contract.fromClub === "Fim de Empréstimo"),
-      );
-      if (matchedClub) return true;
+    // Se o próprio contrato tem isLoan === true (empréstimo de chegada encerrado sem empréstimo de saída prévio),
+    // não pode fazer auto-match com temporadas futuras/anteriores como retorno de empréstimo de saída.
+    if (contract.isLoan && checkIsIncomingLoanExit(player, contract, "exit")) {
+      return false;
     }
+  } else if (
+    contract.isLoan &&
+    checkIsIncomingLoanExit(player, contract, "exit")
+  ) {
+    return false;
   }
 
   // 2. Check career.clubData to see what happened in previous seasons
@@ -329,32 +336,34 @@ export const checkIsLoanReturnArrival = (
       .sort((a, b) => b.seasonNumber - a.seasonNumber);
 
     for (const prevSeason of previousSeasons) {
-      const prevPlayer = prevSeason.players?.find((p) => p.id === player.id);
+      const prevPlayer = prevSeason.players?.find(
+        (p) =>
+          p.id === player.id ||
+          (p.name &&
+            player.name &&
+            p.name.trim().toLowerCase() === player.name.trim().toLowerCase()),
+      );
       if (prevPlayer) {
-        // If the player was marked as loaned in that season
         if (prevPlayer.loan) {
           return true;
         }
 
-        // Did prevPlayer have any loan contract in that season?
         const hadLoanContract = prevPlayer.contract?.some(
           (c) =>
             c.isLoan &&
-            c.leftClub &&
-            (!contract.fromClub ||
-              c.leftClub.trim().toLowerCase() === contract.fromClub.trim().toLowerCase() ||
-              contract.fromClub === "Fim de Empréstimo"),
+            Boolean(c.leftClub) &&
+            !checkIsIncomingLoanExit(prevPlayer, c, "exit") &&
+            c.leftClub.trim().toLowerCase() === targetClub,
         );
         if (hadLoanContract) return true;
 
-        // Found player in most recent previous season and was not on loan
         break;
       }
     }
   }
 
-  // 3. In the current season: if player.loan is currently true
-  if (player?.loan && contract.fromClub) {
+  // 3. In the current season: if player.loan is currently true (apenas para contratos não-loan de retorno)
+  if (player?.loan && !contract.isLoan && contract.fromClub) {
     return true;
   }
 

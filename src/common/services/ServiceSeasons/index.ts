@@ -233,6 +233,14 @@ export const ServiceSeasons = {
         );
       }
 
+      const hydratedNewSeason: ClubData = {
+        ...newSeason,
+        players: playersForNewSeason,
+        academyPlayers: academyPlayersToCopy,
+        matches: [],
+        table: [],
+      };
+
       // Sincroniza parcelas liquidadas automaticamente na virada para a nova temporada
       const hasNewSeasonInstallments = playersForNewSeason.some((p) =>
         (p.contract || []).some(
@@ -247,60 +255,76 @@ export const ServiceSeasons = {
         void ServiceFinance.syncReconciledReport(
           careerId,
           newSeasonId,
-          { ...newSeason, players: playersForNewSeason },
+          hydratedNewSeason,
           false,
           career,
         ).catch(() => {});
       }
 
+      const mergeHydratedSeasonIntoCareer = (c: Career): Career => {
+        const currentClubData = c.clubData || [];
+        const seasonAlreadyExists = currentClubData.some(
+          (s) =>
+            s.id === hydratedNewSeason.id ||
+            s.seasonNumber === hydratedNewSeason.seasonNumber,
+        );
+
+        const updatedClubData = currentClubData.map((s) => {
+          if (
+            previousSeason &&
+            s.id === previousSeason.id &&
+            modifiedPreviousPlayers.length > 0
+          ) {
+            return { ...s, players: updatedPreviousPlayers };
+          }
+          if (
+            s.id === hydratedNewSeason.id ||
+            s.seasonNumber === hydratedNewSeason.seasonNumber
+          ) {
+            return hydratedNewSeason;
+          }
+          return s;
+        });
+
+        const mergedClubData = seasonAlreadyExists
+          ? updatedClubData
+          : [...updatedClubData, hydratedNewSeason];
+
+        const seen = new Set<string>();
+        const deduplicatedClubData: ClubData[] = [];
+        for (const s of mergedClubData) {
+          const key = s.id || `season-${s.seasonNumber}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            deduplicatedClubData.push(s);
+          }
+        }
+
+        return {
+          ...c,
+          clubData: deduplicatedClubData,
+          updatedAt: now,
+        };
+      };
+
+      try {
+        if (typeof updateCachedCareer === "function") {
+          updateCachedCareer(mergeHydratedSeasonIntoCareer(career));
+        }
+      } catch {
+        // Ignora quando Getters está parcialmente mockado em testes unitários
+      }
+
       notifyCareersUpdated((prev) =>
         prev.map((c) => {
           if (c.id !== careerId) return c;
-
-          const currentClubData = c.clubData || [];
-          const seasonAlreadyExists = currentClubData.some(
-            (s) =>
-              s.id === newSeason.id || s.seasonNumber === newSeason.seasonNumber,
-          );
-
-          const updatedClubData = currentClubData.map((s) => {
-            if (
-              previousSeason &&
-              s.id === previousSeason.id &&
-              modifiedPreviousPlayers.length > 0
-            ) {
-              return { ...s, players: updatedPreviousPlayers };
+          const updatedCareer = mergeHydratedSeasonIntoCareer(c);
+          try {
+            if (typeof updateCachedCareer === "function") {
+              updateCachedCareer(updatedCareer);
             }
-            if (
-              s.id === newSeason.id ||
-              s.seasonNumber === newSeason.seasonNumber
-            ) {
-              return newSeason;
-            }
-            return s;
-          });
-
-          const mergedClubData = seasonAlreadyExists
-            ? updatedClubData
-            : [...updatedClubData, newSeason];
-
-          const seen = new Set<string>();
-          const deduplicatedClubData: ClubData[] = [];
-          for (const s of mergedClubData) {
-            const key = s.id || `season-${s.seasonNumber}`;
-            if (!seen.has(key)) {
-              seen.add(key);
-              deduplicatedClubData.push(s);
-            }
-          }
-
-          const updatedCareer: Career = {
-            ...c,
-            clubData: deduplicatedClubData,
-            updatedAt: now,
-          };
-          if (typeof updateCachedCareer === "function") {
-            updateCachedCareer(updatedCareer);
+          } catch {
+            // Ignora quando Getters está parcialmente mockado em testes unitários
           }
           return updatedCareer;
         }),

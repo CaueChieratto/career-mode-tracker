@@ -23,23 +23,12 @@ export const getContractFormattedDate = (c?: Contract | null): string => {
 };
 
 export const safeScrollToTop = () => {
+  if (typeof window === "undefined") return;
   try {
-    if (
-      typeof window !== "undefined" &&
-      typeof window.scrollTo === "function"
-    ) {
+    if (typeof window.scrollTo === "function") {
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-    if (typeof document !== "undefined") {
-      if (document.documentElement && document.documentElement.scrollTop > 0) {
-        document.documentElement.scrollTop = 0;
-      }
-      if (document.body && document.body.scrollTop > 0) {
-        document.body.scrollTop = 0;
-      }
     }
   } catch {
     // ignore in environments without scrollTo support
   }
 };
-

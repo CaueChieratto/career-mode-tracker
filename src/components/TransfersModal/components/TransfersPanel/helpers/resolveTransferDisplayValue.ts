@@ -139,9 +139,10 @@ export const resolveTransferDisplayValue = ({
       season?.seasonNumber,
     );
     const isArrivalLoan = Boolean(
-      contract.isLoan ||
+      !isLoanReturn &&
+      (contract.isLoan ||
         (player.incomingLoan && !isExplicitlyNotLoan) ||
-        isLoanBackArrival,
+        isLoanBackArrival),
     );
 
     if (isNextSeasonTiming(contract.timing)) {
@@ -154,6 +155,8 @@ export const resolveTransferDisplayValue = ({
       );
       if (!hasArrived) {
         displayValue = "Chegada: Proxima Temporada";
+      } else if (isLoanReturn) {
+        displayValue = "Fim do Empréstimo";
       } else if (isArrivalLoan) {
         displayValue = "Empréstimo";
       } else if (value && (value as number) > 0) {
@@ -168,6 +171,8 @@ export const resolveTransferDisplayValue = ({
       );
       if (!hasArrived) {
         displayValue = "Chegada: Proxima Janela";
+      } else if (isLoanReturn) {
+        displayValue = "Fim do Empréstimo";
       } else if (isArrivalLoan) {
         displayValue = "Empréstimo";
       } else if (value && (value as number) > 0) {
@@ -175,6 +180,8 @@ export const resolveTransferDisplayValue = ({
       } else {
         displayValue = "Custo Zero";
       }
+    } else if (isLoanReturn) {
+      displayValue = "Fim do Empréstimo";
     } else if (isArrivalLoan) {
       displayValue = "Empréstimo";
     } else if (value && (value as number) > 0) {
@@ -183,8 +190,6 @@ export const resolveTransferDisplayValue = ({
       displayValue = "Promovido da Base";
     } else if (contract.fromClub === "Passes Livres") {
       displayValue = "Custo Zero";
-    } else if (isLoanReturn) {
-      displayValue = "Fim do Empréstimo";
     } else if (contract.fromClub) {
       displayValue = "Custo Zero";
     }
@@ -195,8 +200,7 @@ export const resolveTransferDisplayValue = ({
       "exit",
     );
     const isExitLoan = Boolean(
-      contract.isLoan ||
-        (player.loan && !isExplicitlyNotLoan),
+      contract.isLoan || (player.loan && !isExplicitlyNotLoan),
     );
 
     if (isNextSeasonTiming(contract.timing)) {

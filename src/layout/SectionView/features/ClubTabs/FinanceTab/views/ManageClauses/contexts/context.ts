@@ -86,7 +86,7 @@ export interface ManageClausesContextValue {
   startManageCard: (item: TransferItem) => void;
   cancelInline: (options?: { restoreScroll?: boolean }) => void;
   handleBackFromEdit: () => void;
-  resetScrollState: () => void;
+  resetScrollState: (options?: { scrollToTop?: boolean }) => void;
 
   // Inline form state
   editingValues: FormValues;

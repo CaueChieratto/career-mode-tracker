@@ -18,7 +18,6 @@ import { ServiceProposals } from "../../../../../../../../../common/services/Ser
 import { toast } from "../../../../../../../../../common/services/ToastService";
 import { useToast } from "../../../../../../../../../common/hooks/UseToast";
 import { TransferProposal } from "../../../../../../../../../common/interfaces/proposals/transferProposal";
-import { safeScrollToTop } from "../../helpers/manageClausesFormatters";
 import Styles from "../../ManageClauses.module.css";
 
 export const ManageClausesScreen: React.FC = () => {
@@ -109,10 +108,15 @@ export const ManageClausesScreen: React.FC = () => {
     setIsFinalizingProposal(true);
     try {
       if (proposal.playerNegotiation) {
-        await ServiceProposals.updateProposal(career.id, season.id, proposal.id, {
-          agreementDate: proposal.agreementDate,
-          playerNegotiation: proposal.playerNegotiation,
-        });
+        await ServiceProposals.updateProposal(
+          career.id,
+          season.id,
+          proposal.id,
+          {
+            agreementDate: proposal.agreementDate,
+            playerNegotiation: proposal.playerNegotiation,
+          },
+        );
       }
       await ProposalFinalizationService.finalizeProposal({
         careerId: career.id,
@@ -198,7 +202,6 @@ export const ManageClausesScreen: React.FC = () => {
     const targetTab =
       index === 0 ? "renewals" : index === 1 ? "arrivals" : "exit";
     setActiveTab(targetTab);
-    safeScrollToTop();
     swiperRef.current?.slideTo(index);
   };
 
@@ -208,7 +211,7 @@ export const ManageClausesScreen: React.FC = () => {
       index === 0 ? "renewals" : index === 1 ? "arrivals" : "exit";
     if (activeTab !== targetTab) {
       cancelInline({ restoreScroll: false });
-      resetScrollState?.();
+      resetScrollState?.({ scrollToTop: false });
       setSearchPlayerQuery("");
       setActiveTab(targetTab);
     }
@@ -308,9 +311,7 @@ export const ManageClausesScreen: React.FC = () => {
                 onEditProposalPlayer={handleEditProposalPlayer}
                 onFinalizeProposal={(p) => setProposalToFinalize(p)}
                 onDeleteProposal={handleDeleteProposal}
-                onOpenDiscardDraftModal={() =>
-                  setIsDiscardDraftModalOpen(true)
-                }
+                onOpenDiscardDraftModal={() => setIsDiscardDraftModalOpen(true)}
               />
             </SwiperSlide>
 
@@ -324,9 +325,7 @@ export const ManageClausesScreen: React.FC = () => {
                 onEditProposalPlayer={handleEditProposalPlayer}
                 onFinalizeProposal={(p) => setProposalToFinalize(p)}
                 onDeleteProposal={handleDeleteProposal}
-                onOpenDiscardDraftModal={() =>
-                  setIsDiscardDraftModalOpen(true)
-                }
+                onOpenDiscardDraftModal={() => setIsDiscardDraftModalOpen(true)}
               />
             </SwiperSlide>
 
@@ -340,9 +339,7 @@ export const ManageClausesScreen: React.FC = () => {
                 onEditProposalPlayer={handleEditProposalPlayer}
                 onFinalizeProposal={(p) => setProposalToFinalize(p)}
                 onDeleteProposal={handleDeleteProposal}
-                onOpenDiscardDraftModal={() =>
-                  setIsDiscardDraftModalOpen(true)
-                }
+                onOpenDiscardDraftModal={() => setIsDiscardDraftModalOpen(true)}
               />
             </SwiperSlide>
           </Swiper>

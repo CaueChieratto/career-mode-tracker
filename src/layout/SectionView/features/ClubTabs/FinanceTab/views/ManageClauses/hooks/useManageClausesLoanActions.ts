@@ -98,6 +98,15 @@ export const useManageClausesLoanActions = ({
       item.player.sell = true;
       item.player.loan = false;
 
+      if (item.player.contract?.[item.contractIndex]) {
+        const targetContract = item.player.contract[item.contractIndex];
+        targetContract.loanTerms = {
+          ...(targetContract.loanTerms || item.contract.loanTerms),
+          buyOptionExercised: true,
+          exercisedDate: loanBuyOptionDateInput,
+        };
+      }
+
       const derivedSale = item.player.contract?.find(
         (c: Contract) =>
           c.fromLoanBuyOption &&
@@ -121,6 +130,13 @@ export const useManageClausesLoanActions = ({
           derivedSale.dataExit = parsedDate;
         }
       }
+
+      if (item.loanOriginDirection === "exit") {
+        const nextCardKey = `${item.player.id}_${item.contractIndex}_exit`;
+        lastClickedCardKeyRef.current = nextCardKey;
+        setActiveInline({ cardKey: nextCardKey, mode: "manage" });
+      }
+      setLocalVersion((v) => v + 1);
 
       showSuccess("Opção de compra exercida com sucesso!");
       setActiveSectionDrawer(null);

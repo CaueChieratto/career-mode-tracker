@@ -104,13 +104,17 @@ export const ClauseOperationalManageView: React.FC<
     activeTransferItem.contract,
   );
 
+  const effectiveDirection =
+    activeTransferItem.loanOriginDirection ?? activeTransferItem.direction;
+
   const isArrivalLoan =
-    Boolean(activeTransferItem.contract.isLoan) &&
-    (activeTransferItem.direction === "arrivals" ||
-      Boolean(
-        activeTransferItem.contract.fromClub &&
-        !activeTransferItem.contract.leftClub,
-      ));
+    effectiveDirection === "arrivals" &&
+    Boolean(
+      (activeTransferItem.contract.isLoan ||
+        (activeTransferItem.player.incomingLoan &&
+          activeTransferItem.contract.isLoan !== false)) &&
+        !activeTransferItem.contract.fromLoanBuyOption,
+    );
 
   const hasBuyOption = hasDefinedLoanBuyOption(activeTransferItem.contract);
   const resolvedBuyOptionFee = getContractBuyOptionFee(
@@ -142,8 +146,8 @@ export const ClauseOperationalManageView: React.FC<
       </div>
 
       {/* GESTÃO DE AJUSTE SALARIAL (RENOVAÇÕES OU CHEGADAS) */}
-      {(activeTransferItem.direction === "renewals" ||
-        (activeTransferItem.direction === "arrivals" &&
+      {(effectiveDirection === "renewals" ||
+        (effectiveDirection === "arrivals" &&
           !activeTransferItem.contract.isLoan)) &&
         resolvedPlayerClauses.wageAdjustment &&
         (() => {
@@ -833,13 +837,13 @@ export const ClauseOperationalManageView: React.FC<
                       </h5>
                       <span
                         className={
-                          activeTransferItem.direction === "exit"
+                          effectiveDirection === "exit"
                             ? Styles.operationalTargetPillClubReceivable
                             : Styles.operationalTargetPillClub
                         }
                       >
                         <FaBuilding size={9} />{" "}
-                        {activeTransferItem.direction === "exit"
+                        {effectiveDirection === "exit"
                           ? "Acordos com o Clube"
                           : "Acordos com Clube Vendedor"}
                       </span>
@@ -914,11 +918,11 @@ export const ClauseOperationalManageView: React.FC<
                           }
                           %
                         </strong>
-                        {activeTransferItem.direction !== "exit" && (
+                        {effectiveDirection !== "exit" && (
                           <span> (Automática na venda)</span>
                         )}
                       </div>
-                      {!readOnly && activeTransferItem.direction === "exit" && (
+                      {!readOnly && effectiveDirection === "exit" && (
                         <button
                           type="button"
                           className={Styles.btnExerciseAgreement}
@@ -1024,7 +1028,7 @@ export const ClauseOperationalManageView: React.FC<
           })()}
 
           {/* GAVETA LATERAL: ATIVAÇÃO DE VENDA FUTURA */}
-          {activeTransferItem.direction === "exit" &&
+          {effectiveDirection === "exit" &&
             activeTransferItem.contract.transferClauses?.sellOnPercentage && (
               <ClauseSectionDrawer
                 isOpen={sellOnActiveCardKey === itemCardKey}
@@ -1210,13 +1214,13 @@ export const ClauseOperationalManageView: React.FC<
                       </h5>
                       <span
                         className={
-                          activeTransferItem.direction === "exit"
+                          effectiveDirection === "exit"
                             ? Styles.operationalTargetPillClubReceivable
                             : Styles.operationalTargetPillClub
                         }
                       >
                         <FaBuilding size={9} />{" "}
-                        {activeTransferItem.direction === "exit"
+                        {effectiveDirection === "exit"
                           ? "Acordo com o Clube"
                           : "A Entregar ao Clube Vendedor"}
                       </span>

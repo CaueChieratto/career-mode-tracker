@@ -566,4 +566,136 @@ describe("loanBuyOptionExercise (Padrão FC Barcelona)", () => {
 
     expect(screen.queryByTestId("btn-manage-loan-prop_simple_loan")).toBeNull();
   });
+
+  it("mantém a lógica de compra em ClauseOperationalManageView quando empréstimo de chegada encerrado está na aba Saídas (loanOriginDirection='arrivals')", () => {
+    const handleExerciseArrivalLoanBuyOption = vi.fn();
+    const endedIncomingContract: Contract = {
+      ...pauVictorContract,
+      leftClub: "Girona FC",
+      dataExit: new Date("2027-06-30"),
+    };
+    const endedIncomingItem: TransferItem = {
+      player: {
+        ...pauVictorPlayer,
+        incomingLoan: false,
+        sell: true,
+        contract: [endedIncomingContract],
+      },
+      contract: endedIncomingContract,
+      contractIndex: 0,
+      direction: "exit",
+      loanOriginDirection: "arrivals",
+      cardKey: "p_pau_victor_0_exit",
+    };
+
+    render(
+      <ClauseOperationalManageView
+        career={mockCareer}
+        activeTransferItem={endedIncomingItem}
+        isLoading={false}
+        cancelInline={vi.fn()}
+        sellOnActiveCardKey={null}
+        setSellOnActiveCardKey={vi.fn()}
+        sellOnTotalInput=""
+        setSellOnTotalInput={vi.fn()}
+        sellOnDateInput="01/07"
+        setSellOnDateInput={vi.fn()}
+        loanBuyOptionDateInput=""
+        setLoanBuyOptionDateInput={vi.fn()}
+        handleApplyWageAdjustment={vi.fn()}
+        handleSettleInstallment={vi.fn()}
+        handleUnsettleInstallment={vi.fn()}
+        handleSettleBonus={vi.fn()}
+        handleExerciseBuyback={vi.fn()}
+        handleExerciseFirstRefusal={vi.fn()}
+        handleTriggerReleaseClause={vi.fn()}
+        handleConfirmSellOn={vi.fn()}
+        handleExerciseLoanBuyOption={vi.fn()}
+        handleExerciseArrivalLoanBuyOption={handleExerciseArrivalLoanBuyOption}
+        onOpenScreen={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByTestId("manage-arrival-loan-buy-option-card"),
+    ).toBeDefined();
+    fireEvent.click(
+      screen.getByTestId("btn-exercise-arrival-loan-buy-option"),
+    );
+    expect(handleExerciseArrivalLoanBuyOption).toHaveBeenCalledWith(
+      endedIncomingItem,
+    );
+  });
+
+  it("mantém a lógica de data de venda em ClauseOperationalManageView quando empréstimo de saída encerrado está na aba Chegadas (loanOriginDirection='exit')", () => {
+    const setActiveSectionDrawer = vi.fn();
+    const outgoingLoanContract: Contract = {
+      isLoan: true,
+      fromClub: "Girona FC",
+      leftClub: "Girona FC",
+      buyValue: 0,
+      sellValue: 0,
+      dataArrival: new Date("2027-06-30"),
+      dataExit: new Date("2027-06-30"),
+      buyOptionValue: 8_000_000,
+      loanTerms: {
+        durationYears: 1,
+        ourWagePercentage: 50,
+        theirWagePercentage: 50,
+        hasBuyOption: true,
+        buyOptionFee: 8_000_000,
+        partnerClub: "Girona FC",
+      },
+    };
+    const returnedOutgoingItem: TransferItem = {
+      player: {
+        ...pauVictorPlayer,
+        incomingLoan: false,
+        loan: false,
+        sell: false,
+        contract: [outgoingLoanContract],
+      },
+      contract: outgoingLoanContract,
+      contractIndex: 0,
+      direction: "arrivals",
+      loanOriginDirection: "exit",
+      cardKey: "p_pau_victor_0_arrivals",
+    };
+
+    render(
+      <ClauseOperationalManageView
+        career={mockCareer}
+        activeTransferItem={returnedOutgoingItem}
+        isLoading={false}
+        cancelInline={vi.fn()}
+        sellOnActiveCardKey={null}
+        setSellOnActiveCardKey={vi.fn()}
+        sellOnTotalInput=""
+        setSellOnTotalInput={vi.fn()}
+        sellOnDateInput="01/07"
+        setSellOnDateInput={vi.fn()}
+        loanBuyOptionDateInput=""
+        setLoanBuyOptionDateInput={vi.fn()}
+        handleApplyWageAdjustment={vi.fn()}
+        handleSettleInstallment={vi.fn()}
+        handleUnsettleInstallment={vi.fn()}
+        handleSettleBonus={vi.fn()}
+        handleExerciseBuyback={vi.fn()}
+        handleExerciseFirstRefusal={vi.fn()}
+        handleTriggerReleaseClause={vi.fn()}
+        handleConfirmSellOn={vi.fn()}
+        handleExerciseLoanBuyOption={vi.fn()}
+        handleExerciseArrivalLoanBuyOption={vi.fn()}
+        onOpenScreen={vi.fn()}
+        setActiveSectionDrawer={setActiveSectionDrawer}
+      />,
+    );
+
+    expect(screen.getByTestId("manage-loan-buy-option-card")).toBeDefined();
+    expect(
+      screen.queryByTestId("manage-arrival-loan-buy-option-card"),
+    ).toBeNull();
+    fireEvent.click(screen.getByTestId("btn-open-exercise-buy-option"));
+    expect(setActiveSectionDrawer).toHaveBeenCalledWith("loanBuyOption");
+  });
 });

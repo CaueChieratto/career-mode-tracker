@@ -3180,5 +3180,147 @@ describe("Gestão de Cláusulas Contratuais (ManageClauses - Cards Inline e Abas
 
       scrollToSpy.mockRestore();
     });
+
+    it("clicar no Navbar dispara scrollTo suave uma única vez sem zerar documentElement.scrollTop sincronamente", () => {
+      const scrollToSpy = vi
+        .spyOn(window, "scrollTo")
+        .mockImplementation(() => {});
+
+      Object.defineProperty(document.documentElement, "scrollTop", {
+        value: 350,
+        writable: true,
+        configurable: true,
+      });
+
+      render(
+        <ManageClauses
+          career={mockCareer}
+          season={mockSeason}
+          onClose={vi.fn()}
+        />,
+      );
+
+      scrollToSpy.mockClear();
+      fireEvent.click(screen.getByText(/Chegadas \(1\)/i));
+
+      expect(scrollToSpy).toHaveBeenCalledTimes(1);
+      expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+      expect(document.documentElement.scrollTop).toBe(350);
+
+      scrollToSpy.mockRestore();
+    });
+
+    it("selecionar um atleta do FC Barcelona no SearchableSelect invoca scrollIntoView com block='start' no card correspondente", () => {
+      const barcaCareer: Career = {
+        ...mockCareer,
+        clubName: "FC Barcelona",
+      };
+      const pedriPlayer: Players = {
+        ...dummyBoughtPlayer,
+        id: "p_pedri_search",
+        name: "Pedri González",
+      };
+      const barcaSeason: ClubData = {
+        ...mockSeason,
+        players: [pedriPlayer],
+      };
+
+      const scrollIntoViewMock = vi.fn();
+      window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
+
+      render(
+        <ManageClauses
+          career={barcaCareer}
+          season={barcaSeason}
+          initialTab="arrivals"
+          onClose={vi.fn()}
+        />,
+      );
+
+      const searchInput = screen.getByPlaceholderText(
+        "Pesquisar jogador em chegadas...",
+      );
+      fireEvent.change(searchInput, { target: { value: "Pedri González" } });
+
+      expect(scrollIntoViewMock).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    it("ao editar cláusulas em ManageClauses de jogador contratado em temporada passada, passa preserveTransferDate=true e mantém data original", async () => {
+      const editTransferSpy = vi
+        .spyOn(PlayersContractService, "editTransferInSeason")
+        .mockResolvedValue(undefined);
+
+      const originalArrival = new Date(2025, 6, 15); // 15/07/2025 (Temporada 1)
+      const pastArrivalPlayer: Players = {
+        ...dummyBoughtPlayer,
+        id: "p_olmo_past",
+        name: "Dani Olmo",
+        buy: false,
+        contract: [
+          {
+            buyValue: 55_000_000,
+            sellValue: 0,
+            fromClub: "RB Leipzig",
+            leftClub: "",
+            dataArrival: originalArrival,
+            dataExit: null,
+            bonuses: [
+              {
+                id: "b_past_1",
+                direction: "payable",
+                category: "objective",
+                bonusCategory: "Objetivo atingido",
+                name: "Ser campeão",
+                targetObjective: "Ser campeão",
+                targetLeague: "LaLiga",
+                partnerClub: "RB Leipzig",
+                value: 3_000_000,
+                status: "pending",
+              },
+            ],
+          },
+        ],
+      };
+
+      const barcaCareerS2: Career = {
+        ...mockCareer,
+        clubName: "FC Barcelona",
+        nation: "Espanha",
+        createdAt: new Date("2025-07-01"),
+      };
+      const season2: ClubData = {
+        ...mockSeason,
+        id: "season-2",
+        seasonNumber: 2,
+        players: [pastArrivalPlayer],
+      };
+
+      render(
+        <ManageClauses
+          career={barcaCareerS2}
+          season={season2}
+          initialTab="arrivals"
+          onClose={vi.fn()}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /Editar/i }));
+      fireEvent.click(screen.getByTestId("btn-choose-club-clauses"));
+      fireEvent.click(screen.getByText("Salvar Cláusulas"));
+
+      await waitFor(() => {
+        expect(editTransferSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            playerId: "p_olmo_past",
+            seasonId: "season-2",
+            preserveTransferDate: true,
+          }),
+        );
+      });
+      expect(pastArrivalPlayer.contract![0].dataArrival).toEqual(originalArrival);
+    });
   });
 });
